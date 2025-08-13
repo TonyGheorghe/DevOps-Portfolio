@@ -46,6 +46,7 @@ arhivare-web-app/
 ├── .env.example
 ├── alembic.ini
 └── README.md
+```
 
 ## Environment Variables
 
@@ -63,7 +64,6 @@ ADMIN_PASSWORD=admin123
 Note: The Compose file will be added later in development.
 
 docker compose up --build
-
 
 API: http://localhost:8000
 
