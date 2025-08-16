@@ -6,7 +6,7 @@ from app.models.base import Base
 class Fond(Base):
     __tablename__ = "fonds"
 
-    id = Column(BigInteger, primary_key=True, index=True)
+    id = Column(BigInteger, primary_key=True, index=True, autoincrement=True)
     company_name = Column(Text, nullable=False)
     holder_name = Column(Text, nullable=False)
     address = Column(Text, nullable=True)

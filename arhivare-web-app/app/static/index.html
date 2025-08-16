@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ro">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Arhivare – Căutare</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 16px; }
+  .row { display:flex; gap:8px; }
+  input[type="text"] { flex:1; padding:10px; border:1px solid #ccc; border-radius:8px; }
+  button { padding:10px 14px; border:0; border-radius:8px; cursor:pointer; }
+  ul { list-style: none; padding:0; }
+  li { padding:12px; border-bottom:1px solid #eee; }
+  small { color:#666; }
+</style>
+<body>
+  <h1>Arhivare Web App</h1>
+  <div class="row">
+    <input id="q" type="text" placeholder="Caută (ex: brașov, tractorul)…" minlength="2"/>
+    <button id="btn">Caută</button>
+  </div>
+  <p id="count"></p>
+  <ul id="results"></ul>
+
+<script>
+const q = document.getElementById('q');
+const btn = document.getElementById('btn');
+const results = document.getElementById('results');
+const count = document.getElementById('count');
+
+async function search() {
+  const query = q.value.trim();
+  if (query.length < 2) { alert("Introdu cel puțin 2 caractere."); return; }
+
+  results.innerHTML = "<li>Se caută...</li>";
+  count.textContent = "";
+
+  const [listRes, countRes] = await Promise.all([
+    fetch(`/search?query=${encodeURIComponent(query)}&limit=20`),
+    fetch(`/search/count?query=${encodeURIComponent(query)}`)
+  ]);
+
+  if (!listRes.ok) { results.innerHTML = `<li>Eroare: ${listRes.status}</li>`; return; }
+
+  const data = await listRes.json();
+  const cnt = countRes.ok ? await countRes.json() : { total_results: data.length };
+
+  count.textContent = `Total rezultate: ${cnt.total_results ?? data.length}`;
+  if (!Array.isArray(data) || data.length === 0) {
+    results.innerHTML = "<li>Niciun rezultat</li>";
+    return;
+  }
+  results.innerHTML = data.map(r => `
+    <li>
+      <strong>${r.company_name ?? "-"}</strong><br/>
+      <small>Deținător: ${r.holder_name ?? "-"}</small><br/>
+      <small>${r.address ?? ""}</small><br/>
+      <small>${r.email ?? ""} ${r.phone ?? ""}</small>
+    </li>
+  `).join("");
+}
+
+btn.addEventListener('click', search);
+q.addEventListener('keydown', (e) => { if (e.key === 'Enter') search(); });
+</script>
+</body>
+</html>
+

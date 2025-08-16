@@ -8,9 +8,16 @@ import sys
 # Adaugă path-ul pentru a importa modelele din app/
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-# Importă modelele
+# Import mai sigur pentru modele
 from app.models.base import Base
-from app.models import User, Fond  # Aceasta asigură că modelele sunt încărcate
+
+# Import explicit doar modelele necesare (fără circular imports)
+try:
+    from app.models.user import User
+    from app.models.fond import Fond
+    print(f"✅ Models imported successfully: User, Fond")
+except ImportError as e:
+    print(f"⚠️ Could not import models: {e}")
 
 # this is the Alembic Config object
 config = context.config

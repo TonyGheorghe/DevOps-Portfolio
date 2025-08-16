@@ -1,6 +1,9 @@
 # app/main.py
 from fastapi import FastAPI
 from app.core.config import settings
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
 
 # Import toate router-ele
 from app.api import auth
@@ -78,3 +81,13 @@ def root():
         "public_search": "/search?query=your_search_term",
         "admin_login": "/auth/login"
     }
+
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+if not os.path.isdir(STATIC_DIR):
+    os.makedirs(STATIC_DIR, exist_ok=True)
+
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+@app.get("/", include_in_schema=False)
+def root():
+    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
