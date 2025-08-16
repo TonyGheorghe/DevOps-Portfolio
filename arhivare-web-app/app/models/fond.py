@@ -1,12 +1,12 @@
 # app/models/fond.py
-from sqlalchemy import Column, String, Text, Boolean, DateTime, BigInteger
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, BigInteger
 from sqlalchemy.sql import func
 from app.models.base import Base
 
 class Fond(Base):
     __tablename__ = "fonds"
 
-    id = Column(BigInteger, primary_key=True, index=True, autoincrement=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     company_name = Column(Text, nullable=False)
     holder_name = Column(Text, nullable=False)
     address = Column(Text, nullable=True)

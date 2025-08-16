@@ -8,12 +8,12 @@ class TestFondsListEndpoint:
     
     async def test_list_fonds_requires_auth(self, client: AsyncClient):
         """Test that listing fonds requires authentication."""
-        response = await client.get("/fonds")
+        response = await client.get("/fonds/")
         assert response.status_code == 401
     
     async def test_list_fonds_returns_list(self, client: AsyncClient, auth_headers: dict, sample_fonds: list[Fond]):
         """Test that authenticated request returns list of fonds."""
-        response = await client.get("/fonds", headers=auth_headers)
+        response = await client.get("/fonds/", headers=auth_headers)
         assert response.status_code == 200
         
         data = response.json()
@@ -25,14 +25,14 @@ class TestFondsListEndpoint:
     async def test_list_fonds_pagination(self, client: AsyncClient, auth_headers: dict, sample_fonds: list[Fond]):
         """Test pagination parameters work correctly."""
         # Test limit
-        response = await client.get("/fonds", headers=auth_headers, params={"limit": 2})
+        response = await client.get("/fonds/", headers=auth_headers, params={"limit": 2})
         assert response.status_code == 200
         
         data = response.json()
         assert len(data) <= 2
         
         # Test skip
-        response = await client.get("/fonds", headers=auth_headers, params={"skip": 1, "limit": 10})
+        response = await client.get("/fonds/", headers=auth_headers, params={"skip": 1, "limit": 10})
         assert response.status_code == 200
         
         data = response.json()
@@ -41,11 +41,11 @@ class TestFondsListEndpoint:
     async def test_list_fonds_active_only_filter(self, client: AsyncClient, auth_headers: dict, sample_fonds: list[Fond]):
         """Test active_only filter parameter."""
         # Get all fonds
-        all_response = await client.get("/fonds", headers=auth_headers, params={"active_only": False})
+        all_response = await client.get("/fonds/", headers=auth_headers, params={"active_only": False})
         all_data = all_response.json()
         
         # Get active only
-        active_response = await client.get("/fonds", headers=auth_headers, params={"active_only": True})
+        active_response = await client.get("/fonds/", headers=auth_headers, params={"active_only": True})
         active_data = active_response.json()
         
         assert response.status_code == 200
@@ -66,7 +66,7 @@ class TestFondsCreateEndpoint:
             "address": "Test Address"
         }
         
-        response = await client.post("/fonds", json=fond_data)
+        response = await client.post("/fonds/", json=fond_data)
         assert response.status_code == 401
     
     async def test_create_fond_success(self, client: AsyncClient, auth_headers: dict):
@@ -80,7 +80,7 @@ class TestFondsCreateEndpoint:
             "notes": "Test notes"
         }
         
-        response = await client.post("/fonds", headers=auth_headers, json=fond_data)
+        response = await client.post("/fonds/", headers=auth_headers, json=fond_data)
         assert response.status_code == 201
         
         data = response.json()
@@ -98,7 +98,7 @@ class TestFondsCreateEndpoint:
             # Missing holder_name and address
         }
         
-        response = await client.post("/fonds", headers=auth_headers, json=incomplete_data)
+        response = await client.post("/fonds/", headers=auth_headers, json=incomplete_data)
         assert response.status_code == 422
         
         error_data = response.json()
@@ -112,7 +112,7 @@ class TestFondsCreateEndpoint:
             "address": "Minimal Address"
         }
         
-        response = await client.post("/fonds", headers=auth_headers, json=minimal_data)
+        response = await client.post("/fonds/", headers=auth_headers, json=minimal_data)
         assert response.status_code == 201
         
         data = response.json()

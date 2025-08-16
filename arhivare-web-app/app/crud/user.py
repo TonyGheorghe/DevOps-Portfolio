@@ -2,6 +2,7 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
+from passlib.hash import bcrypt
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 from app.core.security import get_password_hash
@@ -41,7 +42,7 @@ def update_user(db: Session, db_user: User, user_in: UserUpdate) -> User:
     if user_in.username is not None:
         db_user.username = user_in.username
     if user_in.password is not None:
-        db_user.password_hash = get_password_hash(user_in.password)
+        db_user.password_hash = bcrypt.hash(user_in.password)
     if user_in.role is not None:
         db_user.role = user_in.role
 

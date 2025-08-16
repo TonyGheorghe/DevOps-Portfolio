@@ -215,11 +215,12 @@ class TestUserCRUD:
             username="updated_admin",
             password="newpassword123"
         )
-        
+
+        original_hash = admin_user.password_hash        
         updated_user = update_user(db_session, admin_user, update_data)
         
         assert updated_user.username == update_data.username
-        assert updated_user.password_hash != admin_user.password_hash  # Password should change
+        assert updated_user.password_hash != original_hash
         assert updated_user.id == admin_user.id  # ID should remain same
     
     def test_delete_user(self, db_session: Session):
@@ -251,3 +252,5 @@ class TestUserCRUD:
         with pytest.raises(Exception):  # Should raise IntegrityError or similar
             create_user(db_session, duplicate_user_data)
             db_session.commit()  # Force the constraint check
+
+        db_session.rollback()

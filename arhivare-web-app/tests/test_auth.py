@@ -10,7 +10,7 @@ class TestAuthEndpoints:
     @pytest.mark.asyncio
     async def test_login_missing_credentials_returns_422(self, client: AsyncClient):
         """Test login fără credentials returnează validation error."""
-        response = await client.post("/auth/login", json={})
+        response = await client.post("/auth/login/", json={})
         assert response.status_code == 422
         
         error_data = response.json()
@@ -19,7 +19,7 @@ class TestAuthEndpoints:
     @pytest.mark.asyncio  
     async def test_login_invalid_credentials_returns_401(self, client: AsyncClient, admin_user: User):
         """Test login cu credentials invalide returnează unauthorized."""
-        response = await client.post("/auth/login", json={
+        response = await client.post("/auth/login/", json={
             "username": admin_user.username,
             "password": "wrongpassword"
         })
@@ -31,7 +31,7 @@ class TestAuthEndpoints:
     @pytest.mark.asyncio
     async def test_login_success_returns_token(self, client: AsyncClient, admin_user: User):
         """Test login cu succes returnează access token și user info."""
-        response = await client.post("/auth/login", json={
+        response = await client.post("/auth/login/", json={
             "username": admin_user.username,
             "password": "testpassword"
         })
@@ -60,7 +60,7 @@ class TestAuthEndpoints:
     @pytest.mark.asyncio
     async def test_login_nonexistent_user_returns_401(self, client: AsyncClient):
         """Test login cu user inexistent returnează unauthorized."""
-        response = await client.post("/auth/login", json={
+        response = await client.post("/auth/login/", json={
             "username": "nonexistent",
             "password": "password"
         })
@@ -114,7 +114,7 @@ class TestProtectedEndpoints:
     async def test_token_contains_user_info(self, client: AsyncClient, admin_user: User):
         """Test că JWT token conține informațiile corecte ale user-ului."""
         # Login pentru a obține token
-        login_response = await client.post("/auth/login", json={
+        login_response = await client.post("/auth/login/", json={
             "username": admin_user.username,
             "password": "testpassword"
         })

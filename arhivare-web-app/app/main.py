@@ -48,7 +48,10 @@ app = FastAPI(
 app.include_router(search.router)
 
 # 🔐 Authentication routes  
-app.include_router(auth.router)
+app.include_router(auth.router, prefix="/auth")
+
+# Dezactiveaza redirecturile implicite
+app.router.redirect_slashes = False
 
 # 👥 Admin routes (necesită JWT token)
 app.include_router(users.router, prefix="/users", tags=["Users Management"])

@@ -9,7 +9,7 @@ class TestSearchEndpoints:
     @pytest.mark.asyncio
     async def test_search_without_query_returns_422(self, client: AsyncClient):
         """Test că search fără query parameter returnează validation error."""
-        response = await client.get("/search")
+        response = await client.get("/search/")
         assert response.status_code == 422  # FastAPI validation error
         
         error_data = response.json()
@@ -18,13 +18,13 @@ class TestSearchEndpoints:
     @pytest.mark.asyncio
     async def test_search_with_short_query_returns_422(self, client: AsyncClient):
         """Test că search cu query mai scurt de 2 caractere returnează error."""
-        response = await client.get("/search", params={"query": "a"})
+        response = await client.get("/search/", params={"query": "a"})
         assert response.status_code == 422
     
     @pytest.mark.asyncio
     async def test_search_returns_empty_list_when_no_data(self, client: AsyncClient, empty_db):
         """Test search returnează listă goală când nu există date."""
-        response = await client.get("/search", params={"query": "nonexistent"})
+        response = await client.get("/search/", params={"query": "nonexistent"})
         assert response.status_code == 200
         
         data = response.json()
@@ -34,7 +34,7 @@ class TestSearchEndpoints:
     @pytest.mark.asyncio
     async def test_search_returns_results_when_data_exists(self, client: AsyncClient, sample_fonds: list[Fond]):
         """Test search returnează rezultate corecte când există date."""
-        response = await client.get("/search", params={"query": "brașov", "limit": 10})
+        response = await client.get("/search/", params={"query": "brașov", "limit": 10})
         assert response.status_code == 200
         
         data = response.json()
@@ -50,11 +50,11 @@ class TestSearchEndpoints:
     async def test_search_case_insensitive(self, client: AsyncClient, sample_fonds: list[Fond]):
         """Test că search este case insensitive."""
         # Search cu lowercase
-        response_lower = await client.get("/search", params={"query": "tractorul"})
+        response_lower = await client.get("/search/", params={"query": "tractorul"})
         assert response_lower.status_code == 200
         
         # Search cu uppercase  
-        response_upper = await client.get("/search", params={"query": "TRACTORUL"})
+        response_upper = await client.get("/search/", params={"query": "TRACTORUL"})
         assert response_upper.status_code == 200
         
         data_lower = response_lower.json()
@@ -70,7 +70,7 @@ class TestSearchEndpoints:
     async def test_search_only_returns_active_fonds(self, client: AsyncClient, sample_fonds: list[Fond]):
         """Test că search returnează doar fondurile active."""
         # Search pentru toate company-urile 
-        response = await client.get("/search", params={"query": "company"})
+        response = await client.get("/search/", params={"query": "company"})
         assert response.status_code == 200
         
         data = response.json()
@@ -87,7 +87,7 @@ class TestSearchEndpoints:
     @pytest.mark.asyncio
     async def test_search_limit_parameter(self, client: AsyncClient, sample_fonds: list[Fond]):
         """Test că parametrul limit funcționează corect."""
-        response = await client.get("/search", params={"query": "brașov", "limit": 1})
+        response = await client.get("/search/", params={"query": "brașov", "limit": 1})
         assert response.status_code == 200
         
         data = response.json()
@@ -96,7 +96,7 @@ class TestSearchEndpoints:
     @pytest.mark.asyncio
     async def test_search_response_structure(self, client: AsyncClient, sample_fonds: list[Fond]):
         """Test structura obiectelor din răspunsul search."""
-        response = await client.get("/search", params={"query": "tractorul"})
+        response = await client.get("/search/", params={"query": "tractorul"})
         assert response.status_code == 200
         
         data = response.json()
@@ -117,7 +117,7 @@ class TestSearchEndpoints:
     async def test_search_multiple_terms(self, client: AsyncClient, sample_fonds: list[Fond]):
         """Test search cu termeni multipli."""
         # Search pentru 'textile' - ar trebui să găsească Fabrica de Textile Cluj
-        response = await client.get("/search", params={"query": "textile"})
+        response = await client.get("/search/", params={"query": "textile"})
         assert response.status_code == 200
         
         data = response.json()
@@ -131,13 +131,13 @@ class TestSearchCountEndpoint:
     @pytest.mark.asyncio
     async def test_search_count_without_query_returns_422(self, client: AsyncClient):
         """Test că search count fără query returnează validation error."""
-        response = await client.get("/search/count")
+        response = await client.get("/search/count/")
         assert response.status_code == 422
     
     @pytest.mark.asyncio
     async def test_search_count_returns_correct_structure(self, client: AsyncClient, sample_fonds: list[Fond]):
         """Test search count returnează structura corectă de răspuns."""
-        response = await client.get("/search/count", params={"query": "brașov"})
+        response = await client.get("/search/count/", params={"query": "brașov"})
         assert response.status_code == 200
         
         data = response.json()
@@ -150,19 +150,21 @@ class TestSearchCountEndpoint:
         query = "brașov"
         
         # Obține rezultatele search
-        search_response = await client.get("/search", params={"query": query, "limit": 100})
+        search_response = await client.get("/search/", params={"query": query, "limit": 100})
         search_data = search_response.json()
         
         # Obține count-ul search
-        count_response = await client.get("/search/count", params={"query": query})
+        count_response = await client.get("/search/count/", params={"query": query})
         count_data = count_response.json()
         
         assert len(search_data) == count_data["total_results"]
+        print(response.status_code)
+        print(response.text)
     
     @pytest.mark.asyncio
     async def test_search_count_zero_for_nonexistent_query(self, client: AsyncClient, empty_db):
         """Test că search count returnează 0 pentru query-uri fără rezultate."""
-        response = await client.get("/search/count", params={"query": "nonexistentcompany12345"})
+        response = await client.get("/search/count/", params={"query": "nonexistentcompany12345"})
         assert response.status_code == 200
         
         data = response.json()
@@ -172,7 +174,7 @@ class TestSearchCountEndpoint:
     async def test_search_count_only_counts_active_fonds(self, client: AsyncClient, sample_fonds: list[Fond]):
         """Test că search count numără doar fondurile active."""
         # Count pentru toate company-urile
-        response = await client.get("/search/count", params={"query": "company"})
+        response = await client.get("/search/count/", params={"query": "company"})
         assert response.status_code == 200
         
         data = response.json()
