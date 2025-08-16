@@ -2,6 +2,7 @@
 import pytest
 import asyncio
 import uuid
+from jose import jwt
 from typing import Generator, AsyncGenerator
 from httpx import AsyncClient
 from sqlalchemy import create_engine, event
@@ -12,8 +13,9 @@ from app.main import app
 from app.models.base import Base
 from app.models.user import User
 from app.models.fond import Fond
-from app.db.session import get_db
+from app.db.session import get_db, engine
 from app.core.security import get_password_hash
+from app.core.config import settings
 
 # ======================================================
 # DATABASE SETUP - SQLite with proper foreign keys
@@ -268,6 +270,12 @@ async def user_headers(client: AsyncClient, regular_user: User) -> dict[str, str
 # ======================================================
 # UTILITY FIXTURES  
 # ======================================================
+@pytest.fixture(scope="session", autouse=True)
+def setup_test_db():
+    # Creează toate tabelele pentru SQLite de test
+    Base.metadata.create_all(bind=engine)
+    yield
+    Base.metadata.drop_all(bind=engine)
 
 @pytest.fixture(scope="function")
 def empty_db(db_session):

@@ -47,7 +47,7 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
 async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     # Caută user-ul în baza de date
     user = db.query(User).filter(User.username == login_data.username).first()
-    
+
     # Verifică dacă user-ul există și parola e corectă
     if not user or not verify_password(login_data.password, user.password_hash):
         raise HTTPException(
