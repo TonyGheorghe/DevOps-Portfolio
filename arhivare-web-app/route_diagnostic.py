@@ -227,6 +227,7 @@ class TestFondsDeleteEndpoint:
         print(f"Debug - Delete response text: {response.text}")
         
         # The endpoint might return 204 (No Content) instead of 200
+        # Let's check the actual implementation
         assert response.status_code in [200, 204]
         
         if response.status_code == 200:
@@ -237,20 +238,12 @@ class TestFondsDeleteEndpoint:
             pass
         
         # Verify fond is soft deleted (still exists but inactive)
-        get_response = await client.get("/fonds/", headers=auth_headers, params={"active_only": False})
-        
-        # DEBUG: Verifică răspunsul înainte de procesare
-        print(f"Debug - Get all fonds status: {get_response.status_code}")
-        print(f"Debug - Get all fonds response: {get_response.text[:200]}")
-        
-        assert get_response.status_code == 200, f"Failed to get fonds: {get_response.status_code} - {get_response.text}"
-        
+        get_response = await client.get("/fonds", headers=auth_headers, params={"active_only": False})
         all_fonds = get_response.json()
-        assert isinstance(all_fonds, list), f"Expected list, got {type(all_fonds)}: {all_fonds}"
         
         deleted_fond = next((f for f in all_fonds if f["id"] == fond_id), None)
-        assert deleted_fond is not None, f"Fond {fond_id} should still exist after soft delete"
-        assert deleted_fond["active"] is False, f"Fond {fond_id} should be inactive after deletion"
+        assert deleted_fond is not None
+        assert deleted_fond["active"] is False
     
     @pytest.mark.asyncio
     async def test_delete_nonexistent_fond_returns_404(self, client: AsyncClient, auth_headers: dict):

@@ -156,8 +156,9 @@ class TestSearchCountEndpoint:
         """Test că search count se potrivește cu numărul actual de rezultate search."""
         query = "brașov"
         
+        # IMPORTANT: Folosește limit=50 (maximum permis de endpoint)
         # Obține rezultatele search
-        search_response = await client.get("/search", params={"query": query, "limit": 100})
+        search_response = await client.get("/search", params={"query": query, "limit": 50})
         
         # Debug info
         print(f"\nSearch response status: {search_response.status_code}")
@@ -183,7 +184,11 @@ class TestSearchCountEndpoint:
         print(f"Search results count: {len(search_data)}")
         print(f"Count endpoint result: {count_data['total_results']}")
         
-        assert len(search_data) == count_data["total_results"]
+        # Dacă avem mai multe rezultate decât limit-ul, verifică că search_data are exact limit rezultate
+        if count_data['total_results'] > 50:
+            assert len(search_data) == 50  # Should be limited to 50
+        else:
+            assert len(search_data) == count_data["total_results"]
     
     @pytest.mark.asyncio
     async def test_search_count_zero_for_nonexistent_query(self, client: AsyncClient, empty_db):

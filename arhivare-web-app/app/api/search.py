@@ -1,4 +1,4 @@
-# app/api/search.py
+# app/api/search.py - FIXED VERSION
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
@@ -7,10 +7,11 @@ from app.db.session import get_db
 from app.schemas.fond import FondResponse
 from app.crud import fond as crud_fond
 
-router = APIRouter(prefix="/search", tags=["Public Search"])
+# FIXED: Remove prefix from here since it's included without prefix in main.py
+router = APIRouter(tags=["Public Search"])
 
 
-@router.get("/", response_model=List[FondResponse])
+@router.get("/search", response_model=List[FondResponse])
 def search_fonds(
     query: str = Query(..., min_length=2, max_length=100, description="Termenul de căutare (min 2 caractere)"),
     skip: int = Query(0, ge=0, description="Numărul de rezultate de sărit pentru paginație"),
@@ -40,7 +41,7 @@ def search_fonds(
     return results
 
 
-@router.get("/count")
+@router.get("/search/count")
 def search_count(
     query: str = Query(..., min_length=2, max_length=100, description="Termenul de căutare"),
     db: Session = Depends(get_db)
