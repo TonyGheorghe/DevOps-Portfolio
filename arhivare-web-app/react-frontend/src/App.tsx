@@ -1,7 +1,9 @@
+// src/App.tsx
 import React from 'react';
-import HomePage from './components/HomePage';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, ProtectedRoute, LoginPage } from './components/AuthSystem';
+import { AuthProvider, ProtectedRoute } from './components/AuthSystem';
+import HomePage from './components/HomePage';
+import { LoginPage } from './components/AuthSystem';
 import AdminDashboard from './components/AdminDashboard';
 import './App.css';
 
