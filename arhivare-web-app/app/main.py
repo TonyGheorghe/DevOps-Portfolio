@@ -1,5 +1,6 @@
 # app/main.py
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 
 from app.api import search
@@ -19,6 +20,7 @@ app.include_router(search.router)              # rutele publice (ex: /search)
 app.include_router(auth_router)                # /auth/login, /auth/me (și variantele cu /)
 app.include_router(users.router, prefix="/users", tags=["Users Management"])
 app.include_router(fonds.router, prefix="/fonds", tags=["Fonds Management"])
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # Dezactivează auto-redirect pentru slash mismatch
 app.router.redirect_slashes = False

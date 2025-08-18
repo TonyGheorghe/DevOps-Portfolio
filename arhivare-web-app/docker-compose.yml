@@ -1,6 +1,7 @@
-version: "3.9"
+version: '3.8'
 
 services:
+  # Serviciul de bază de date PostgreSQL
   db:
     image: postgres:16-alpine
     container_name: arhivare_db
@@ -21,6 +22,7 @@ services:
       retries: 10
     restart: unless-stopped
 
+  # Serviciul Adminer pentru administrarea bazei de date
   adminer:
     image: adminer:4
     container_name: arhivare_adminer
@@ -35,6 +37,7 @@ services:
       - app_net
     restart: unless-stopped
 
+  # Serviciul backend FastAPI
   api:
     build:
       context: .
@@ -49,7 +52,29 @@ services:
       - "8000:8000"
     networks:
       - app_net
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    volumes:
+      - .:/app  # Pentru hot reload în development
+    restart: unless-stopped
+
+  # Serviciul frontend React
+  frontend:
+    build:
+      context: ./react-frontend
+      dockerfile: Dockerfile
+    container_name: arhivare_frontend
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+    networks:
+      - app_net
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - CHOKIDAR_USEPOLLING=true  # Pentru hot reload în Docker
+    volumes:
+      - ./react-frontend:/app  # Pentru hot reload în development
+      - /app/node_modules  # Păstrează node_modules din container
     restart: unless-stopped
 
 volumes:
@@ -57,4 +82,4 @@ volumes:
 
 networks:
   app_net:
-
+    driver: bridge
