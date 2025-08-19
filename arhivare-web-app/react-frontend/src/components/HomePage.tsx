@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Search, Phone, Mail, MapPin, Building2, Archive } from 'lucide-react';
 
 // Type definitions bazate pe schema din backend
@@ -13,12 +13,6 @@ interface Fond {
   active: boolean;
   created_at: string;
   updated_at: string;
-}
-
-interface SearchResponse {
-  results: Fond[];
-  total: number;
-  query: string;
 }
 
 // API Configuration
@@ -102,11 +96,23 @@ const HomePage: React.FC = () => {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center space-x-3">
-            <Archive className="h-8 w-8 text-blue-600" />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Arhivare Web App</h1>
-              <p className="text-sm text-gray-600">Căutare fonduri arhivistice româneşti</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Archive className="h-8 w-8 text-blue-600" />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Arhivare Web App</h1>
+                <p className="text-sm text-gray-600">Căutare fonduri arhivistice româneşti</p>
+              </div>
+            </div>
+            
+            {/* Admin link */}
+            <div className="flex items-center space-x-4">
+              <a 
+                href="/login" 
+                className="text-gray-600 hover:text-blue-600 transition-colors text-sm font-medium"
+              >
+                Admin Login
+              </a>
             </div>
           </div>
         </div>
@@ -126,7 +132,7 @@ const HomePage: React.FC = () => {
 
           {/* Search Form */}
           <div className="max-w-xl mx-auto">
-            <div className="flex gap-2">
+            <form onSubmit={handleSearch} className="flex gap-2">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
@@ -139,13 +145,14 @@ const HomePage: React.FC = () => {
                 />
               </div>
               <button
+                type="submit"
                 onClick={handleSearch}
                 disabled={loading || query.length < 2}
                 className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? 'Caută...' : 'Caută'}
               </button>
-            </div>
+            </form>
           </div>
 
           {/* Quick suggestions */}

@@ -1,15 +1,16 @@
 import React, { useState, useContext, createContext, useEffect, ReactNode } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Eye, EyeOff, User, LogOut, Shield } from 'lucide-react';
 
 // ===== TYPES & INTERFACES =====
-interface User {
+interface UserData {  // Renamed from User to avoid conflict
   id: number;
   username: string;
   role: string;
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: UserData | null;
   token: string | null;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
@@ -20,7 +21,7 @@ interface AuthContextType {
 interface LoginResponse {
   access_token: string;
   token_type: string;
-  user: User;
+  user: UserData;
 }
 
 // ===== AUTH CONTEXT =====
@@ -41,7 +42,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserData | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -124,7 +125,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// ===== LOGIN PAGE COMPONENT =====
+// ===== LOGIN PAGE COMPONENT - FIXED WITH NAVIGATION =====
 export const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -133,14 +134,19 @@ export const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   
   const { login, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get the intended destination (from state) or default to admin dashboard
+  const from = location.state?.from?.pathname || '/admin';
 
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      // In a real app, you'd use React Router here
-      console.log('User already authenticated, should redirect to dashboard');
+      console.log('User is authenticated, redirecting to:', from);
+      navigate(from, { replace: true });
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, navigate, from]);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -156,11 +162,12 @@ export const LoginPage: React.FC = () => {
     try {
       const success = await login(username.trim(), password);
       
-      if (!success) {
-        setError('Username sau parolă greșite');
+      if (success) {
+        console.log('Login successful, redirecting to:', from);
+        // Navigarea se va face automat prin useEffect de mai sus
+        navigate(from, { replace: true });
       } else {
-        // Success - user will be redirected by useEffect
-        console.log('Login successful');
+        setError('Username sau parolă greșite');
       }
     } catch (err) {
       setError('A apărut o eroare la conectare');
@@ -175,13 +182,14 @@ export const LoginPage: React.FC = () => {
     }
   };
 
+  // Don't show login form if already authenticated
   if (isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <Shield className="h-16 w-16 text-green-600 mx-auto mb-4" />
+          <Shield className="h-16 w-16 text-green-600 mx-auto mb-4 animate-pulse" />
           <h2 className="text-2xl font-bold text-gray-900">Conectat cu succes!</h2>
-          <p className="text-gray-600 mt-2">Vei fi redirecționat către dashboard...</p>
+          <p className="text-gray-600 mt-2">Te redirectăm către dashboard...</p>
         </div>
       </div>
     );
@@ -199,11 +207,16 @@ export const LoginPage: React.FC = () => {
           <p className="mt-2 text-sm text-gray-600">
             Introdu datele de conectare pentru accesul la dashboard
           </p>
+          {from !== '/admin' && (
+            <p className="mt-1 text-xs text-amber-600">
+              Vei fi redirectat către: {from}
+            </p>
+          )}
         </div>
 
         {/* Login Form */}
         <div className="bg-white shadow-lg rounded-lg px-8 py-8">
-          <div className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Error Message */}
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-md p-4">
@@ -228,6 +241,7 @@ export const LoginPage: React.FC = () => {
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
                   disabled={isLoading}
                   autoComplete="username"
+                  required
                 />
               </div>
             </div>
@@ -249,6 +263,7 @@ export const LoginPage: React.FC = () => {
                   className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
                   disabled={isLoading}
                   autoComplete="current-password"
+                  required
                 />
                 <button
                   type="button"
@@ -263,7 +278,7 @@ export const LoginPage: React.FC = () => {
 
             {/* Submit Button */}
             <button
-              onClick={handleSubmit}
+              type="submit"
               disabled={isLoading || !username.trim() || !password.trim()}
               className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
@@ -283,7 +298,7 @@ export const LoginPage: React.FC = () => {
                 <strong>Demo:</strong> username: admin, parolă: admin123
               </p>
             </div>
-          </div>
+          </form>
         </div>
 
         {/* Footer */}
@@ -300,6 +315,12 @@ export const LoginPage: React.FC = () => {
 // ===== USER PROFILE COMPONENT =====
 export const UserProfile: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   if (!isAuthenticated || !user) {
     return null;
@@ -324,7 +345,7 @@ export const UserProfile: React.FC = () => {
         </div>
 
         <button
-          onClick={logout}
+          onClick={handleLogout}
           className="flex-shrink-0 p-1 text-gray-400 hover:text-red-600 transition-colors"
           title="Deconectare"
         >
@@ -335,7 +356,7 @@ export const UserProfile: React.FC = () => {
   );
 };
 
-// ===== PROTECTED ROUTE COMPONENT =====
+// ===== PROTECTED ROUTE COMPONENT - FIXED WITH NAVIGATION =====
 interface ProtectedRouteProps {
   children: ReactNode;
   requiredRole?: string;
@@ -346,6 +367,18 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredRole = 'admin' 
 }) => {
   const { isAuthenticated, user, isLoading } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      // Store the attempted location so we can redirect back after login
+      navigate('/login', { 
+        state: { from: location },
+        replace: true 
+      });
+    }
+  }, [isAuthenticated, isLoading, navigate, location]);
 
   if (isLoading) {
     return (
@@ -359,7 +392,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!isAuthenticated) {
-    return <LoginPage />;
+    // Navigation is handled in useEffect above
+    return null;
   }
 
   if (requiredRole && user?.role !== requiredRole) {
@@ -374,6 +408,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
           <p className="text-sm text-gray-500 mt-1">
             Rol necesar: {requiredRole}, rolul tău: {user?.role}
           </p>
+          <button
+            onClick={() => navigate('/')}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Înapoi la căutare
+          </button>
         </div>
       </div>
     );
@@ -381,54 +421,3 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   return <>{children}</>;
 };
-
-// ===== DEMO APP COMPONENT =====
-const AuthDemo: React.FC = () => {
-  const { isAuthenticated, user } = useAuth();
-
-  if (!isAuthenticated) {
-    return <LoginPage />;
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header with user profile */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">
-              Dashboard Admin
-            </h1>
-            <UserProfile />
-          </div>
-        </div>
-      </header>
-
-      {/* Main content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Bun venit, {user?.username}!
-          </h2>
-          <p className="text-gray-600">
-            Ești conectat cu rolul de <span className="font-medium">{user?.role}</span>.
-          </p>
-          <p className="text-gray-600 mt-2">
-            Aici va fi dashboard-ul pentru managementul fondurilor arhivistice.
-          </p>
-        </div>
-      </main>
-    </div>
-  );
-};
-
-// ===== MAIN APP COMPONENT =====
-const App: React.FC = () => {
-  return (
-    <AuthProvider>
-      <AuthDemo />
-    </AuthProvider>
-  );
-};
-
-export default App;

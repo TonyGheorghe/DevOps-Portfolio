@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Plus, Edit2, Trash2, Search, Building2, Archive, 
-  Phone, Mail, MapPin, X, LogOut, Users
+  Phone, Mail, MapPin, X, LogOut, Users, Home, CheckCircle
 } from 'lucide-react';
 import { useAuth } from './AuthSystem';
+import FondForm from './forms/FondForm';
 
 // Type definitions
 interface Fond {
@@ -20,17 +22,32 @@ interface Fond {
   updated_at: string;
 }
 
+// Type for form data (from FondForm)
+interface FondFormData {
+  company_name: string;
+  holder_name: string;
+  address: string;
+  email: string;
+  phone: string;
+  notes: string;
+  source_url: string;
+  active: boolean;
+}
+
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const AdminDashboard: React.FC = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [fonds, setFonds] = useState<Fond[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
   // Form state
   const [showForm, setShowForm] = useState(false);
   const [editingFond, setEditingFond] = useState<Fond | undefined>();
+  const [formLoading, setFormLoading] = useState(false);
   
   // Search and filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,6 +62,32 @@ const AdminDashboard: React.FC = () => {
     };
   };
 
+  // Clear messages after a delay
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
+  // Handle logout with navigation
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
+
+  // Navigate to homepage
+  const goToHomepage = () => {
+    navigate('/', { replace: false });
+  };
+
   // Load fonds (wrapped in useCallback to satisfy dependency array)
   const loadFonds = useCallback(async () => {
     setLoading(true);
@@ -57,6 +100,12 @@ const AdminDashboard: React.FC = () => {
       );
 
       if (!response.ok) {
+        if (response.status === 401) {
+          // Token expired or invalid, logout and redirect to login
+          logout();
+          navigate('/login', { replace: true });
+          return;
+        }
         throw new Error(`Error loading fonds: ${response.status}`);
       }
 
@@ -68,15 +117,107 @@ const AdminDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [showInactive]);
+  }, [showInactive, logout, navigate]);
 
   useEffect(() => {
     loadFonds();
   }, [loadFonds]);
 
+  // CREATE fond function
+  const handleCreateFond = async (fondData: FondFormData) => {
+    setFormLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/fonds/`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(fondData)
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          logout();
+          navigate('/login', { replace: true });
+          return;
+        }
+        const errorData = await response.json();
+        throw new Error(errorData.detail || `Error creating fond: ${response.status}`);
+      }
+
+      const newFond = await response.json();
+      
+      // Close form and reload data
+      setShowForm(false);
+      setEditingFond(undefined);
+      await loadFonds();
+      
+      setSuccessMessage(`Fondul "${newFond.company_name}" a fost creat cu succes!`);
+      
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Error creating fond');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  // UPDATE fond function
+  const handleUpdateFond = async (fondData: FondFormData) => {
+    if (!editingFond) return;
+    
+    setFormLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/fonds/${editingFond.id}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(fondData)
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          logout();
+          navigate('/login', { replace: true });
+          return;
+        }
+        const errorData = await response.json();
+        throw new Error(errorData.detail || `Error updating fond: ${response.status}`);
+      }
+
+      const updatedFond = await response.json();
+      
+      // Close form and reload data
+      setShowForm(false);
+      setEditingFond(undefined);
+      await loadFonds();
+      
+      setSuccessMessage(`Fondul "${updatedFond.company_name}" a fost actualizat cu succes!`);
+      
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Error updating fond');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  // Handle form save (CREATE or UPDATE)
+  const handleFormSave = async (fondData: FondFormData) => {
+    if (editingFond) {
+      await handleUpdateFond(fondData);
+    } else {
+      await handleCreateFond(fondData);
+    }
+  };
+
+  // Handle form cancel
+  const handleFormCancel = () => {
+    setShowForm(false);
+    setEditingFond(undefined);
+  };
+
   // Delete operation with proper confirm
   const handleDeleteFond = async (fond: Fond) => {
-    // Use window.confirm instead of global confirm
     if (!window.confirm(`Ești sigur că vrei să ștergi fondul "${fond.company_name}"?`)) {
       return;
     }
@@ -88,10 +229,16 @@ const AdminDashboard: React.FC = () => {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          logout();
+          navigate('/login', { replace: true });
+          return;
+        }
         throw new Error(`Error deleting fond: ${response.status}`);
       }
 
       await loadFonds(); // Reload to reflect changes
+      setSuccessMessage(`Fondul "${fond.company_name}" a fost șters cu succes!`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error deleting fond');
     }
@@ -141,13 +288,16 @@ const AdminDashboard: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-4">
-              <a 
-                href="/" 
-                className="text-gray-600 hover:text-blue-600 transition-colors"
+              {/* Navigation buttons */}
+              <button 
+                onClick={goToHomepage}
+                className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
               >
-                ← Înapoi la căutare
-              </a>
+                <Home className="h-4 w-4" />
+                <span>Căutare publică</span>
+              </button>
               
+              {/* User profile section */}
               <div className="flex items-center space-x-3 bg-gray-50 rounded-lg px-4 py-2">
                 <div className="flex-shrink-0">
                   <div className="h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center">
@@ -159,8 +309,8 @@ const AdminDashboard: React.FC = () => {
                   <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
                 </div>
                 <button
-                  onClick={logout}
-                  className="text-gray-400 hover:text-red-600 transition-colors"
+                  onClick={handleLogout}
+                  className="text-gray-400 hover:text-red-600 transition-colors p-1 rounded-md hover:bg-red-50"
                   title="Deconectare"
                 >
                   <LogOut className="h-5 w-5" />
@@ -172,22 +322,40 @@ const AdminDashboard: React.FC = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Success Message */}
+        {successMessage && (
+          <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
+              <p className="text-green-800">{successMessage}</p>
+              <button
+                onClick={() => setSuccessMessage(null)}
+                className="ml-auto text-green-600 hover:text-green-800 p-1"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Error Message */}
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800">{error}</p>
-            <button
-              onClick={() => setError(null)}
-              className="ml-4 text-red-600 hover:text-red-800"
-            >
-              Închide
-            </button>
+            <div className="flex justify-between items-center">
+              <p className="text-red-800">{error}</p>
+              <button
+                onClick={() => setError(null)}
+                className="text-red-600 hover:text-red-800 p-1"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         )}
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
             <div className="flex items-center">
               <Archive className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
@@ -197,7 +365,7 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
             <div className="flex items-center">
               <Building2 className="h-8 w-8 text-green-600" />
               <div className="ml-4">
@@ -207,7 +375,7 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
             <div className="flex items-center">
               <X className="h-8 w-8 text-gray-400" />
               <div className="ml-4">
@@ -247,7 +415,10 @@ const AdminDashboard: React.FC = () => {
                 </label>
 
                 <button
-                  onClick={() => setShowForm(true)}
+                  onClick={() => {
+                    setEditingFond(undefined);
+                    setShowForm(true);
+                  }}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 transition-colors"
                 >
                   <Plus className="h-4 w-4" />
@@ -294,7 +465,7 @@ const AdminDashboard: React.FC = () => {
                   </tr>
                 ) : (
                   filteredFonds.map((fond) => (
-                    <tr key={fond.id} className="hover:bg-gray-50">
+                    <tr key={fond.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
                         <div>
                           <div className="text-sm font-medium text-gray-900">
@@ -355,14 +526,14 @@ const AdminDashboard: React.FC = () => {
                             setEditingFond(fond);
                             setShowForm(true);
                           }}
-                          className="text-blue-600 hover:text-blue-900 p-1"
+                          className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
                           title="Editează"
                         >
                           <Edit2 className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteFond(fond)}
-                          className="text-red-600 hover:text-red-900 p-1"
+                          className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
                           title="Șterge"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -375,45 +546,30 @@ const AdminDashboard: React.FC = () => {
             </table>
           </div>
         </div>
+
+        {/* Pagination info */}
+        {filteredFonds.length > 0 && (
+          <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
+            <p>
+              Afișând {filteredFonds.length} din {fonds.length} fonduri
+            </p>
+            <p>
+              {searchQuery && `Filtrate după: "${searchQuery}"`}
+            </p>
+          </div>
+        )}
       </main>
 
-      {/* Simple Form Modal */}
+      {/* Form Modal - WITH DUPLICATE DETECTION! */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {editingFond ? 'Editare Fond' : 'Fond Nou'}
-              </h3>
-              <button
-                onClick={() => {
-                  setShowForm(false);
-                  setEditingFond(undefined);
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-
-            <p className="text-center text-gray-600 py-8">
-              Formular complet de editare va fi implementat în următoarea iterație.
-              <br />
-              Pentru moment, poți gestiona fondurile prin API endpoints direct.
-            </p>
-
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={() => {
-                  setShowForm(false);
-                  setEditingFond(undefined);
-                }}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-              >
-                Închide
-              </button>
-            </div>
-          </div>
+          <FondForm
+            fond={editingFond}
+            existingFonds={fonds}
+            onSave={handleFormSave}
+            onCancel={handleFormCancel}
+            isLoading={formLoading}
+          />
         </div>
       )}
     </div>
