@@ -1,5 +1,8 @@
+// src/components/HomePage.tsx - Fixed Admin Login Link
 import React, { useState } from 'react';
-import { Search, Phone, Mail, MapPin, Building2, Archive } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Phone, Mail, MapPin, Building2, Archive, LogIn } from 'lucide-react';
+import { useAuth } from './AuthSystem';
 
 // Type definitions bazate pe schema din backend
 interface Fond {
@@ -19,6 +22,9 @@ interface Fond {
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const HomePage: React.FC = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
+  
   // State management pentru search
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Fond[]>([]);
@@ -86,6 +92,21 @@ const HomePage: React.FC = () => {
     }
   };
 
+  // Handle admin login navigation
+  const handleAdminLogin = () => {
+    if (isAuthenticated) {
+      // If already authenticated, go to appropriate dashboard
+      if (user?.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/admin/users'); // Non-admin users can view users in read-only mode
+      }
+    } else {
+      // If not authenticated, go to login
+      navigate('/login');
+    }
+  };
+
   // Calculate pagination
   const totalPages = Math.ceil(totalResults / resultsPerPage);
   const startResult = (currentPage - 1) * resultsPerPage + 1;
@@ -105,14 +126,30 @@ const HomePage: React.FC = () => {
               </div>
             </div>
             
-            {/* Admin link */}
+            {/* Auth section */}
             <div className="flex items-center space-x-4">
-              <a 
-                href="/login" 
-                className="text-gray-600 hover:text-blue-600 transition-colors text-sm font-medium"
-              >
-                Admin Login
-              </a>
+              {isAuthenticated ? (
+                <div className="flex items-center space-x-3">
+                  <span className="text-sm text-gray-600">
+                    Bună, <span className="font-medium">{user?.username}</span>!
+                  </span>
+                  <button 
+                    onClick={handleAdminLogin}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                  >
+                    <Archive className="h-4 w-4" />
+                    <span>{user?.role === 'admin' ? 'Dashboard' : 'Utilizatori'}</span>
+                  </button>
+                </div>
+              ) : (
+                <button 
+                  onClick={handleAdminLogin}
+                  className="text-gray-600 hover:text-blue-600 transition-colors text-sm font-medium flex items-center space-x-2"
+                >
+                  <LogIn className="h-4 w-4" />
+                  <span>Conectare</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

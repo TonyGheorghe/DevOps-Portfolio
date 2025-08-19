@@ -1,13 +1,15 @@
+// src/components/AdminDashboard.tsx - Updated with User Management Navigation
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plus, Edit2, Trash2, Search, Building2, Archive, 
-  Phone, Mail, MapPin, X, LogOut, Users, Home, CheckCircle
+  Phone, Mail, MapPin, X, LogOut, Users, Home, CheckCircle,
+  User, Settings, BarChart3
 } from 'lucide-react';
 import { useAuth } from './AuthSystem';
 import FondForm from './forms/FondForm';
 
-// Type definitions
+// Types
 interface Fond {
   id: number;
   company_name: string;
@@ -22,7 +24,6 @@ interface Fond {
   updated_at: string;
 }
 
-// Type for form data (from FondForm)
 interface FondFormData {
   company_name: string;
   holder_name: string;
@@ -88,6 +89,16 @@ const AdminDashboard: React.FC = () => {
     navigate('/', { replace: false });
   };
 
+  // Navigate to users management
+  const goToUsersManagement = () => {
+    navigate('/admin/users', { replace: false });
+  };
+
+  // Navigate to profile
+  const goToProfile = () => {
+    navigate('/profile', { replace: false });
+  };
+
   // Load fonds (wrapped in useCallback to satisfy dependency array)
   const loadFonds = useCallback(async () => {
     setLoading(true);
@@ -101,7 +112,6 @@ const AdminDashboard: React.FC = () => {
 
       if (!response.ok) {
         if (response.status === 401) {
-          // Token expired or invalid, logout and redirect to login
           logout();
           navigate('/login', { replace: true });
           return;
@@ -147,7 +157,6 @@ const AdminDashboard: React.FC = () => {
 
       const newFond = await response.json();
       
-      // Close form and reload data
       setShowForm(false);
       setEditingFond(undefined);
       await loadFonds();
@@ -187,7 +196,6 @@ const AdminDashboard: React.FC = () => {
 
       const updatedFond = await response.json();
       
-      // Close form and reload data
       setShowForm(false);
       setEditingFond(undefined);
       await loadFonds();
@@ -237,7 +245,7 @@ const AdminDashboard: React.FC = () => {
         throw new Error(`Error deleting fond: ${response.status}`);
       }
 
-      await loadFonds(); // Reload to reflect changes
+      await loadFonds();
       setSuccessMessage(`Fondul "${fond.company_name}" a fost șters cu succes!`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error deleting fond');
@@ -288,14 +296,32 @@ const AdminDashboard: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-4">
-              {/* Navigation buttons */}
-              <button 
-                onClick={goToHomepage}
-                className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
-              >
-                <Home className="h-4 w-4" />
-                <span>Căutare publică</span>
-              </button>
+              {/* Navigation Menu */}
+              <nav className="hidden md:flex items-center space-x-2">
+                <button 
+                  onClick={goToHomepage}
+                  className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
+                >
+                  <Home className="h-4 w-4" />
+                  <span>Căutare</span>
+                </button>
+                
+                <button 
+                  onClick={goToUsersManagement}
+                  className="flex items-center space-x-2 text-gray-600 hover:text-purple-600 transition-colors px-3 py-2 rounded-md hover:bg-purple-50"
+                >
+                  <Users className="h-4 w-4" />
+                  <span>Utilizatori</span>
+                </button>
+
+                <button 
+                  onClick={goToProfile}
+                  className="flex items-center space-x-2 text-gray-600 hover:text-green-600 transition-colors px-3 py-2 rounded-md hover:bg-green-50"
+                >
+                  <User className="h-4 w-4" />
+                  <span>Profil</span>
+                </button>
+              </nav>
               
               {/* User profile section */}
               <div className="flex items-center space-x-3 bg-gray-50 rounded-lg px-4 py-2">
@@ -322,6 +348,70 @@ const AdminDashboard: React.FC = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Quick Actions Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Fonds Stats */}
+          <div 
+            className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => setShowForm(true)}
+          >
+            <div className="flex items-center">
+              <Archive className="h-8 w-8 text-blue-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Total Fonduri</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                <p className="text-xs text-blue-600 mt-1">Click pentru adăugare</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Active Fonds */}
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center">
+              <Building2 className="h-8 w-8 text-green-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Fonduri Active</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.active}</p>
+                <p className="text-xs text-gray-500 mt-1">Vizibile public</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Users Management */}
+          <div 
+            className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer"
+            onClick={goToUsersManagement}
+          >
+            <div className="flex items-center">
+              <Users className="h-8 w-8 text-purple-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Utilizatori</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  <span className="text-lg">Gestionează</span>
+                </p>
+                <p className="text-xs text-purple-600 mt-1">Click pentru management</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Profile Access */}
+          <div 
+            className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer"
+            onClick={goToProfile}
+          >
+            <div className="flex items-center">
+              <User className="h-8 w-8 text-orange-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Profilul Meu</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  <span className="text-lg">Setări</span>
+                </p>
+                <p className="text-xs text-orange-600 mt-1">Click pentru profil</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Success Message */}
         {successMessage && (
           <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
@@ -352,39 +442,6 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
         )}
-
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center">
-              <Archive className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Fonduri</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center">
-              <Building2 className="h-8 w-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.active}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center">
-              <X className="h-8 w-8 text-gray-400" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Inactive</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.inactive}</p>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Controls */}
         <div className="bg-white rounded-lg shadow mb-6">

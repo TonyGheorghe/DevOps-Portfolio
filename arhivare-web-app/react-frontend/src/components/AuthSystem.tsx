@@ -1,9 +1,10 @@
+// src/components/AuthSystem.tsx - Final Clean Version
 import React, { useState, useContext, createContext, useEffect, ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Eye, EyeOff, User, LogOut, Shield } from 'lucide-react';
 
 // ===== TYPES & INTERFACES =====
-interface UserData {  // Renamed from User to avoid conflict
+interface UserData {
   id: number;
   username: string;
   role: string;
@@ -24,10 +25,15 @@ interface LoginResponse {
   user: UserData;
 }
 
+interface ProtectedRouteProps {
+  children: ReactNode;
+  requiredRole?: string;
+  allowReadOnly?: boolean;
+}
+
 // ===== AUTH CONTEXT =====
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// Custom hook pentru folosirea contextului de auth
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -48,7 +54,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
-  // Check for existing auth on mount
   useEffect(() => {
     const checkExistingAuth = () => {
       try {
@@ -61,7 +66,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       } catch (error) {
         console.error('Error loading stored auth:', error);
-        // Clear invalid stored data
         localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_user');
       } finally {
@@ -72,7 +76,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkExistingAuth();
   }, []);
 
-  // Login function
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -90,11 +93,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       const data: LoginResponse = await response.json();
 
-      // Store auth data
       setToken(data.access_token);
       setUser(data.user);
       
-      // Persist to localStorage
       localStorage.setItem('auth_token', data.access_token);
       localStorage.setItem('auth_user', JSON.stringify(data.user));
 
@@ -105,7 +106,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Logout function
   const logout = () => {
     setToken(null);
     setUser(null);
@@ -125,7 +125,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// ===== LOGIN PAGE COMPONENT - FIXED WITH NAVIGATION =====
+// ===== LOGIN PAGE COMPONENT =====
 export const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -137,10 +137,8 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Get the intended destination (from state) or default to admin dashboard
-  const from = location.state?.from?.pathname || '/admin';
+  const from = location.state?.from?.pathname || '/';
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
       console.log('User is authenticated, redirecting to:', from);
@@ -164,7 +162,6 @@ export const LoginPage: React.FC = () => {
       
       if (success) {
         console.log('Login successful, redirecting to:', from);
-        // Navigarea se va face automat prin useEffect de mai sus
         navigate(from, { replace: true });
       } else {
         setError('Username sau parolă greșite');
@@ -182,14 +179,13 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  // Don't show login form if already authenticated
   if (isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Shield className="h-16 w-16 text-green-600 mx-auto mb-4 animate-pulse" />
           <h2 className="text-2xl font-bold text-gray-900">Conectat cu succes!</h2>
-          <p className="text-gray-600 mt-2">Te redirectăm către dashboard...</p>
+          <p className="text-gray-600 mt-2">Te redirectăm către aplicație...</p>
         </div>
       </div>
     );
@@ -198,33 +194,29 @@ export const LoginPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        {/* Header */}
         <div className="text-center">
           <Lock className="h-12 w-12 text-blue-600 mx-auto" />
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Conectare Admin
+            Conectare
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Introdu datele de conectare pentru accesul la dashboard
+            Introdu datele de conectare pentru acces
           </p>
-          {from !== '/admin' && (
+          {from !== '/' && (
             <p className="mt-1 text-xs text-amber-600">
               Vei fi redirectat către: {from}
             </p>
           )}
         </div>
 
-        {/* Login Form */}
         <div className="bg-white shadow-lg rounded-lg px-8 py-8">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Error Message */}
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-md p-4">
                 <p className="text-sm text-red-800">{error}</p>
               </div>
             )}
 
-            {/* Username Field */}
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
                 Username
@@ -246,7 +238,6 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Password Field */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Parolă
@@ -276,7 +267,6 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading || !username.trim() || !password.trim()}
@@ -292,16 +282,24 @@ export const LoginPage: React.FC = () => {
               )}
             </button>
 
-            {/* Demo Credentials Info */}
             <div className="bg-gray-50 rounded-md p-4">
-              <p className="text-xs text-gray-600 text-center">
-                <strong>Demo:</strong> username: admin, parolă: admin123
+              <p className="text-xs text-gray-600 text-center mb-2">
+                <strong>Conturi demo disponibile:</strong>
               </p>
+              <div className="text-xs text-gray-600 space-y-1">
+                <div className="flex justify-between">
+                  <span>Admin:</span>
+                  <span>admin / admin123</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Operator:</span>
+                  <span>operator / Operator1234</span>
+                </div>
+              </div>
             </div>
           </form>
         </div>
 
-        {/* Footer */}
         <div className="text-center">
           <p className="text-xs text-gray-500">
             © 2025 Arhivare Web App - Tony Gheorghe
@@ -356,29 +354,37 @@ export const UserProfile: React.FC = () => {
   );
 };
 
-// ===== PROTECTED ROUTE COMPONENT - FIXED WITH NAVIGATION =====
-interface ProtectedRouteProps {
-  children: ReactNode;
-  requiredRole?: string;
-}
-
+// ===== PROTECTED ROUTE COMPONENT =====
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
-  requiredRole = 'admin' 
+  requiredRole,
+  allowReadOnly = false
 }) => {
-  const { isAuthenticated, user, isLoading } = useAuth();
+  const { isAuthenticated, user, isLoading, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      // Store the attempted location so we can redirect back after login
       navigate('/login', { 
         state: { from: location },
         replace: true 
       });
     }
   }, [isAuthenticated, isLoading, navigate, location]);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
+
+  const handleGoHome = () => {
+    if (user?.role === 'admin') {
+      navigate('/admin', { replace: true });
+    } else {
+      navigate('/', { replace: true });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -392,28 +398,56 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!isAuthenticated) {
-    // Navigation is handled in useEffect above
     return null;
   }
 
   if (requiredRole && user?.role !== requiredRole) {
+    if (allowReadOnly && isAuthenticated) {
+      return <>{children}</>;
+    }
+    
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center max-w-md mx-auto p-6">
           <Shield className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900">Acces interzis</h2>
-          <p className="text-gray-600 mt-2">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Acces interzis</h2>
+          <p className="text-gray-600 mb-4">
             Nu ai permisiunile necesare pentru a accesa această secțiune.
           </p>
-          <p className="text-sm text-gray-500 mt-1">
-            Rol necesar: {requiredRole}, rolul tău: {user?.role}
-          </p>
-          <button
-            onClick={() => navigate('/')}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Înapoi la căutare
-          </button>
+          <div className="bg-gray-100 rounded-lg p-4 mb-6">
+            <p className="text-sm text-gray-700">
+              <strong>Rolul tău:</strong> {user?.role || 'Necunoscut'}
+            </p>
+            <p className="text-sm text-gray-700">
+              <strong>Rol necesar:</strong> {requiredRole}
+            </p>
+          </div>
+          
+          <div className="space-y-3">
+            <button
+              onClick={handleGoHome}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              {user?.role === 'admin' ? 'Înapoi la Dashboard' : 'Înapoi la Căutare'}
+            </button>
+            
+            <button
+              onClick={handleLogout}
+              className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Schimbă contul</span>
+            </button>
+          </div>
+          
+          {user?.role === 'user' && (
+            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                💡 <strong>Sfat:</strong> Pentru acces la funcțiile administrative, 
+                contactează un administrator pentru a-ți schimba rolul.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
