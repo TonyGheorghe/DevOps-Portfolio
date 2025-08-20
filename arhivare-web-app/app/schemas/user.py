@@ -1,9 +1,9 @@
-# app/schemas/user.py - Updated with Extended Roles and Fields
+# app/schemas/user.py - Updated with Extended Roles and Enhanced Features
 from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 
-# Valid user roles
+# Valid user roles - UPDATED WITH NEW ROLES
 VALID_ROLES = ["admin", "audit", "client"]
 
 class UserBase(BaseModel):
@@ -90,16 +90,18 @@ class UserRoleInfo(BaseModel):
                     "Editare toate fondurile", 
                     "Ștergere fonduri",
                     "Management utilizatori",
+                    "Assignment fonduri către clienți",
                     "Administrare sistem"
                 ]
             },
             "audit": {
-                "display_name": "Audit",
+                "display_name": "Audit", 
                 "description": "Vizualizare completă, fără modificări",
                 "permissions": [
                     "Vizualizare toate fondurile",
                     "Export date și statistici",
-                    "Rapoarte și analize"
+                    "Rapoarte și analize",
+                    "Monitorizare activitate"
                 ]
             },
             "client": {
@@ -107,7 +109,8 @@ class UserRoleInfo(BaseModel):
                 "description": "Acces la fondurile proprii",
                 "permissions": [
                     "Vizualizare fondurile proprii",
-                    "Editare fondurile proprii",
+                    "Editare fondurile proprii", 
+                    "Căutare fonduri publice",
                     "Verificare completitudine date"
                 ]
             }
@@ -120,3 +123,25 @@ class UserRoleInfo(BaseModel):
             description=info["description"], 
             permissions=info["permissions"]
         )
+
+# Assignment-related schemas
+class FondAssignment(BaseModel):
+    """Schema for assigning fonds to clients."""
+    fond_id: int
+    client_id: int
+    notes: Optional[str] = None
+
+class FondAssignmentResponse(BaseModel):
+    """Response for fond assignment operations."""
+    message: str
+    fond_id: int
+    client_id: int
+    client_username: str
+    fond_company_name: str
+
+class ClientStats(BaseModel):
+    """Statistics for a client user."""
+    total_fonds: int
+    active_fonds: int
+    inactive_fonds: int
+    last_updated: Optional[datetime] = None
