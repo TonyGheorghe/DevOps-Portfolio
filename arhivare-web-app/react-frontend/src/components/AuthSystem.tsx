@@ -1,7 +1,7 @@
 // src/components/AuthSystem.tsx - Final Clean Version
 import React, { useState, useContext, createContext, useEffect, ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Lock, Eye, EyeOff, User, LogOut, Shield } from 'lucide-react';
+import { Lock, Eye, EyeOff, User, LogOut, Shield, ArrowLeft, Home } from 'lucide-react';
 
 // ===== TYPES & INTERFACES =====
 interface UserData {
@@ -179,6 +179,11 @@ export const LoginPage: React.FC = () => {
     }
   };
 
+  // Handle back to homepage
+  const handleBackToHome = () => {
+    navigate('/', { replace: true });
+  };
+
   if (isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -194,6 +199,17 @@ export const LoginPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
+        {/* Back to Home Button */}
+        <div className="flex justify-start">
+          <button
+            onClick={handleBackToHome}
+            className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-white/50"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="text-sm font-medium">Înapoi la căutare</span>
+          </button>
+        </div>
+
         <div className="text-center">
           <Lock className="h-12 w-12 text-blue-600 mx-auto" />
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
@@ -301,9 +317,16 @@ export const LoginPage: React.FC = () => {
         </div>
 
         <div className="text-center">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 mb-2">
             © 2025 Arhivare Web App - Tony Gheorghe
           </p>
+          <button
+            onClick={handleBackToHome}
+            className="inline-flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-800 transition-colors"
+          >
+            <Home className="h-3 w-3" />
+            <span>Înapoi la pagina principală</span>
+          </button>
         </div>
       </div>
     </div>
