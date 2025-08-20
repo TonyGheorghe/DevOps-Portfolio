@@ -321,9 +321,6 @@ const ClientDashboard: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-900">{user?.username}</p>
                   <p className="text-xs text-green-600 capitalize">Client</p>
-                  {user?.company_name && (
-                    <p className="text-xs text-gray-500">{user.company_name}</p>
-                  )}
                 </div>
                 <button
                   onClick={handleLogout}
@@ -372,7 +369,7 @@ const ClientDashboard: React.FC = () => {
 
         {/* Quick Stats Cards */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div 
               className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer"
               onClick={() => setShowForm(true)}
@@ -460,23 +457,15 @@ const ClientDashboard: React.FC = () => {
             <User className="h-5 w-5 mr-2 text-green-600" />
             Informații Client
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <p className="text-sm font-medium text-gray-600">Nume utilizator</p>
               <p className="text-lg text-gray-900">{user?.username}</p>
             </div>
-            {user?.company_name && (
-              <div>
-                <p className="text-sm font-medium text-gray-600">Companie</p>
-                <p className="text-lg text-gray-900">{user.company_name}</p>
-              </div>
-            )}
-            {user?.contact_email && (
-              <div>
-                <p className="text-sm font-medium text-gray-600">Email contact</p>
-                <p className="text-lg text-gray-900">{user.contact_email}</p>
-              </div>
-            )}
+            <div>
+              <p className="text-sm font-medium text-gray-600">Rol</p>
+              <p className="text-lg text-gray-900">{user?.role}</p>
+            </div>
           </div>
           {stats?.last_updated && (
             <div className="mt-4 text-sm text-gray-600">
@@ -695,15 +684,4 @@ const ClientDashboard: React.FC = () => {
   );
 };
 
-export default ClientDashboard; p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-center">
-                <CheckCircle className="h-8 w-8 text-blue-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Fonduri Active</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.active_fonds}</p>
-                  <p className="text-xs text-gray-500 mt-1">Vizibile public</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow
+export default ClientDashboard;

@@ -1,4 +1,4 @@
-// src/components/AuthSystem.tsx - Final Clean Version
+// src/components/AuthSystem.tsx - Final Clean Version with Extended User Types
 import React, { useState, useContext, createContext, useEffect, ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Eye, EyeOff, User, LogOut, Shield, ArrowLeft, Home } from 'lucide-react';
@@ -8,6 +8,12 @@ interface UserData {
   id: number;
   username: string;
   role: string;
+  // Extended fields for client information
+  company_name?: string;
+  contact_email?: string;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface AuthContextType {
@@ -308,8 +314,8 @@ export const LoginPage: React.FC = () => {
                   <span>admin / admin123</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Operator:</span>
-                  <span>operator / Operator1234</span>
+                  <span>Client:</span>
+                  <span>client / client123</span>
                 </div>
               </div>
             </div>
