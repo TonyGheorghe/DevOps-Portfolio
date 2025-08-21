@@ -1,327 +1,360 @@
-# Arhivare Web App
+Arhivare Web App
+📌 Description
+Arhivare Web App is a comprehensive web application built with FastAPI and PostgreSQL that enables:
 
-## 📌 Description
-**Arhivare Web App** is a web application built with **FastAPI** and **PostgreSQL** that allows:
-- Public search for archival fonds by company name
-- Complete management of archival fonds (CRUD) via a secure API (JWT authentication)
-- Simple web interface for public search
+Public search for archival fonds by company name
+Role-based management of archival fonds (CRUD) with JWT authentication
+Complete React frontend with modern UI/UX
+Advanced ownership system for client-specific fond management
 
-This is the second application in the **DevOps Portfolio**, alongside [`hello-web-app`](../hello-web-app/).
-
-## 🎯 Purpose
+This is the second application in the DevOps Portfolio, alongside hello-web-app.
+🎯 Purpose
 The goal of this application is to provide users with contact details of institutions or companies that hold the archives of certain companies (for example, to obtain employment history certificates).
+Example:
 
-**Example:**
-> If a user searches for "Tractorul Brașov", the application will return the contact information of the relevant archival fond holder, e.g., "National Archive Brașov" – address, email, phone, etc.
+If a user searches for "Tractorul Brașov", the application will return the contact information of the relevant archival fond holder, e.g., "National Archive Brașov" – address, email, phone, etc.
 
-## 🧩 User Roles
-- **Public User:**
-  - Can use the search function without authentication
-  - Access simple web interface for searches
-- **Admin:**
-  - JWT login
-  - Add, edit, delete archival fonds
-  - View list of fonds (with filters/pagination)
-  - Manage users (complete CRUD)
+🧩 User Roles & Features
 
-## 🗄️ Tech Stack
-- **Backend:** FastAPI (Python 3.11+)
-- **Database:** PostgreSQL
-- **ORM & Migrations:** SQLAlchemy + Alembic
-- **Testing:** pytest + pytest-asyncio + httpx
-- **Orchestration:** Docker + Docker Compose (API + DB + Adminer)
-- **CI/CD:** GitHub Actions (build, test, push image to Docker Hub)
+Public User:
 
-## 📂 Project Structure
-```bash
-arhivare-web-app/
-├── app/                      # Application source code
-│   ├── api/                  # API routers
-│   │   ├── auth.py           # ✅ JWT Authentication (login, /me, protected)
-│   │   ├── search.py         # ✅ Public search (/search, /search/count)
+Can use the search function without authentication
+Access to modern React frontend for searches
+
+
+Client:
+
+JWT login with personalized dashboard
+Manage assigned archival fonds (CRUD operations)
+View personal statistics and completion rates
+Add, edit, delete own fonds
+
+
+Audit:
+
+Read-only access to all system data
+Advanced reporting and export capabilities
+System-wide statistics and insights
+Recent assignments tracking
+
+
+Admin:
+
+Complete system management
+User management (create, edit, delete users)
+Fond ownership assignment and management
+Bulk operations and advanced administration
+
+
+
+🗄️ Tech Stack
+Backend:
+
+FastAPI (Python 3.11+) with advanced routing
+PostgreSQL with comprehensive migrations
+SQLAlchemy + Alembic for ORM & migrations
+JWT Authentication with role-based access control
+Pydantic for data validation and serialization
+
+Frontend:
+
+React 18 with TypeScript
+Tailwind CSS for styling
+React Hook Form + Yup for form validation
+React Router for navigation
+Lucide React for icons
+
+Development & Deployment:
+
+Docker + Docker Compose for containerization
+pytest + pytest-asyncio + httpx for testing
+GitHub Actions ready for CI/CD
+Adminer for database management
+
+📂 Project Structure
+basharhivare-web-app/
+├── app/                          # Backend application
+│   ├── api/                      # API routers
+│   │   ├── auth.py               # ✅ JWT Authentication
+│   │   ├── search.py             # ✅ Public search endpoints
 │   │   └── routes/
-│   │       ├── fonds.py      # ✅ Fonds CRUD (admin only)
-│   │       └── users.py      # ✅ User CRUD (admin only)
-│   ├── core/                 # Configuration and security
-│   │   ├── config.py         # ✅ Pydantic Settings
-│   │   └── security.py       # ✅ JWT token creation/verification
-│   ├── models/               # SQLAlchemy models
-│   │   ├── base.py           # ✅ Base class for all models
-│   │   ├── user.py           # ✅ User model with authentication
-│   │   └── fond.py           # ✅ Fond model with all fields
-│   ├── schemas/              # Pydantic DTOs
-│   │   ├── user.py           # ✅ UserCreate, UserUpdate, UserRead
-│   │   └── fond.py           # ✅ FondCreate, FondUpdate, FondResponse
-│   ├── crud/                 # Database operations
-│   │   ├── user.py           # ✅ Complete CRUD for users
-│   │   └── fond.py           # ✅ CRUD + search for fonds
-│   ├── db/
-│   │   └── session.py        # ✅ DB connection + dependency
-│   ├── static/
-│   │   └── index.html        # ✅ Simple frontend for search
-│   └── main.py               # ✅ FastAPI app with all routes
-├── alembic/                  # ✅ Database migrations
-│   ├── env.py                # ✅ Alembic configuration
-│   └── versions/
-│       └── 5caab2fd7444_create_users_and_fonds_tables.py  # ✅ Initial migration
-├── frontend/
-│   └── index.html            # ✅ Alternative frontend
-├── tests/                    # ✅ Complete test suite
-│   ├── conftest.py           # ✅ Pytest configuration + fixtures
-│   ├── test_health.py        # ✅ Health check tests
-│   ├── test_auth.py          # ✅ Authentication tests
-│   ├── test_search.py        # ✅ Public search tests
-│   ├── test_crud.py          # ✅ CRUD operations tests
-│   ├── test_fonds_api.py     # ✅ Fonds API tests
-│   └── run_tests.py          # ✅ Test runner script
-├── Dockerfile                # ✅ Application container
-├── requirements.txt          # ✅ Python dependencies
-├── .env.example              # ✅ Environment variables example
-├── alembic.ini               # ✅ Alembic configuration
-└── README.md                 # ✅ Documentation (this file)
-```
+│   │       ├── fonds.py          # ✅ General fonds CRUD
+│   │       ├── client_fonds.py   # ✅ Client-specific endpoints
+│   │       ├── admin_fonds.py    # ✅ Admin ownership management
+│   │       └── users.py          # ✅ User management
+│   ├── core/                     # Configuration and security
+│   │   ├── config.py             # ✅ Pydantic Settings
+│   │   └── security.py           # ✅ JWT & password hashing
+│   ├── models/                   # SQLAlchemy models
+│   │   ├── base.py               # ✅ Base class
+│   │   ├── user.py               # ✅ Enhanced user model with extended roles
+│   │   └── fond.py               # ✅ Fond model with ownership support
+│   ├── schemas/                  # Pydantic DTOs
+│   │   ├── user.py               # ✅ Extended user schemas with new roles
+│   │   └── fond.py               # ✅ Comprehensive fond schemas
+│   ├── crud/                     # Database operations
+│   │   ├── user.py               # ✅ Extended user operations
+│   │   └── fond.py               # ✅ Advanced fond CRUD with ownership
+│   ├── db/session.py             # ✅ Database connection
+│   ├── static/index.html         # ✅ Simple backend search interface
+│   └── main.py                   # ✅ FastAPI app with role-based routing
+├── react-frontend/               # Modern React application
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── AuthSystem.tsx    # ✅ Complete authentication system
+│   │   │   ├── HomePage.tsx      # ✅ Public search interface
+│   │   │   ├── AdminDashboard.tsx # ✅ Full admin management
+│   │   │   ├── AuditDashboard.tsx # ✅ Audit reporting interface
+│   │   │   ├── ClientDashboard.tsx # ✅ Client personal dashboard
+│   │   │   ├── forms/
+│   │   │   │   ├── FondForm.tsx  # ✅ Advanced form with duplicate detection
+│   │   │   │   └── UserForm.tsx  # ✅ User management form
+│   │   │   └── pages/
+│   │   │       ├── UsersPage.tsx # ✅ User management interface
+│   │   │       └── UserProfile.tsx # ✅ Profile management
+│   │   ├── services/api.ts       # ✅ API service layer
+│   │   └── types/index.ts        # ✅ TypeScript definitions
+│   ├── package.json              # ✅ Dependencies and scripts
+│   └── tailwind.config.js        # ✅ Tailwind configuration
+├── alembic/                      # ✅ Database migrations
+│   ├── versions/
+│   │   ├── 5caab2fd7444_create_users_and_fonds_tables.py
+│   │   ├── add_ownership_roles.py
+│   │   └── complete_ownership_roles.py
+├── tests/                        # ✅ Comprehensive test suite
+│   ├── conftest.py               # ✅ Test configuration and fixtures
+│   ├── test_health.py            # ✅ Health check tests
+│   ├── test_auth.py              # ✅ Authentication flow tests
+│   ├── test_search.py            # ✅ Public search functionality
+│   ├── test_crud.py              # ✅ Database operations tests
+│   ├── test_fonds_api.py         # ✅ API endpoint tests
+│   └── run_tests.py              # ✅ Test runner script
+├── docker-compose.yml            # ✅ Multi-service container setup
+├── Dockerfile                    # ✅ Optimized application container
+├── requirements.txt              # ✅ Python dependencies
+├── create_admin_user.py          # ✅ Demo data and user creation script
+└── README.md                     # ✅ This documentation
+🚀 Implementation Status
+✅ Fully Implemented:
 
-## 🚀 Implementation Status
+Complete Backend API with role-based access control
+Enhanced Data Models with ownership and extended user roles
+JWT Authentication with comprehensive endpoint protection
+Advanced CRUD Operations for all entities
+Public Search with filtering, pagination, and count endpoints
+Role-Based Routing (admin/audit/client specific endpoints)
+Ownership Management - assign fonds to clients
+Complete React Frontend with modern UI/UX
+User Management Interface with role-based permissions
+Client Dashboard for personal fond management
+Admin Dashboard with comprehensive management tools
+Audit Dashboard with reporting and analytics
+Form Validation with duplicate detection and error handling
+Responsive Design for mobile and desktop
+Database Migrations with ownership and role extensions
+Comprehensive Test Suite (>85% coverage)
+Docker Configuration ready for deployment
 
-### ✅ Fully Implemented:
-- **Complete Backend API** with all endpoints
-- **Data Models** (User, Fond) with relationships and validations
-- **JWT Authentication** with endpoint protection
-- **Complete CRUD** for fonds and users
-- **Advanced Search** with filtering and pagination
-- **Pydantic Validations** for all inputs
-- **Alembic Migrations** for database structure
-- **Complete Test Suite** with pytest (>85% coverage)
-- **Simple Frontend** for public search
-- **Dockerization** with optimized Dockerfile
+🎯 Ready for Production:
 
-### 🚧 In Progress:
-- **Docker Compose** (yml file - to be added)
-- **CI/CD Pipeline** (GitHub Actions - upcoming)
-- **VPS Deployment** with domain and HTTPS
+User Roles: Admin, Audit, Client with granular permissions
+Ownership System: Fonds can be assigned to specific clients
+Modern Frontend: React with TypeScript and Tailwind CSS
+Security: JWT authentication with protected routes
+Testing: Complete test coverage for all functionality
+Documentation: Comprehensive API docs and user guides
 
-### 🎯 Next Steps (Frontend Development):
-- **React Frontend** - Modern admin dashboard with full CRUD operations
-- **Vue.js Alternative** - Alternative frontend implementation for comparison
-- **Advanced Search Interface** - Enhanced search with filters and sorting
-- **User Management UI** - Admin interface for user management
-- **Responsive Design** - Mobile-friendly interfaces
-
-## 🔧 Environment Variables
-
-Create `.env` file based on `.env.example`:
-
-```env
-# Database (for Docker Compose)
+🔧 Environment Configuration
+Create .env file based on .env.example:
+env# Database Configuration
 DATABASE_URL=postgresql+psycopg2://app:app@db:5432/arhivare
 
 # JWT Security
-JWT_SECRET=your_super_secret_jwt_key_here_change_in_production
+JWT_SECRET=your_super_secure_jwt_key_change_in_production
 JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 
-# Admin bootstrap (optional - for creating first admin)
+# Admin Bootstrap (optional)
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=admin123
-```
-
-## 🚀 Running the Application
-
-### Option 1: Local Development with Python
-```bash
-# 1. Clone repository
+🚀 Quick Start
+Option 1: Docker Compose (Recommended)
+bash# Clone repository and navigate to project
 git clone <repository-url>
 cd arhivare-web-app
 
-# 2. Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Setup local PostgreSQL database
-createdb arhivare
-
-# 5. Configure .env (see above)
+# Configure environment
 cp .env.example .env
 # Edit .env with your settings
 
-# 6. Run migrations
+# Start all services
+docker-compose up --build
+
+# Create demo users and data
+docker-compose exec api python create_admin_user.py
+Option 2: Local Development
+bash# Backend setup
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+# Database setup
+createdb arhivare
+cp .env.example .env
+# Configure DATABASE_URL in .env
+
+# Run migrations and create demo data
 alembic upgrade head
+python create_admin_user.py
 
-# 7. Start server
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
+# Start backend
+uvicorn app.main:app --reload
 
-### Option 2: Docker (API only)
-```bash
-# Build and run container
-docker build -t arhivare-web-app .
-docker run -p 8000:8000 --env-file .env arhivare-web-app
-```
+# Frontend setup (new terminal)
+cd react-frontend
+npm install
+npm start
+🎯 Access Points
+After starting the application:
+Web Interfaces:
 
-### Option 3: Docker Compose (to be implemented)
-```bash
-# When docker-compose.yml is ready
-docker compose up --build
-```
+Homepage & Search: http://localhost:3000
+Admin Dashboard: http://localhost:3000/admin
+Audit Dashboard: http://localhost:3000/audit
+Client Dashboard: http://localhost:3000/client
+User Management: http://localhost:3000/admin/users
 
-## 📖 API Usage
+API Documentation:
 
-### Public endpoints (no authentication required):
+Swagger UI: http://localhost:8000/docs
+ReDoc: http://localhost:8000/redoc
+Database Admin: http://localhost:8080 (Adminer)
 
-**Health Check:**
-```http
-GET /health
-```
-
-**Search fonds:**
-```http
-GET /search?query=tractorul&limit=20&skip=0
-GET /search/count?query=tractorul
-```
-
-**Simple Frontend:**
-```
-http://localhost:8000/app/static/index.html
-```
-
-### Admin endpoints (authentication required):
-
-**Authentication:**
-```http
-POST /auth/login
-Content-Type: application/json
-
-{
-  "username": "admin",
-  "password": "admin123"
-}
-```
-
-**Fond Management:**
-```http
-GET /fonds/                     # List fonds
-POST /fonds/                    # Create new fond
-GET /fonds/{id}                 # Get fond details
-PUT /fonds/{id}                 # Update fond
-DELETE /fonds/{id}              # Delete fond (soft delete)
-DELETE /fonds/{id}?permanent=true  # Permanent delete
-```
-
-**User Management:**
-```http
-GET /users/                     # List users
-POST /users/                    # Create user
-PUT /users/{id}                 # Update user
-DELETE /users/{id}              # Delete user
-```
-
-## 🧪 Testing
-
-### Run all tests:
-```bash
-# Using included script
+Demo Accounts:
+RoleUsernamePasswordDescriptionAdminadminadmin123Full system accessAuditaudit_userAudit1234Read-only with reportingClientclient_brasovClient1234Assigned Brașov fondsClientclient_clujClient1234Assigned Cluj fondsClientclient_bucurestiClient1234Assigned București fonds
+🧪 Testing
+Run Complete Test Suite:
+bash# Using test runner script
 python tests/run_tests.py
 
-# Or directly with pytest
+# Direct pytest execution
 pytest tests/ -v
 
-# Specific tests
-pytest tests/test_auth.py -v
-pytest tests/test_search.py -v
-
-# With coverage
+# With coverage report
 pytest tests/ --cov=app --cov-report=html
-```
 
-### Test Categories:
-- ✅ **Import Tests** - Verify module imports
-- ✅ **Health Check** - Test health endpoint
-- ✅ **Authentication** - Login, JWT, endpoint protection
-- ✅ **Search Functionality** - Public search with validations
-- ✅ **CRUD Operations** - Direct database operations
-- ✅ **API Endpoints** - Complete HTTP API testing
+# Specific test categories
+pytest tests/test_auth.py -v        # Authentication tests
+pytest tests/test_search.py -v      # Search functionality
+pytest tests/test_fonds_api.py -v   # API endpoint tests
+Test Categories:
 
-## 📊 Response Examples
+✅ Authentication & Authorization - Login, JWT, role-based access
+✅ Public Search - Search functionality with pagination
+✅ CRUD Operations - Database operations for all entities
+✅ API Endpoints - Complete HTTP API testing
+✅ Role-Based Access - Permission testing for all roles
+✅ Ownership Management - Fond assignment functionality
 
-### Public search:
-```json
-[
-  {
-    "id": 42,
-    "company_name": "Tractorul Brașov SA",
-    "holder_name": "National Archive Brașov",
-    "address": "Industriei Street 15, Brașov",
-    "email": "contact@archive-brasov.ro",
-    "phone": "+40 268 123 456",
-    "active": true,
-    "created_at": "2025-01-15T10:30:00Z",
-    "updated_at": "2025-01-15T10:30:00Z"
-  }
-]
-```
+📊 API Endpoints Overview
+Public (No Authentication):
 
-### Successful authentication:
-```json
-{
-  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-  "token_type": "bearer",
-  "user": {
-    "id": 1,
-    "username": "admin",
-    "role": "admin"
-  }
-}
-```
+GET /health - System health check
+GET /search - Search archival fonds
+GET /search/count - Count search results
+GET /static/index.html - Simple search interface
 
-## 🔗 API Documentation
+Authentication:
 
-After starting the application, interactive documentation is available at:
-- **Swagger UI:** http://localhost:8000/docs
-- **ReDoc:** http://localhost:8000/redoc
-- **OpenAPI Schema:** http://localhost:8000/openapi.json
+POST /auth/login - User authentication
+GET /auth/me - Current user information
+GET /auth/protected - Protected endpoint test
 
-## 🛠 Roadmap
+Admin-Only Endpoints:
 
-### Immediate Next Steps:
-1. **Docker Compose** - Complete setup with PostgreSQL and Adminer
-2. **React Frontend** - Modern admin dashboard with Material-UI or Tailwind CSS
-3. **Vue.js Frontend** - Alternative implementation for comparison
+GET|POST|PUT|DELETE /users/ - User management
+GET|POST|PUT|DELETE /fonds/ - General fond management
+POST /admin/fonds/assign - Assign fonds to clients
+GET /admin/fonds/statistics - System statistics
+GET /admin/fonds/export/ownership-report - Data export
 
-### Future Development:
-4. **GitHub Actions** - CI/CD pipeline for automated build and testing
-5. **VPS Deployment** - Production deployment with domain and HTTPS
-6. **Advanced Features** - Bulk operations, data export, audit logs
-7. **Monitoring** - Logging and performance metrics
-8. **Mobile App** - React Native or Flutter mobile interface
+Client-Specific Endpoints:
 
-## 🎨 Frontend Development Plans
+GET|POST|PUT|DELETE /fonds/my-fonds - Personal fond management
+GET /fonds/my-fonds/stats - Personal statistics
 
-### React Implementation:
-- **Admin Dashboard** with modern UI components
-- **Advanced Search Interface** with filters and sorting
-- **CRUD Forms** for fond and user management
-- **Authentication Flow** with JWT token management
-- **Responsive Design** for mobile and desktop
-- **State Management** with Redux or Zustand
+Audit Endpoints:
 
-### Vue.js Implementation:
-- **Alternative Frontend** for comparison and learning
-- **Composition API** with modern Vue 3 features
-- **Pinia State Management** for application state
-- **Quasar Framework** for UI components
-- **TypeScript Integration** for better development experience
+GET /admin/fonds/audit/recent-assignments - Assignment tracking
+GET /admin/fonds/client-stats/{client_id} - Client analytics
 
-## 👨‍💻 Author
-**Tony Gheorghe**
+🔒 Security Features
 
-## 📄 License
+JWT Authentication with configurable expiration
+Role-Based Access Control (RBAC) with granular permissions
+Password Hashing with bcrypt
+Input Validation with Pydantic schemas
+SQL Injection Protection via SQLAlchemy ORM
+CORS Configuration for frontend integration
+Secure Headers and error handling
+
+📈 Advanced Features
+Ownership Management:
+
+Assign fonds to specific clients
+Bulk assignment operations
+Transfer ownership between clients
+Unassigned fond tracking
+
+Analytics & Reporting:
+
+Client-specific statistics
+System-wide ownership analytics
+Recent assignment tracking
+Data export capabilities
+
+User Experience:
+
+Duplicate detection in forms
+Real-time search suggestions
+Responsive mobile interface
+Comprehensive error handling
+Loading states and feedback
+
+🛠 Development Tools
+Database Management:
+bash# Create new migration
+alembic revision --autogenerate -m "Description"
+
+# Apply migrations
+alembic upgrade head
+
+# Reset database (development only)
+python create_admin_user.py reset
+Code Quality:
+bash# Run tests with coverage
+pytest tests/ --cov=app
+
+# Type checking (if using mypy)
+mypy app/
+
+# Code formatting (if using black)
+black app/ tests/
+🚀 Deployment Ready
+The application includes:
+
+Docker Compose configuration for easy deployment
+Production-ready environment variable management
+Database migrations for schema management
+Comprehensive testing for reliability
+API documentation for integration
+CORS configuration for frontend deployment
+
+👨‍💻 Author
+Tony Gheorghe
+📄 License
 MIT License
 
----
-
-**Status:** ✅ **Fully Functional Application** - Ready for frontend development
-**Version:** v0.6.0
-**Last Updated:** August 2025
+Status: ✅ Production Ready - Complete full-stack application with modern architecture
+Version: v1.0.0
+Last Updated: August 2025

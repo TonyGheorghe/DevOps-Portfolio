@@ -1,9 +1,9 @@
-# app/schemas/user.py - Updated with Extended Roles and Enhanced Features
+# app/schemas/user.py - FIXED VERSION with Proper Roles
 from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 
-# Valid user roles - UPDATED WITH NEW ROLES
+# CORRECT ROLES - Updated from old admin/user system
 VALID_ROLES = ["admin", "audit", "client"]
 
 class UserBase(BaseModel):
@@ -33,6 +33,15 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str = Field(min_length=8, description="Parola în clar; va fi stocată doar hash-uită")
+    
+    @field_validator('company_name')
+    @classmethod
+    def validate_company_name_for_client(cls, v, info):
+        """Company name should be provided for client role."""
+        if hasattr(info, 'data') and info.data.get('role') == 'client':
+            if not v or not v.strip():
+                raise ValueError('Numele companiei este obligatoriu pentru clienți')
+        return v
 
 class UserUpdate(BaseModel):
     username: Optional[str] = Field(default=None, min_length=3, max_length=64)

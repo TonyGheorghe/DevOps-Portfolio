@@ -1,8 +1,8 @@
-// src/components/forms/UserForm.tsx - Fixed TypeScript Version
+// src/components/forms/UserForm.tsx - FIXED VERSION with Proper Roles
 import React, { useState } from 'react';
 import { 
   User, Lock, Shield, Save, X, AlertCircle, 
-  Eye, EyeOff, UserCheck, AlertTriangle, Key
+  Eye, EyeOff, UserCheck, AlertTriangle, Key, Building2
 } from 'lucide-react';
 
 // Types
@@ -10,6 +10,9 @@ interface UserData {
   id: number;
   username: string;
   role: string;
+  company_name?: string;
+  contact_email?: string;
+  notes?: string;
   created_at: string;
 }
 
@@ -17,6 +20,9 @@ interface UserFormData {
   username: string;
   password: string;
   role: string;
+  company_name: string;
+  contact_email: string;
+  notes: string;
 }
 
 interface UserFormProps {
@@ -26,6 +32,13 @@ interface UserFormProps {
   onCancel: () => void;
   isLoading?: boolean;
 }
+
+// FIXED ROLES - Updated to match backend
+const VALID_ROLES = [
+  { value: 'admin', label: 'Administrator', description: 'Acces complet la sistem' },
+  { value: 'audit', label: 'Audit', description: 'Vizualizare și rapoarte (read-only)' },
+  { value: 'client', label: 'Client', description: 'Management fonduri proprii' }
+];
 
 // Password strength calculator
 const getPasswordStrength = (password: string): { score: number; label: string; color: string } => {
@@ -56,7 +69,10 @@ export const UserForm: React.FC<UserFormProps> = ({
   const [formData, setFormData] = useState<UserFormData>({
     username: user?.username || '',
     password: '',
-    role: user?.role || 'user'
+    role: user?.role || 'client',
+    company_name: user?.company_name || '',
+    contact_email: user?.contact_email || '',
+    notes: user?.notes || ''
   });
   
   // UI state
@@ -72,6 +88,9 @@ export const UserForm: React.FC<UserFormProps> = ({
 
   // Password strength
   const passwordStrength = getPasswordStrength(formData.password);
+
+  // Check if client role is selected
+  const isClientRole = formData.role === 'client';
 
   // Validation functions
   const validateUsername = (username: string): string | null => {
@@ -102,7 +121,28 @@ export const UserForm: React.FC<UserFormProps> = ({
 
   const validateRole = (role: string): string | null => {
     if (!role) return 'Rolul este obligatoriu';
-    if (!['admin', 'user'].includes(role)) return 'Rolul trebuie să fie admin sau user';
+    const validRoles = VALID_ROLES.map(r => r.value);
+    if (!validRoles.includes(role)) return 'Rolul selectat nu este valid';
+    return null;
+  };
+
+  const validateCompanyName = (companyName: string, role: string): string | null => {
+    if (role === 'client' && !companyName.trim()) {
+      return 'Numele companiei este obligatoriu pentru clienți';
+    }
+    if (companyName && companyName.length > 255) {
+      return 'Numele companiei poate avea maxim 255 caractere';
+    }
+    return null;
+  };
+
+  const validateContactEmail = (email: string): string | null => {
+    if (email && email.trim()) {
+      const emailRegex = /^[^@]+@[^@]+\.[^@]+$/;
+      if (!emailRegex.test(email)) {
+        return 'Adresa de email nu este validă';
+      }
+    }
     return null;
   };
 
@@ -118,6 +158,12 @@ export const UserForm: React.FC<UserFormProps> = ({
     
     const roleError = validateRole(formData.role);
     if (roleError) newErrors.role = roleError;
+
+    const companyError = validateCompanyName(formData.company_name, formData.role);
+    if (companyError) newErrors.company_name = companyError;
+
+    const emailError = validateContactEmail(formData.contact_email);
+    if (emailError) newErrors.contact_email = emailError;
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -130,6 +176,11 @@ export const UserForm: React.FC<UserFormProps> = ({
     // Clear error for this field
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+
+    // Clear company name if role changes from client to something else
+    if (field === 'role' && value !== 'client') {
+      setFormData(prev => ({ ...prev, company_name: '' }));
     }
   };
 
@@ -185,7 +236,7 @@ export const UserForm: React.FC<UserFormProps> = ({
   const formDisabled = isLoading || isSubmitting;
 
   return (
-    <div className="bg-white rounded-lg shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+    <div className="bg-white rounded-lg shadow-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
       {/* Header */}
       <div className="flex justify-between items-center p-6 border-b border-gray-200">
         <div className="flex items-center space-x-3">
@@ -251,6 +302,89 @@ export const UserForm: React.FC<UserFormProps> = ({
           <p className="text-xs text-gray-500 mt-1">
             Doar litere, cifre, underscore, cratimă și punct
           </p>
+        </div>
+
+        {/* Role field */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Shield className="h-4 w-4 inline mr-1" />
+            Rol *
+          </label>
+          <select
+            value={formData.role}
+            onChange={(e) => handleInputChange('role', e.target.value)}
+            disabled={formDisabled}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 ${
+              errors.role ? 'border-red-300' : 'border-gray-300'
+            }`}
+          >
+            {VALID_ROLES.map((role) => (
+              <option key={role.value} value={role.value}>
+                {role.label}
+              </option>
+            ))}
+          </select>
+          {errors.role && (
+            <p className="text-red-600 text-sm mt-1">{errors.role}</p>
+          )}
+          
+          {/* Role descriptions */}
+          <div className="mt-2 space-y-1 text-xs text-gray-500">
+            {VALID_ROLES.map((role) => (
+              <div key={role.value} className="flex items-center">
+                {role.value === 'admin' && <Shield className="h-3 w-3 mr-1 text-purple-600" />}
+                {role.value === 'audit' && <User className="h-3 w-3 mr-1 text-orange-600" />}
+                {role.value === 'client' && <Building2 className="h-3 w-3 mr-1 text-green-600" />}
+                <span><strong>{role.label}:</strong> {role.description}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Company Name field - Only for clients */}
+        {isClientRole && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Building2 className="h-4 w-4 inline mr-1" />
+              Numele Companiei *
+            </label>
+            <input
+              type="text"
+              value={formData.company_name}
+              onChange={(e) => handleInputChange('company_name', e.target.value)}
+              placeholder="ex: Tractorul Brașov Heritage SRL"
+              disabled={formDisabled}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 ${
+                errors.company_name ? 'border-red-300' : 'border-gray-300'
+              }`}
+            />
+            {errors.company_name && (
+              <p className="text-red-600 text-sm mt-1">{errors.company_name}</p>
+            )}
+            <p className="text-xs text-gray-500 mt-1">
+              Numele companiei pentru care gestionează fondurile
+            </p>
+          </div>
+        )}
+
+        {/* Contact Email field */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Email Contact {isClientRole && '(recomandat)'}
+          </label>
+          <input
+            type="email"
+            value={formData.contact_email}
+            onChange={(e) => handleInputChange('contact_email', e.target.value)}
+            placeholder="ex: contact@companie.ro"
+            disabled={formDisabled}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 ${
+              errors.contact_email ? 'border-red-300' : 'border-gray-300'
+            }`}
+          />
+          {errors.contact_email && (
+            <p className="text-red-600 text-sm mt-1">{errors.contact_email}</p>
+          )}
         </div>
 
         {/* Password field */}
@@ -320,38 +454,19 @@ export const UserForm: React.FC<UserFormProps> = ({
           )}
         </div>
 
-        {/* Role field */}
+        {/* Notes field */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            <Shield className="h-4 w-4 inline mr-1" />
-            Rol *
+            Note Administrative
           </label>
-          <select
-            value={formData.role}
-            onChange={(e) => handleInputChange('role', e.target.value)}
+          <textarea
+            value={formData.notes}
+            onChange={(e) => handleInputChange('notes', e.target.value)}
+            placeholder="Note despre utilizator..."
+            rows={3}
             disabled={formDisabled}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 ${
-              errors.role ? 'border-red-300' : 'border-gray-300'
-            }`}
-          >
-            <option value="user">Utilizator</option>
-            <option value="admin">Administrator</option>
-          </select>
-          {errors.role && (
-            <p className="text-red-600 text-sm mt-1">{errors.role}</p>
-          )}
-          
-          {/* Role descriptions */}
-          <div className="mt-2 space-y-1 text-xs text-gray-500">
-            <div className="flex items-center">
-              <User className="h-3 w-3 mr-1 text-green-600" />
-              <span><strong>Utilizator:</strong> Acces limitat la funcționalități</span>
-            </div>
-            <div className="flex items-center">
-              <Shield className="h-3 w-3 mr-1 text-purple-600" />
-              <span><strong>Administrator:</strong> Acces complet la toate funcționalitățile</span>
-            </div>
-          </div>
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 resize-none"
+          />
         </div>
 
         {/* Security warning for admin role */}
