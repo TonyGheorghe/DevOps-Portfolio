@@ -235,6 +235,14 @@ def delete_user(
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Doar administratorii pot șterge utilizatori")
     
+    # Nu te poți șterge pe tine însuți
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Nu te poți șterge pe tine însuți")
+    
+    db_user = crud_user.get_user_by_id(db, user_id)
+    if not db_user:
+        raise HTTPException(status_code=404, detail="Utilizatorul nu a fost găsit")
+    
     # Nu poți șterge ultimul admin
     if db_user.role == "admin":
         admin_count = crud_user.count_users_by_role(db).get("admin", 0)
@@ -277,15 +285,7 @@ def validate_username(
     
     # Verifică formatul username-ului
     import re
-    if not re.match(r'^[a-zA-Z0-9_.-]+ să te ștergi pe tine însuți
-    if user_id == current_user.id:
-        raise HTTPException(status_code=400, detail="Nu te poți șterge pe tine însuți")
-    
-    db_user = crud_user.get_user_by_id(db, user_id)
-    if not db_user:
-        raise HTTPException(status_code=404, detail="Utilizatorul nu a fost găsit")
-    
-    # Nu poți, username):
+    if not re.match(r'^[a-zA-Z0-9_.-]+$', username):
         return {
             "available": False,
             "reason": "Username-ul poate conține doar litere, cifre, underscore, cratimă și punct"
@@ -326,6 +326,8 @@ def get_roles_info(
         roles_info.append(role_info.model_dump())
     
     # Adaugă statistici despre utilizatori pe rol
+    from app.db.session import get_db
+    db = next(get_db())
     role_stats = crud_user.count_users_by_role(db)
     
     return {
@@ -334,12 +336,4 @@ def get_roles_info(
         "total_users": sum(role_stats.values()),
         "can_create_users": current_user.role == "admin",
         "can_modify_users": current_user.role == "admin"
-    } să te ștergi pe tine însuți
-    if user_id == current_user.id:
-        raise HTTPException(status_code=400, detail="Nu te poți șterge pe tine însuți")
-    
-    db_user = crud_user.get_user_by_id(db, user_id)
-    if not db_user:
-        raise HTTPException(status_code=404, detail="Utilizatorul nu a fost găsit")
-    
-    # Nu poți
+    }

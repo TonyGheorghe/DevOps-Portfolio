@@ -1,8 +1,8 @@
-// src/components/forms/UserForm.tsx - FIXED VERSION with Proper Roles
+// src/components/forms/UserForm.tsx - FINAL FIXED VERSION with Correct Roles
 import React, { useState } from 'react';
 import { 
   User, Lock, Shield, Save, X, AlertCircle, 
-  Eye, EyeOff, UserCheck, AlertTriangle, Key, Building2
+  Eye, EyeOff, UserCheck, AlertTriangle, Key, Building2, Mail
 } from 'lucide-react';
 
 // Types
@@ -14,6 +14,7 @@ interface UserData {
   contact_email?: string;
   notes?: string;
   created_at: string;
+  updated_at?: string;
 }
 
 interface UserFormData {
@@ -33,11 +34,11 @@ interface UserFormProps {
   isLoading?: boolean;
 }
 
-// FIXED ROLES - Updated to match backend
+// CORRECT ROLES - Updated to match backend
 const VALID_ROLES = [
-  { value: 'admin', label: 'Administrator', description: 'Acces complet la sistem' },
-  { value: 'audit', label: 'Audit', description: 'Vizualizare și rapoarte (read-only)' },
-  { value: 'client', label: 'Client', description: 'Management fonduri proprii' }
+  { value: 'admin', label: 'Administrator', description: 'Acces complet la sistem', color: 'purple' },
+  { value: 'audit', label: 'Audit', description: 'Vizualizare și rapoarte (read-only)', color: 'orange' },
+  { value: 'client', label: 'Client', description: 'Management fonduri proprii', color: 'green' }
 ];
 
 // Password strength calculator
@@ -333,7 +334,7 @@ export const UserForm: React.FC<UserFormProps> = ({
             {VALID_ROLES.map((role) => (
               <div key={role.value} className="flex items-center">
                 {role.value === 'admin' && <Shield className="h-3 w-3 mr-1 text-purple-600" />}
-                {role.value === 'audit' && <User className="h-3 w-3 mr-1 text-orange-600" />}
+                {role.value === 'audit' && <Eye className="h-3 w-3 mr-1 text-orange-600" />}
                 {role.value === 'client' && <Building2 className="h-3 w-3 mr-1 text-green-600" />}
                 <span><strong>{role.label}:</strong> {role.description}</span>
               </div>
@@ -370,6 +371,7 @@ export const UserForm: React.FC<UserFormProps> = ({
         {/* Contact Email field */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Mail className="h-4 w-4 inline mr-1" />
             Email Contact {isClientRole && '(recomandat)'}
           </label>
           <input
@@ -479,6 +481,22 @@ export const UserForm: React.FC<UserFormProps> = ({
                 <p className="text-sm text-amber-700 mt-1">
                   Administratorii au acces complet la toate datele și funcționalitățile aplicației, 
                   inclusiv managementul utilizatorilor și fondurilor.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Client role info */}
+        {formData.role === 'client' && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <Building2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="text-sm font-medium text-green-800">Client Information</h4>
+                <p className="text-sm text-green-700 mt-1">
+                  Clienții pot gestiona doar fondurile care le sunt assignate de administrator. 
+                  Numele companiei este obligatoriu pentru identificarea fondurilor.
                 </p>
               </div>
             </div>

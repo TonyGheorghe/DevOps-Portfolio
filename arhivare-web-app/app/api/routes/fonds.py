@@ -1,13 +1,15 @@
-# app/api/routes/fonds.py - Updated with Ownership Logic
+# app/api/routes/fonds.py - FIXED with Auto Assignment and Owner Display
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List, Optional
 
 from app.db.session import get_db
 from app.api.auth import get_current_user
 from app.models.user import User as UserModel
+from app.models.fond import Fond
 from app.schemas.fond import FondCreate, FondUpdate, FondResponse
-from app.crud import fond as crud_fond
+from app.crud import fond as crud_fond, user as crud_user
 
 router = APIRouter()
 
@@ -52,7 +54,7 @@ def list_my_fonds(
     else:
         # Pentru admin și audit, my-fonds = toate fondurile
         if search:
-            fonds = crud_fond.search_fonds(db, search, skip=skip, limit=limit) if active_only else []
+            fonds = crud_fond.search_all_fonds(db, search, skip=skip, limit=limit, active_only=active_only)
         else:
             fonds = crud_fond.get_fonds(db, skip=skip, limit=limit, active_only=active_only)
     
@@ -98,6 +100,59 @@ def get_fond(
     return db_fond
 
 
+def find_client_by_company_name(db: Session, company_name: str) -> Optional[UserModel]:
+    """
+    Găsește un client pe baza numelui companiei din holder_name.
+    Încearcă mai multe strategii de matching.
+    """
+    if not company_name:
+        return None
+    
+    # Normalizează numele pentru căutare
+    normalized_name = company_name.lower().strip()
+    
+    # Strategie 1: Exact match
+    client = db.query(UserModel).filter(
+        UserModel.role == "client",
+        func.lower(UserModel.company_name) == normalized_name
+    ).first()
+    
+    if client:
+        return client
+    
+    # Strategie 2: Caută dacă company_name conține holder_name
+    clients = db.query(UserModel).filter(UserModel.role == "client").all()
+    for client in clients:
+        if client.company_name:
+            client_name_normalized = client.company_name.lower().strip()
+            # Verifică dacă holder_name conține numele companiei clientului
+            if client_name_normalized in normalized_name or normalized_name in client_name_normalized:
+                return client
+    
+    # Strategie 3: Matching parțial pe cuvinte cheie
+    # Elimină prefixe comune (SRL, SA, etc.)
+    for prefix in ['srl', 'sa', 'sc', 'ltd', 'inc', 'corp']:
+        normalized_name = normalized_name.replace(f' {prefix}', '').replace(f'{prefix} ', '')
+    
+    for client in clients:
+        if client.company_name:
+            client_name_clean = client.company_name.lower().strip()
+            for prefix in ['srl', 'sa', 'sc', 'ltd', 'inc', 'corp']:
+                client_name_clean = client_name_clean.replace(f' {prefix}', '').replace(f'{prefix} ', '')
+            
+            # Split în cuvinte și verifică overlap
+            holder_words = set(normalized_name.split())
+            client_words = set(client_name_clean.split())
+            
+            # Dacă au cel puțin 50% cuvinte comune și cel puțin 2 cuvinte
+            if len(holder_words) >= 2 and len(client_words) >= 2:
+                common_words = holder_words.intersection(client_words)
+                if len(common_words) >= max(1, min(len(holder_words), len(client_words)) // 2):
+                    return client
+    
+    return None
+
+
 @router.post("/", response_model=FondResponse, status_code=status.HTTP_201_CREATED)
 def create_fond(
     fond_in: FondCreate,
@@ -106,19 +161,35 @@ def create_fond(
     current_user: UserModel = Depends(get_current_user)
 ):
     """
-    Creează un nou fond arhivistic.
+    Creează un nou fond arhivistic cu auto-assignment inteligent.
     
     - Admin: poate crea fonduri și le poate asigna unui client
     - Client: poate crea fonduri doar pentru sine (owner_id va fi automat user.id)
     - Audit: nu poate crea fonduri
+    
+    AUTO-ASSIGNMENT: Dacă nu se specifică owner_id, sistemul va încerca să găsească
+    automat un client pe baza numelui din holder_name.
     """
     if current_user.role == "audit":
         raise HTTPException(status_code=403, detail="Audit users cannot create fonds")
     
     # Determină owner_id pe baza rolului
+    final_owner_id = None
+    
     if current_user.role == "admin":
-        # Admin poate specifica owner_id sau să lase NULL (unassigned)
-        final_owner_id = owner_id
+        if owner_id:
+            # Admin a specificat explicit un owner
+            final_owner_id = owner_id
+        else:
+            # AUTO-ASSIGNMENT: Încearcă să găsești client pe baza holder_name
+            potential_client = find_client_by_company_name(db, fond_in.holder_name)
+            if potential_client:
+                final_owner_id = potential_client.id
+                print(f"🤖 AUTO-ASSIGNMENT: Fond '{fond_in.company_name}' assignat automat la {potential_client.username} ({potential_client.company_name})")
+            else:
+                # Rămâne unassigned dacă nu găsește client potrivit
+                print(f"⚠️  No matching client found for holder_name: '{fond_in.holder_name}'")
+                
     elif current_user.role == "client":
         # Client poate crea fonduri doar pentru sine
         final_owner_id = current_user.id
@@ -126,6 +197,12 @@ def create_fond(
             raise HTTPException(status_code=403, detail="Nu poți crea fonduri pentru alți utilizatori")
     else:
         raise HTTPException(status_code=403, detail="Invalid user role")
+    
+    # Validează owner_id dacă este specificat
+    if final_owner_id:
+        owner = crud_user.get_user_by_id(db, final_owner_id)
+        if not owner or owner.role != "client":
+            raise HTTPException(status_code=400, detail="Owner must be a client user")
     
     return crud_fond.create_fond(db, fond_in, owner_id=final_owner_id)
 
@@ -234,8 +311,7 @@ def assign_fond_owner(
         raise HTTPException(status_code=403, detail="Only admin can assign fond ownership")
     
     # Verifică că owner-ul este un client valid
-    from app.crud.user import get_user_by_id
-    owner = get_user_by_id(db, owner_id)
+    owner = crud_user.get_user_by_id(db, owner_id)
     if not owner or owner.role != "client":
         raise HTTPException(status_code=400, detail="Owner must be a client user")
     
@@ -247,7 +323,8 @@ def assign_fond_owner(
         "message": f"Fond {fond_id} assigned to user {owner.username}",
         "fond_id": fond_id,
         "owner_id": owner_id,
-        "owner_username": owner.username
+        "owner_username": owner.username,
+        "owner_company": owner.company_name
     }
 
 
@@ -270,4 +347,41 @@ def remove_fond_owner(
     return {
         "message": f"Ownership removed from fond {fond_id}",
         "fond_id": fond_id
+    }
+
+
+@router.get("/ownership/suggestions")
+def get_ownership_suggestions(
+    holder_name: str = Query(..., description="Numele deținătorului pentru căutarea sugestiilor"),
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
+    """
+    Returnează sugestii de clienți pentru un holder_name dat (pentru admin).
+    """
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can get ownership suggestions")
+    
+    # Găsește clientul potrivit
+    suggested_client = find_client_by_company_name(db, holder_name)
+    
+    # Returnează și toți clienții disponibili
+    all_clients = crud_user.get_client_users(db)
+    
+    return {
+        "holder_name": holder_name,
+        "suggested_client": {
+            "id": suggested_client.id,
+            "username": suggested_client.username,
+            "company_name": suggested_client.company_name,
+            "match_confidence": "high" if suggested_client else None
+        } if suggested_client else None,
+        "all_clients": [
+            {
+                "id": client.id,
+                "username": client.username,
+                "company_name": client.company_name
+            }
+            for client in all_clients
+        ]
     }

@@ -1,9 +1,9 @@
-// src/components/pages/UserProfile.tsx - User Profile Management
+// src/components/pages/UserProfile.tsx - FIXED with Client Access
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   User, Lock, Shield, Save, ArrowLeft, Eye, EyeOff, 
-  AlertCircle, CheckCircle, Key, Clock, Calendar
+  AlertCircle, CheckCircle, Key, Clock, Calendar, Building2, Mail
 } from 'lucide-react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -17,18 +17,20 @@ interface PasswordChangeData {
   confirmPassword: string;
 }
 
+interface ProfileUpdateData {
+  company_name: string;
+  contact_email: string;
+  notes: string;
+}
+
 interface ProfileData {
   username: string;
   role: string;
+  company_name?: string;
+  contact_email?: string;
+  notes?: string;
   created_at: string;
   id: number;
-}
-
-interface UserData {
-  id: number;
-  username: string;
-  role: string;
-  created_at?: string; // Make optional since it might not be in the auth context
 }
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
@@ -57,6 +59,24 @@ const passwordChangeSchema = yup.object({
     .oneOf([yup.ref('newPassword')], 'Parolele nu se potrivesc')
 });
 
+// Profile update validation schema
+const profileUpdateSchema = yup.object({
+  company_name: yup
+    .string()
+    .required('Numele companiei este obligatoriu pentru clienți')
+    .min(2, 'Numele companiei trebuie să aibă cel puțin 2 caractere')
+    .max(255, 'Numele companiei poate avea maxim 255 caractere'),
+  
+  contact_email: yup
+    .string()
+    .email('Adresa de email nu este validă')
+    .max(100, 'Email-ul poate avea maxim 100 caractere'),
+  
+  notes: yup
+    .string()
+    .max(1000, 'Notele pot avea maxim 1000 caractere')
+});
+
 // Password strength calculator
 const getPasswordStrength = (password: string): { score: number; label: string; color: string } => {
   if (!password) return { score: 0, label: 'Nicio parolă', color: 'gray' };
@@ -79,6 +99,11 @@ const UserProfile: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   
+  // Role checks
+  const isAdmin = user?.role === 'admin';
+  const isAudit = user?.role === 'audit';
+  const isClient = user?.role === 'client';
+  
   // State management
   const [loading, setLoading] = useState(true);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
@@ -88,18 +113,29 @@ const UserProfile: React.FC = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Form setup
+  // Password change form
   const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    watch,
-    reset
+    register: registerPassword,
+    handleSubmit: handlePasswordSubmit,
+    formState: { errors: passwordErrors, isSubmitting: isPasswordSubmitting },
+    watch: watchPassword,
+    reset: resetPassword
   } = useForm<PasswordChangeData>({
     resolver: yupResolver(passwordChangeSchema)
   });
 
-  const watchedNewPassword = watch('newPassword');
+  // Profile update form (only for clients)
+  const {
+    register: registerProfile,
+    handleSubmit: handleProfileSubmit,
+    formState: { errors: profileErrors, isSubmitting: isProfileSubmitting },
+    reset: resetProfile,
+    setValue: setProfileValue
+  } = useForm<ProfileUpdateData>({
+    resolver: yupResolver(profileUpdateSchema)
+  });
+
+  const watchedNewPassword = watchPassword('newPassword');
   const passwordStrength = getPasswordStrength(watchedNewPassword || '');
 
   // Auth headers
@@ -138,8 +174,19 @@ const UserProfile: React.FC = () => {
           id: data.id,
           username: data.username,
           role: data.role,
-          created_at: new Date().toISOString() // Use current date as fallback
+          company_name: data.company_name,
+          contact_email: data.contact_email,
+          notes: data.notes,
+          created_at: data.created_at || new Date().toISOString()
         });
+
+        // Set profile form values for clients
+        if (data.role === 'client') {
+          setProfileValue('company_name', data.company_name || '');
+          setProfileValue('contact_email', data.contact_email || '');
+          setProfileValue('notes', data.notes || '');
+        }
+
       } catch (err) {
         setError('Nu s-au putut încărca datele profilului');
       } finally {
@@ -148,7 +195,7 @@ const UserProfile: React.FC = () => {
     };
 
     loadProfile();
-  }, [user, logout, navigate]);
+  }, [user, logout, navigate, setProfileValue]);
 
   // Clear messages
   useEffect(() => {
@@ -170,15 +217,16 @@ const UserProfile: React.FC = () => {
     try {
       setError(null);
       
-      // Since we don't have a specific change password endpoint,
-      // we'll use the update user endpoint
       const response = await fetch(`${API_BASE_URL}/users/${profileData?.id}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({
           username: profileData?.username,
           password: data.newPassword,
-          role: profileData?.role
+          role: profileData?.role,
+          company_name: profileData?.company_name,
+          contact_email: profileData?.contact_email,
+          notes: profileData?.notes
         })
       });
 
@@ -191,10 +239,60 @@ const UserProfile: React.FC = () => {
       }
 
       setSuccessMessage('Parola a fost schimbată cu succes!');
-      reset(); // Clear the form
+      resetPassword();
       
     } catch (err) {
       setError('A apărut o eroare la schimbarea parolei');
+    }
+  };
+
+  // Handle profile update (clients only)
+  const onSubmitProfileUpdate: SubmitHandler<ProfileUpdateData> = async (data) => {
+    try {
+      setError(null);
+      
+      const response = await fetch(`${API_BASE_URL}/users/${profileData?.id}`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          username: profileData?.username,
+          role: profileData?.role,
+          company_name: data.company_name,
+          contact_email: data.contact_email,
+          notes: data.notes
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to update profile');
+      }
+
+      const updatedData = await response.json();
+      setProfileData(prev => prev ? {
+        ...prev,
+        company_name: updatedData.company_name,
+        contact_email: updatedData.contact_email,
+        notes: updatedData.notes
+      } : null);
+
+      setSuccessMessage('Profilul a fost actualizat cu succes!');
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'A apărut o eroare la actualizarea profilului');
+    }
+  };
+
+  // Handle back navigation
+  const handleBack = () => {
+    if (isAdmin) {
+      navigate('/admin');
+    } else if (isAudit) {
+      navigate('/audit');
+    } else if (isClient) {
+      navigate('/client');
+    } else {
+      navigate('/');
     }
   };
 
@@ -217,7 +315,7 @@ const UserProfile: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900">Eroare</h2>
           <p className="text-gray-600 mt-2">Nu s-au putut încărca datele profilului</p>
           <button
-            onClick={() => navigate('/admin')}
+            onClick={handleBack}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             Înapoi la Dashboard
@@ -235,7 +333,7 @@ const UserProfile: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <button
-                onClick={() => navigate(-1)}
+                onClick={handleBack}
                 className="text-gray-600 hover:text-blue-600 transition-colors p-2 rounded-md hover:bg-gray-50"
               >
                 <ArrowLeft className="h-5 w-5" />
@@ -280,7 +378,7 @@ const UserProfile: React.FC = () => {
                 {/* Avatar */}
                 <div className="flex justify-center">
                   <div className={`h-20 w-20 rounded-full flex items-center justify-center text-white text-2xl font-bold ${
-                    profileData.role === 'admin' ? 'bg-purple-600' : 'bg-green-600'
+                    isAdmin ? 'bg-blue-600' : isAudit ? 'bg-purple-600' : 'bg-green-600'
                   }`}>
                     {profileData.username.charAt(0).toUpperCase()}
                   </div>
@@ -290,11 +388,11 @@ const UserProfile: React.FC = () => {
                 <div className="text-center space-y-2">
                   <h3 className="text-xl font-semibold text-gray-900">{profileData.username}</h3>
                   <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-                    profileData.role === 'admin' 
-                      ? 'bg-purple-100 text-purple-800' 
-                      : 'bg-green-100 text-green-800'
+                    isAdmin ? 'bg-blue-100 text-blue-800' : 
+                    isAudit ? 'bg-purple-100 text-purple-800' :
+                    'bg-green-100 text-green-800'
                   }`}>
-                    {profileData.role === 'admin' ? 'Administrator' : 'Utilizator'}
+                    {isAdmin ? 'Administrator' : isAudit ? 'Audit' : 'Client'}
                   </span>
                 </div>
 
@@ -310,6 +408,13 @@ const UserProfile: React.FC = () => {
                     <span>Rol: {profileData.role}</span>
                   </div>
                   
+                  {isClient && profileData.company_name && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Building2 className="h-4 w-4 mr-2" />
+                      <span>Companie: {profileData.company_name}</span>
+                    </div>
+                  )}
+                  
                   <div className="flex items-center text-sm text-gray-600">
                     <Calendar className="h-4 w-4 mr-2" />
                     <span>Înregistrat: {new Date(profileData.created_at).toLocaleDateString('ro-RO')}</span>
@@ -324,7 +429,7 @@ const UserProfile: React.FC = () => {
                       <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
                       <span>Căutare fonduri publice</span>
                     </div>
-                    {profileData.role === 'admin' && (
+                    {isAdmin && (
                       <>
                         <div className="flex items-center">
                           <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
@@ -340,21 +445,135 @@ const UserProfile: React.FC = () => {
                         </div>
                       </>
                     )}
+                    {isAudit && (
+                      <>
+                        <div className="flex items-center">
+                          <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                          <span>Vizualizare toate fondurile</span>
+                        </div>
+                        <div className="flex items-center">
+                          <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                          <span>Export și rapoarte</span>
+                        </div>
+                      </>
+                    )}
+                    {isClient && (
+                      <>
+                        <div className="flex items-center">
+                          <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                          <span>Management fonduri proprii</span>
+                        </div>
+                        <div className="flex items-center">
+                          <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                          <span>Adăugare fonduri noi</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Password Change Form */}
-          <div className="lg:col-span-2">
+          {/* Forms Column */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Client Profile Update Form */}
+            {isClient && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-center space-x-3 mb-6">
+                  <Building2 className="h-6 w-6 text-green-600" />
+                  <h2 className="text-lg font-semibold text-gray-900">Actualizează Profilul</h2>
+                </div>
+
+                <form onSubmit={handleProfileSubmit(onSubmitProfileUpdate)} className="space-y-6">
+                  {/* Company Name */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <Building2 className="h-4 w-4 inline mr-1" />
+                      Numele Companiei *
+                    </label>
+                    <input
+                      {...registerProfile('company_name')}
+                      type="text"
+                      placeholder="ex: Test Company SRL"
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${
+                        profileErrors.company_name ? 'border-red-300' : 'border-gray-300'
+                      }`}
+                    />
+                    {profileErrors.company_name && (
+                      <p className="text-red-600 text-sm mt-1">{profileErrors.company_name.message}</p>
+                    )}
+                  </div>
+
+                  {/* Contact Email */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <Mail className="h-4 w-4 inline mr-1" />
+                      Email de Contact
+                    </label>
+                    <input
+                      {...registerProfile('contact_email')}
+                      type="email"
+                      placeholder="ex: contact@companie.ro"
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${
+                        profileErrors.contact_email ? 'border-red-300' : 'border-gray-300'
+                      }`}
+                    />
+                    {profileErrors.contact_email && (
+                      <p className="text-red-600 text-sm mt-1">{profileErrors.contact_email.message}</p>
+                    )}
+                  </div>
+
+                  {/* Notes */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Note
+                    </label>
+                    <textarea
+                      {...registerProfile('notes')}
+                      rows={3}
+                      placeholder="Note despre companie..."
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none resize-none ${
+                        profileErrors.notes ? 'border-red-300' : 'border-gray-300'
+                      }`}
+                    />
+                    {profileErrors.notes && (
+                      <p className="text-red-600 text-sm mt-1">{profileErrors.notes.message}</p>
+                    )}
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={isProfileSubmitting}
+                      className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                    >
+                      {isProfileSubmitting ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Se actualizează...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" />
+                          <span>Actualizează Profilul</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Password Change Form */}
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center space-x-3 mb-6">
                 <Key className="h-6 w-6 text-blue-600" />
                 <h2 className="text-lg font-semibold text-gray-900">Schimbă Parola</h2>
               </div>
 
-              <form onSubmit={handleSubmit(onSubmitPasswordChange)} className="space-y-6">
+              <form onSubmit={handlePasswordSubmit(onSubmitPasswordChange)} className="space-y-6">
                 {/* Current Password */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -362,11 +581,11 @@ const UserProfile: React.FC = () => {
                   </label>
                   <div className="relative">
                     <input
-                      {...register('currentPassword')}
+                      {...registerPassword('currentPassword')}
                       type={showCurrentPassword ? 'text' : 'password'}
                       placeholder="Introdu parola actuală"
                       className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none ${
-                        errors.currentPassword ? 'border-red-300' : 'border-gray-300'
+                        passwordErrors.currentPassword ? 'border-red-300' : 'border-gray-300'
                       }`}
                     />
                     <button
@@ -377,8 +596,8 @@ const UserProfile: React.FC = () => {
                       {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  {errors.currentPassword && (
-                    <p className="text-red-600 text-sm mt-1">{errors.currentPassword.message}</p>
+                  {passwordErrors.currentPassword && (
+                    <p className="text-red-600 text-sm mt-1">{passwordErrors.currentPassword.message}</p>
                   )}
                 </div>
 
@@ -389,11 +608,11 @@ const UserProfile: React.FC = () => {
                   </label>
                   <div className="relative">
                     <input
-                      {...register('newPassword')}
+                      {...registerPassword('newPassword')}
                       type={showNewPassword ? 'text' : 'password'}
                       placeholder="Introdu parola nouă"
                       className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none ${
-                        errors.newPassword ? 'border-red-300' : 'border-gray-300'
+                        passwordErrors.newPassword ? 'border-red-300' : 'border-gray-300'
                       }`}
                     />
                     <button
@@ -405,8 +624,8 @@ const UserProfile: React.FC = () => {
                     </button>
                   </div>
                   
-                  {errors.newPassword && (
-                    <p className="text-red-600 text-sm mt-1">{errors.newPassword.message}</p>
+                  {passwordErrors.newPassword && (
+                    <p className="text-red-600 text-sm mt-1">{passwordErrors.newPassword.message}</p>
                   )}
 
                   {/* Password strength indicator */}
@@ -435,11 +654,11 @@ const UserProfile: React.FC = () => {
                   </label>
                   <div className="relative">
                     <input
-                      {...register('confirmPassword')}
+                      {...registerPassword('confirmPassword')}
                       type={showConfirmPassword ? 'text' : 'password'}
                       placeholder="Confirmă parola nouă"
                       className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none ${
-                        errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                        passwordErrors.confirmPassword ? 'border-red-300' : 'border-gray-300'
                       }`}
                     />
                     <button
@@ -450,8 +669,8 @@ const UserProfile: React.FC = () => {
                       {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  {errors.confirmPassword && (
-                    <p className="text-red-600 text-sm mt-1">{errors.confirmPassword.message}</p>
+                  {passwordErrors.confirmPassword && (
+                    <p className="text-red-600 text-sm mt-1">{passwordErrors.confirmPassword.message}</p>
                   )}
                 </div>
 
@@ -473,10 +692,10 @@ const UserProfile: React.FC = () => {
                 <div className="flex justify-end">
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isPasswordSubmitting}
                     className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
                   >
-                    {isSubmitting ? (
+                    {isPasswordSubmitting ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                         <span>Se schimbă...</span>
@@ -493,7 +712,7 @@ const UserProfile: React.FC = () => {
             </div>
 
             {/* Security Information */}
-            <div className="bg-white rounded-lg shadow p-6 mt-6">
+            <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center space-x-3 mb-4">
                 <Shield className="h-6 w-6 text-green-600" />
                 <h2 className="text-lg font-semibold text-gray-900">Informații Securitate</h2>

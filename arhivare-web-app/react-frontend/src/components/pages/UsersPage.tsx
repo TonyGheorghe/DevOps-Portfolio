@@ -1,10 +1,10 @@
-// src/components/pages/UsersPage.tsx - With Read-Only Access for Non-Admin Users
+// src/components/pages/UsersPage.tsx - FINAL FIXED VERSION with Correct Roles
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plus, Edit2, Trash2, Search, Users, Shield, 
   Eye, EyeOff, LogOut, Home, CheckCircle, X, 
-  AlertCircle, Key, User, Lock, Info
+  AlertCircle, Key, User, Lock, Info, Building2
 } from 'lucide-react';
 import { useAuth } from '../AuthSystem';
 import UserForm from '../forms/UserForm';
@@ -14,16 +14,26 @@ interface UserData {
   id: number;
   username: string;
   role: string;
+  company_name?: string;
+  contact_email?: string;
+  notes?: string;
   created_at: string;
+  updated_at?: string;
 }
 
 interface UserFormData {
   username: string;
   password: string;
   role: string;
+  company_name: string;
+  contact_email: string;
+  notes: string;
 }
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
+// CORRECT ROLES - Fixed to match backend
+const VALID_ROLES = ['admin', 'audit', 'client'];
 
 const UsersPage: React.FC = () => {
   const { user: currentUser, logout } = useAuth();
@@ -149,7 +159,7 @@ const UsersPage: React.FC = () => {
       setEditingUser(undefined);
       await loadUsers();
       
-      setSuccessMessage(`Utilizatorul "${newUser.username}" a fost creat cu succes!`);
+      setSuccessMessage(`Utilizatorul "${newUser.username}" (${newUser.role}) a fost creat cu succes!`);
       
     } catch (err) {
       throw new Error(err instanceof Error ? err.message : 'Error creating user');
@@ -174,7 +184,10 @@ const UsersPage: React.FC = () => {
       // Prepare update data - don't send password if empty
       const updateData: any = {
         username: userData.username,
-        role: userData.role
+        role: userData.role,
+        company_name: userData.company_name,
+        contact_email: userData.contact_email,
+        notes: userData.notes
       };
       
       if (userData.password && userData.password.trim()) {
@@ -256,7 +269,8 @@ const UsersPage: React.FC = () => {
           navigate('/login', { replace: true });
           return;
         }
-        throw new Error(`Error deleting user: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.detail || `Error deleting user: ${response.status}`);
       }
 
       await loadUsers();
@@ -274,18 +288,34 @@ const UsersPage: React.FC = () => {
   // Filter users
   const filteredUsers = users.filter(user => {
     const matchesSearch = !searchQuery || 
-      user.username.toLowerCase().includes(searchQuery.toLowerCase());
+      user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (user.company_name && user.company_name.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
     
     return matchesSearch && matchesRole;
   });
 
-  // Stats
+  // CORRECTED Stats calculation
   const stats = {
     total: users.length,
     admins: users.filter(u => u.role === 'admin').length,
-    users: users.filter(u => u.role === 'user').length,
+    audit: users.filter(u => u.role === 'audit').length,
+    clients: users.filter(u => u.role === 'client').length,
+  };
+
+  // Get role display info
+  const getRoleDisplay = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return { label: 'Administrator', color: 'purple', icon: Shield };
+      case 'audit':
+        return { label: 'Audit', color: 'orange', icon: Eye };
+      case 'client':
+        return { label: 'Client', color: 'green', icon: Building2 };
+      default:
+        return { label: role, color: 'gray', icon: User };
+    }
   };
 
   if (loading) {
@@ -403,8 +433,8 @@ const UsersPage: React.FC = () => {
           </div>
         )}
 
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* CORRECTED Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
             <div className="flex items-center">
               <Users className="h-8 w-8 text-blue-600" />
@@ -427,10 +457,20 @@ const UsersPage: React.FC = () => {
 
           <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
             <div className="flex items-center">
-              <User className="h-8 w-8 text-green-600" />
+              <Eye className="h-8 w-8 text-orange-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Utilizatori</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.users}</p>
+                <p className="text-sm font-medium text-gray-600">Audit</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.audit}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center">
+              <Building2 className="h-8 w-8 text-green-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Clienți</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.clients}</p>
               </div>
             </div>
           </div>
@@ -454,7 +494,7 @@ const UsersPage: React.FC = () => {
               </div>
 
               <div className="flex items-center space-x-4">
-                {/* Role filter */}
+                {/* CORRECTED Role filter */}
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
@@ -462,7 +502,8 @@ const UsersPage: React.FC = () => {
                 >
                   <option value="all">Toate rolurile</option>
                   <option value="admin">Administratori</option>
-                  <option value="user">Utilizatori</option>
+                  <option value="audit">Audit</option>
+                  <option value="client">Clienți</option>
                 </select>
 
                 {/* Add User Button - Only for Admins */}
@@ -505,6 +546,9 @@ const UsersPage: React.FC = () => {
                     Rol
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Companie
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Creat la
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -515,7 +559,7 @@ const UsersPage: React.FC = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                       <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                       <p className="text-lg font-medium">Niciun utilizator găsit</p>
                       <p className="text-sm">
@@ -524,98 +568,107 @@ const UsersPage: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  filteredUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center">
-                          <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                            user.role === 'admin' ? 'bg-purple-100' : 'bg-green-100'
-                          }`}>
-                            {user.role === 'admin' ? (
-                              <Shield className="h-5 w-5 text-purple-600" />
-                            ) : (
-                              <User className="h-5 w-5 text-green-600" />
-                            )}
-                          </div>
-                          <div className="ml-3">
-                            <div className="text-sm font-medium text-gray-900">
-                              {user.username}
-                              {user.id === currentUser?.id && (
-                                <span className="ml-2 text-xs text-blue-600">(tu)</span>
+                  filteredUsers.map((user) => {
+                    const roleDisplay = getRoleDisplay(user.role);
+                    const RoleIcon = roleDisplay.icon;
+                    
+                    return (
+                      <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center">
+                            <div className={`h-8 w-8 rounded-full flex items-center justify-center bg-${roleDisplay.color}-100`}>
+                              <RoleIcon className={`h-5 w-5 text-${roleDisplay.color}-600`} />
+                            </div>
+                            <div className="ml-3">
+                              <div className="text-sm font-medium text-gray-900">
+                                {user.username}
+                                {user.id === currentUser?.id && (
+                                  <span className="ml-2 text-xs text-blue-600">(tu)</span>
+                                )}
+                              </div>
+                              {user.contact_email && (
+                                <div className="text-sm text-gray-500">{user.contact_email}</div>
                               )}
                             </div>
                           </div>
-                        </div>
-                      </td>
+                        </td>
 
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          user.role === 'admin' 
-                            ? 'bg-purple-100 text-purple-800' 
-                            : 'bg-green-100 text-green-800'
-                        }`}>
-                          {user.role === 'admin' ? 'Administrator' : 'Utilizator'}
-                        </span>
-                      </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-${roleDisplay.color}-100 text-${roleDisplay.color}-800`}>
+                            {roleDisplay.label}
+                          </span>
+                        </td>
 
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {new Date(user.created_at).toLocaleDateString('ro-RO', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {user.company_name ? (
+                            <div>
+                              <div className="font-medium text-gray-900">{user.company_name}</div>
+                              <div className="text-xs text-gray-500">Companie client</div>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
 
-                      <td className="px-6 py-4 text-right text-sm font-medium space-x-2">
-                        {isAdmin ? (
-                          <>
-                            <button
-                              onClick={() => {
-                                setEditingUser(user);
-                                setShowForm(true);
-                              }}
-                              className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
-                              title="Editează"
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </button>
-                            
-                            {user.id !== currentUser?.id && (
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {new Date(user.created_at).toLocaleDateString('ro-RO', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </td>
+
+                        <td className="px-6 py-4 text-right text-sm font-medium space-x-2">
+                          {isAdmin ? (
+                            <>
                               <button
-                                onClick={() => handleDeleteUser(user)}
-                                className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
-                                title="Șterge"
+                                onClick={() => {
+                                  setEditingUser(user);
+                                  setShowForm(true);
+                                }}
+                                className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
+                                title="Editează"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Edit2 className="h-4 w-4" />
                               </button>
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => handleViewOnlyClick('edita utilizatori')}
-                              className="text-gray-400 p-1 rounded cursor-not-allowed opacity-50"
-                              title="Doar citire - Nu ai permisiuni de editare"
-                              disabled
-                            >
-                              <Eye className="h-4 w-4" />
-                            </button>
-                            
-                            {user.id !== currentUser?.id && (
+                              
+                              {user.id !== currentUser?.id && (
+                                <button
+                                  onClick={() => handleDeleteUser(user)}
+                                  className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
+                                  title="Șterge"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )}
+                            </>
+                          ) : (
+                            <>
                               <button
-                                onClick={() => handleViewOnlyClick('șterge utilizatori')}
+                                onClick={() => handleViewOnlyClick('edita utilizatori')}
                                 className="text-gray-400 p-1 rounded cursor-not-allowed opacity-50"
-                                title="Doar citire - Nu ai permisiuni de ștergere"
+                                title="Doar citire - Nu ai permisiuni de editare"
                                 disabled
                               >
-                                <Lock className="h-4 w-4" />
+                                <Eye className="h-4 w-4" />
                               </button>
-                            )}
-                          </>
-                        )}
-                      </td>
-                    </tr>
-                  ))
+                              
+                              {user.id !== currentUser?.id && (
+                                <button
+                                  onClick={() => handleViewOnlyClick('șterge utilizatori')}
+                                  className="text-gray-400 p-1 rounded cursor-not-allowed opacity-50"
+                                  title="Doar citire - Nu ai permisiuni de ștergere"
+                                  disabled
+                                >
+                                  <Lock className="h-4 w-4" />
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

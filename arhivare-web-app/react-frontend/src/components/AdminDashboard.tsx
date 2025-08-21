@@ -1,10 +1,10 @@
-// src/components/AdminDashboard.tsx - Updated with User Management Navigation
+// src/components/AdminDashboard.tsx - FIXED with Role-Based Navigation
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plus, Edit2, Trash2, Search, Building2, Archive, 
   Phone, Mail, MapPin, X, LogOut, Users, Home, CheckCircle,
-  User, Settings, BarChart3
+  User, Settings, BarChart3, Shield, Eye
 } from 'lucide-react';
 import { useAuth } from './AuthSystem';
 import FondForm from './forms/FondForm';
@@ -54,6 +54,13 @@ const AdminDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showInactive, setShowInactive] = useState(false);
 
+  // Role-based access control
+  const isAdmin = user?.role === 'admin';
+  const isAudit = user?.role === 'audit';
+  const isClient = user?.role === 'client';
+  const canEdit = isAdmin; // Only admin can edit
+  const canView = isAdmin || isAudit; // Admin and Audit can view all
+
   // Get auth token
   const getAuthHeaders = () => {
     const token = localStorage.getItem('auth_token');
@@ -89,9 +96,11 @@ const AdminDashboard: React.FC = () => {
     navigate('/', { replace: false });
   };
 
-  // Navigate to users management
+  // Navigate to users management (only for admin and audit)
   const goToUsersManagement = () => {
-    navigate('/admin/users', { replace: false });
+    if (isAdmin || isAudit) {
+      navigate('/admin/users', { replace: false });
+    }
   };
 
   // Navigate to profile
@@ -133,8 +142,13 @@ const AdminDashboard: React.FC = () => {
     loadFonds();
   }, [loadFonds]);
 
-  // CREATE fond function
+  // CREATE fond function (Admin only)
   const handleCreateFond = async (fondData: FondFormData) => {
+    if (!canEdit) {
+      setError('Nu ai permisiuni pentru a crea fonduri');
+      return;
+    }
+
     setFormLoading(true);
     setError(null);
     
@@ -170,8 +184,13 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  // UPDATE fond function
+  // UPDATE fond function (Admin only)
   const handleUpdateFond = async (fondData: FondFormData) => {
+    if (!canEdit) {
+      setError('Nu ai permisiuni pentru a modifica fonduri');
+      return;
+    }
+
     if (!editingFond) return;
     
     setFormLoading(true);
@@ -224,8 +243,13 @@ const AdminDashboard: React.FC = () => {
     setEditingFond(undefined);
   };
 
-  // Delete operation with proper confirm
+  // Delete operation with proper confirm (Admin only)
   const handleDeleteFond = async (fond: Fond) => {
+    if (!canEdit) {
+      setError('Nu ai permisiuni pentru a șterge fonduri');
+      return;
+    }
+
     if (!window.confirm(`Ești sigur că vrei să ștergi fondul "${fond.company_name}"?`)) {
       return;
     }
@@ -252,6 +276,11 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  // Handle view-only actions for non-admin users
+  const handleViewOnlyClick = (action: string) => {
+    setError(`Nu ai permisiuni pentru a ${action}. Contul tău are acces doar în modul vizualizare.`);
+  };
+
   // Filter fonds based on search
   const filteredFonds = fonds.filter(fond => {
     if (!searchQuery) return true;
@@ -268,6 +297,19 @@ const AdminDashboard: React.FC = () => {
     total: fonds.length,
     active: fonds.filter(f => f.active).length,
     inactive: fonds.filter(f => !f.active).length,
+  };
+
+  // Get dashboard title based on role
+  const getDashboardTitle = () => {
+    if (isAdmin) return 'Dashboard Admin';
+    if (isAudit) return 'Dashboard Audit';
+    return 'Dashboard';
+  };
+
+  const getDashboardDescription = () => {
+    if (isAdmin) return 'Management fonduri arhivistice';
+    if (isAudit) return 'Vizualizare și monitorizare (read-only)';
+    return 'Vizualizare fonduri';
   };
 
   if (loading) {
@@ -288,10 +330,12 @@ const AdminDashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-3">
-              <Archive className="h-8 w-8 text-blue-600" />
+              {isAdmin && <Archive className="h-8 w-8 text-blue-600" />}
+              {isAudit && <BarChart3 className="h-8 w-8 text-purple-600" />}
+              {isClient && <Building2 className="h-8 w-8 text-green-600" />}
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Dashboard Admin</h1>
-                <p className="text-sm text-gray-600">Management fonduri arhivistice</p>
+                <h1 className="text-2xl font-bold text-gray-900">{getDashboardTitle()}</h1>
+                <p className="text-sm text-gray-600">{getDashboardDescription()}</p>
               </div>
             </div>
             
@@ -306,13 +350,16 @@ const AdminDashboard: React.FC = () => {
                   <span>Căutare</span>
                 </button>
                 
-                <button 
-                  onClick={goToUsersManagement}
-                  className="flex items-center space-x-2 text-gray-600 hover:text-purple-600 transition-colors px-3 py-2 rounded-md hover:bg-purple-50"
-                >
-                  <Users className="h-4 w-4" />
-                  <span>Utilizatori</span>
-                </button>
+                {/* Users Management - Only for Admin and Audit */}
+                {(isAdmin || isAudit) && (
+                  <button 
+                    onClick={goToUsersManagement}
+                    className="flex items-center space-x-2 text-gray-600 hover:text-purple-600 transition-colors px-3 py-2 rounded-md hover:bg-purple-50"
+                  >
+                    <Users className="h-4 w-4" />
+                    <span>Utilizatori</span>
+                  </button>
+                )}
 
                 <button 
                   onClick={goToProfile}
@@ -324,15 +371,26 @@ const AdminDashboard: React.FC = () => {
               </nav>
               
               {/* User profile section */}
-              <div className="flex items-center space-x-3 bg-gray-50 rounded-lg px-4 py-2">
+              <div className={`flex items-center space-x-3 rounded-lg px-4 py-2 ${
+                isAdmin ? 'bg-blue-50' : isAudit ? 'bg-purple-50' : 'bg-green-50'
+              }`}>
                 <div className="flex-shrink-0">
-                  <div className="h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center">
-                    <Users className="h-5 w-5 text-white" />
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                    isAdmin ? 'bg-blue-600' : isAudit ? 'bg-purple-600' : 'bg-green-600'
+                  }`}>
+                    {isAdmin && <Archive className="h-5 w-5 text-white" />}
+                    {isAudit && <Shield className="h-5 w-5 text-white" />}
+                    {isClient && <Building2 className="h-5 w-5 text-white" />}
                   </div>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-900">{user?.username}</p>
-                  <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+                  <p className={`text-xs capitalize ${
+                    isAdmin ? 'text-blue-600' : isAudit ? 'text-purple-600' : 'text-green-600'
+                  }`}>
+                    {user?.role}
+                    {isAudit && ' (Read-Only)'}
+                  </p>
                 </div>
                 <button
                   onClick={handleLogout}
@@ -348,19 +406,36 @@ const AdminDashboard: React.FC = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Read-Only Notice for Audit Users */}
+        {isAudit && (
+          <div className="mb-6 bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <Eye className="h-5 w-5 text-purple-600 mr-3" />
+              <div>
+                <h4 className="text-sm font-medium text-purple-800">Acces Audit (Read-Only)</h4>
+                <p className="text-sm text-purple-700 mt-1">
+                  Poți vizualiza toate fondurile și exporta date, dar nu poți face modificări.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Quick Actions Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Fonds Stats */}
           <div 
-            className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => setShowForm(true)}
+            className={`bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow ${
+              canEdit ? 'cursor-pointer' : ''
+            }`}
+            onClick={canEdit ? () => setShowForm(true) : undefined}
           >
             <div className="flex items-center">
               <Archive className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total Fonduri</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-                <p className="text-xs text-blue-600 mt-1">Click pentru adăugare</p>
+                {canEdit && <p className="text-xs text-blue-600 mt-1">Click pentru adăugare</p>}
               </div>
             </div>
           </div>
@@ -377,22 +452,26 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Users Management */}
-          <div 
-            className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer"
-            onClick={goToUsersManagement}
-          >
-            <div className="flex items-center">
-              <Users className="h-8 w-8 text-purple-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Utilizatori</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  <span className="text-lg">Gestionează</span>
-                </p>
-                <p className="text-xs text-purple-600 mt-1">Click pentru management</p>
+          {/* Users Management - Only for Admin and Audit */}
+          {(isAdmin || isAudit) && (
+            <div 
+              className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer"
+              onClick={goToUsersManagement}
+            >
+              <div className="flex items-center">
+                <Users className="h-8 w-8 text-purple-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Utilizatori</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    <span className="text-lg">Gestionează</span>
+                  </p>
+                  <p className="text-xs text-purple-600 mt-1">
+                    {isAdmin ? 'Click pentru management' : 'Click pentru vizualizare'}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Profile Access */}
           <div 
@@ -471,16 +550,24 @@ const AdminDashboard: React.FC = () => {
                   <span className="text-sm text-gray-700">Arată inactive</span>
                 </label>
 
-                <button
-                  onClick={() => {
-                    setEditingFond(undefined);
-                    setShowForm(true);
-                  }}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 transition-colors"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Adaugă Fond</span>
-                </button>
+                {/* Add Fond Button - Only for Admin */}
+                {canEdit ? (
+                  <button
+                    onClick={() => {
+                      setEditingFond(undefined);
+                      setShowForm(true);
+                    }}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 transition-colors"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Adaugă Fond</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center space-x-2 text-gray-500 text-sm">
+                    <Eye className="h-4 w-4" />
+                    <span>Doar vizualizare</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -578,23 +665,36 @@ const AdminDashboard: React.FC = () => {
                       </td>
 
                       <td className="px-6 py-4 text-right text-sm font-medium space-x-2">
-                        <button
-                          onClick={() => {
-                            setEditingFond(fond);
-                            setShowForm(true);
-                          }}
-                          className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
-                          title="Editează"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteFond(fond)}
-                          className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
-                          title="Șterge"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        {canEdit ? (
+                          <>
+                            <button
+                              onClick={() => {
+                                setEditingFond(fond);
+                                setShowForm(true);
+                              }}
+                              className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
+                              title="Editează"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteFond(fond)}
+                              className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
+                              title="Șterge"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => handleViewOnlyClick('edita fonduri')}
+                            className="text-gray-400 p-1 rounded cursor-not-allowed opacity-50"
+                            title="Doar vizualizare"
+                            disabled
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -617,8 +717,8 @@ const AdminDashboard: React.FC = () => {
         )}
       </main>
 
-      {/* Form Modal - WITH DUPLICATE DETECTION! */}
-      {showForm && (
+      {/* Form Modal - Only for Admin */}
+      {showForm && canEdit && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <FondForm
             fond={editingFond}
