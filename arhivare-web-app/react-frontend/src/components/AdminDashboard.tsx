@@ -1,13 +1,15 @@
-// src/components/AdminDashboard.tsx - FIXED with Role-Based Navigation
+// src/components/AdminDashboard.tsx - ENHANCED with Auto-Reassignment Support
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Plus, Edit2, Trash2, Search, Building2, Archive, 
   Phone, Mail, MapPin, X, LogOut, Users, Home, CheckCircle,
-  User, Settings, BarChart3, Shield, Eye
+  User, Settings, BarChart3, Shield, Eye, AlertTriangle,
+  RefreshCw, Zap, Target
 } from 'lucide-react';
 import { useAuth } from './AuthSystem';
 import FondForm from './forms/FondForm';
+import ReassignmentModal from './ReassignmentModal';
 
 // Types
 interface Fond {
@@ -22,6 +24,7 @@ interface Fond {
   active: boolean;
   created_at: string;
   updated_at: string;
+  owner_id?: number;
 }
 
 interface FondFormData {
@@ -33,6 +36,31 @@ interface FondFormData {
   notes: string;
   source_url: string;
   active: boolean;
+}
+
+// NEW: Reassignment types
+interface ReassignmentSuggestion {
+  user_id: number;
+  username: string;
+  company_name: string;
+  similarity: number;
+  match_type: string;
+  confidence: string;
+}
+
+interface ReassignmentData {
+  fond_id: number;
+  fond_name: string;
+  old_holder_name: string;
+  new_holder_name: string;
+  current_owner?: {
+    id: number;
+    username: string;
+    company_name: string;
+  };
+  suggestions: ReassignmentSuggestion[];
+  best_match: ReassignmentSuggestion;
+  requires_confirmation: boolean;
 }
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
@@ -50,9 +78,17 @@ const AdminDashboard: React.FC = () => {
   const [editingFond, setEditingFond] = useState<Fond | undefined>();
   const [formLoading, setFormLoading] = useState(false);
   
+  // NEW: Reassignment state
+  const [showReassignmentModal, setShowReassignmentModal] = useState(false);
+  const [reassignmentData, setReassignmentData] = useState<ReassignmentData | null>(null);
+  const [reassignmentLoading, setReassignmentLoading] = useState(false);
+  
   // Search and filters
   const [searchQuery, setSearchQuery] = useState('');
   const [showInactive, setShowInactive] = useState(false);
+
+  // NEW: Auto-reassignment settings
+  const [autoReassignEnabled, setAutoReassignEnabled] = useState(false);
 
   // Role-based access control
   const isAdmin = user?.role === 'admin';
@@ -184,7 +220,7 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  // UPDATE fond function (Admin only)
+  // NEW: Enhanced UPDATE fond function with reassignment detection
   const handleUpdateFond = async (fondData: FondFormData) => {
     if (!canEdit) {
       setError('Nu ai permisiuni pentru a modifica fonduri');
@@ -197,7 +233,11 @@ const AdminDashboard: React.FC = () => {
     setError(null);
     
     try {
-      const response = await fetch(`${API_BASE_URL}/fonds/${editingFond.id}`, {
+      // NEW: Use enhanced endpoint with reassignment detection
+      const url = new URL(`${API_BASE_URL}/fonds/${editingFond.id}`);
+      url.searchParams.append('auto_reassign', autoReassignEnabled.toString());
+
+      const response = await fetch(url.toString(), {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify(fondData)
@@ -213,19 +253,85 @@ const AdminDashboard: React.FC = () => {
         throw new Error(errorData.detail || `Error updating fond: ${response.status}`);
       }
 
-      const updatedFond = await response.json();
+      const responseData = await response.json();
       
+      // NEW: Check if reassignment suggestions were returned
+      if (responseData.reassignment_suggestions) {
+        console.log('🔄 Reassignment suggestions detected:', responseData.reassignment_suggestions);
+        
+        // Show reassignment modal
+        setReassignmentData(responseData.reassignment_suggestions);
+        setShowReassignmentModal(true);
+        setFormLoading(false);
+        return; // Don't close form yet - wait for reassignment confirmation
+      }
+      
+      // If no reassignment needed, proceed normally
       setShowForm(false);
       setEditingFond(undefined);
       await loadFonds();
       
-      setSuccessMessage(`Fondul "${updatedFond.company_name}" a fost actualizat cu succes!`);
+      let message = `Fondul "${responseData.fond.company_name}" a fost actualizat cu succes!`;
+      if (responseData.auto_reassignment_applied) {
+        message += ' (Reassignment automat aplicat)';
+      }
+      
+      setSuccessMessage(message);
       
     } catch (err) {
       throw new Error(err instanceof Error ? err.message : 'Error updating fond');
     } finally {
+      if (!reassignmentData) {
+        setFormLoading(false);
+      }
+    }
+  };
+
+  // NEW: Handle reassignment confirmation
+  const handleReassignmentConfirm = async (fondId: number, newOwnerId: number | null) => {
+    setReassignmentLoading(true);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/fonds/${fondId}/confirm-reassignment`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          fond_id: fondId,
+          new_owner_id: newOwnerId,
+          confirmed: true
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Error confirming reassignment');
+      }
+
+      const result = await response.json();
+      
+      // Close modals and refresh data
+      setShowReassignmentModal(false);
+      setReassignmentData(null);
+      setShowForm(false);
+      setEditingFond(undefined);
+      
+      await loadFonds();
+      
+      setSuccessMessage(result.message);
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error confirming reassignment');
+    } finally {
+      setReassignmentLoading(false);
       setFormLoading(false);
     }
+  };
+
+  // NEW: Handle reassignment cancellation
+  const handleReassignmentCancel = () => {
+    setShowReassignmentModal(false);
+    setReassignmentData(null);
+    // Don't close the fond form - user can continue editing
   };
 
   // Handle form save (CREATE or UPDATE)
@@ -241,6 +347,9 @@ const AdminDashboard: React.FC = () => {
   const handleFormCancel = () => {
     setShowForm(false);
     setEditingFond(undefined);
+    // Also close reassignment modal if open
+    setShowReassignmentModal(false);
+    setReassignmentData(null);
   };
 
   // Delete operation with proper confirm (Admin only)
@@ -276,6 +385,43 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  // NEW: Bulk check reassignments
+  const handleBulkCheckReassignments = async () => {
+    if (!isAdmin) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/fonds/bulk-check-reassignments`, {
+        method: 'POST',
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error('Error checking bulk reassignments');
+      }
+
+      const result = await response.json();
+      
+      const candidatesCount = result.manual_reassignment_candidates;
+      const autoCount = result.automatic_reassignments_applied;
+      
+      let message = `Verificare completă: ${candidatesCount} fonduri au nevoie de reassignment manual`;
+      if (autoCount > 0) {
+        message += `, ${autoCount} reassignment-uri automate aplicate`;
+      }
+      
+      setSuccessMessage(message);
+      await loadFonds(); // Refresh data
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error checking reassignments');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Handle view-only actions for non-admin users
   const handleViewOnlyClick = (action: string) => {
     setError(`Nu ai permisiuni pentru a ${action}. Contul tău are acces doar în modul vizualizare.`);
@@ -297,6 +443,8 @@ const AdminDashboard: React.FC = () => {
     total: fonds.length,
     active: fonds.filter(f => f.active).length,
     inactive: fonds.filter(f => !f.active).length,
+    assigned: fonds.filter(f => f.owner_id).length,
+    unassigned: fonds.filter(f => !f.owner_id).length,
   };
 
   // Get dashboard title based on role
@@ -307,12 +455,12 @@ const AdminDashboard: React.FC = () => {
   };
 
   const getDashboardDescription = () => {
-    if (isAdmin) return 'Management fonduri arhivistice';
+    if (isAdmin) return 'Management fonduri arhivistice cu auto-reassignment';
     if (isAudit) return 'Vizualizare și monitorizare (read-only)';
     return 'Vizualizare fonduri';
   };
 
-  if (loading) {
+  if (loading && !reassignmentData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -421,9 +569,45 @@ const AdminDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* Quick Actions Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Fonds Stats */}
+        {/* NEW: Auto-Reassignment Notice for Admin */}
+        {isAdmin && (
+          <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Target className="h-5 w-5 text-blue-600 mr-3" />
+                <div>
+                  <h4 className="text-sm font-medium text-blue-800">Auto-Reassignment Activ</h4>
+                  <p className="text-sm text-blue-700 mt-1">
+                    Sistemul detectează automat necesitatea de reassignment când editezi fonduri.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={autoReassignEnabled}
+                    onChange={(e) => setAutoReassignEnabled(e.target.checked)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-blue-700">Auto-assignment pentru match-uri exacte</span>
+                </label>
+                <button
+                  onClick={handleBulkCheckReassignments}
+                  disabled={loading}
+                  className="flex items-center space-x-2 px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  <Zap className="h-4 w-4" />
+                  <span>Verifică Toate</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Enhanced Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+          {/* Total Fonds */}
           <div 
             className={`bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow ${
               canEdit ? 'cursor-pointer' : ''
@@ -452,6 +636,30 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
+          {/* NEW: Assigned Fonds */}
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center">
+              <CheckCircle className="h-8 w-8 text-purple-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Assignate</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.assigned}</p>
+                <p className="text-xs text-gray-500 mt-1">Au owner</p>
+              </div>
+            </div>
+          </div>
+
+          {/* NEW: Unassigned Fonds */}
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-center">
+              <AlertTriangle className="h-8 w-8 text-orange-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Neasignate</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.unassigned}</p>
+                <p className="text-xs text-gray-500 mt-1">Fără owner</p>
+              </div>
+            </div>
+          </div>
+
           {/* Users Management - Only for Admin and Audit */}
           {(isAdmin || isAudit) && (
             <div 
@@ -472,23 +680,6 @@ const AdminDashboard: React.FC = () => {
               </div>
             </div>
           )}
-
-          {/* Profile Access */}
-          <div 
-            className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer"
-            onClick={goToProfile}
-          >
-            <div className="flex items-center">
-              <User className="h-8 w-8 text-orange-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Profilul Meu</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  <span className="text-lg">Setări</span>
-                </p>
-                <p className="text-xs text-orange-600 mt-1">Click pentru profil</p>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Success Message */}
@@ -589,7 +780,7 @@ const AdminDashboard: React.FC = () => {
                     Contact
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                    Status / Owner
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Acțiuni
@@ -655,13 +846,26 @@ const AdminDashboard: React.FC = () => {
                       </td>
 
                       <td className="px-6 py-4">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          fond.active 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {fond.active ? 'Activ' : 'Inactiv'}
-                        </span>
+                        <div className="space-y-1">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            fond.active 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {fond.active ? 'Activ' : 'Inactiv'}
+                          </span>
+                          
+                          {/* NEW: Show ownership status */}
+                          {fond.owner_id ? (
+                            <div className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                              Assignat (ID: {fond.owner_id})
+                            </div>
+                          ) : (
+                            <div className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
+                              Neasignat
+                            </div>
+                          )}
+                        </div>
                       </td>
 
                       <td className="px-6 py-4 text-right text-sm font-medium space-x-2">
@@ -719,7 +923,7 @@ const AdminDashboard: React.FC = () => {
 
       {/* Form Modal - Only for Admin */}
       {showForm && canEdit && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-40">
           <FondForm
             fond={editingFond}
             existingFonds={fonds}
@@ -728,6 +932,16 @@ const AdminDashboard: React.FC = () => {
             isLoading={formLoading}
           />
         </div>
+      )}
+
+      {/* NEW: Reassignment Modal */}
+      {showReassignmentModal && reassignmentData && (
+        <ReassignmentModal
+          reassignmentData={reassignmentData}
+          onConfirm={handleReassignmentConfirm}
+          onCancel={handleReassignmentCancel}
+          isLoading={reassignmentLoading}
+        />
       )}
     </div>
   );

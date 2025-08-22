@@ -1,4 +1,4 @@
-# app/crud/fond.py - ENHANCED with Auto-Reassignment Logic
+# app/crud/fond.py - ENHANCED with Auto-Reassignment on Edit
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_, func
 from typing import List, Optional, Dict, Tuple
@@ -119,7 +119,7 @@ def search_all_fonds(db: Session, search_term: str, skip: int = 0, limit: int = 
     return query.offset(skip).limit(limit).all()
 
 
-# NEW: Auto-reassignment logic
+# NEW: Enhanced Auto-reassignment logic for Edit Operations
 def find_potential_owners_for_holder(db: Session, holder_name: str, exclude_current_owner: Optional[int] = None) -> List[Dict]:
     """
     Găsește utilizatori client care ar putea fi owner-i pentru un holder_name dat.
@@ -153,7 +153,8 @@ def find_potential_owners_for_holder(db: Session, holder_name: str, exclude_curr
                 "company_name": client.company_name,
                 "contact_email": client.contact_email,
                 "similarity": similarity,
-                "match_type": get_match_type(similarity)
+                "match_type": get_match_type(similarity),
+                "confidence": "high" if similarity >= 0.8 else "medium"
             })
     
     # Sortează după similaritate (descrescător)
@@ -236,7 +237,7 @@ def get_match_type(similarity: float) -> str:
 
 
 def create_fond(db: Session, fond: FondCreate, owner_id: Optional[int] = None) -> Fond:
-    """Creează un nou fond cu owner opțional."""
+    """Creează un fond nou cu owner opțional."""
     db_fond = Fond(
         company_name=fond.company_name,
         holder_name=fond.holder_name,
@@ -254,31 +255,61 @@ def create_fond(db: Session, fond: FondCreate, owner_id: Optional[int] = None) -
     return db_fond
 
 
-def update_fond(db: Session, fond_id: int, fond_update: FondUpdate) -> Optional[Fond]:
+# NEW: Enhanced update function with auto-reassignment detection
+def update_fond_with_reassignment_detection(
+    db: Session, 
+    fond_id: int, 
+    fond_update: FondUpdate,
+    auto_reassign: bool = False,
+    confirmed_new_owner_id: Optional[int] = None
+) -> Tuple[Optional[Fond], Optional[Dict]]:
     """
-    Actualizează un fond existent.
-    ENHANCED: Detectează potențialele schimbări de ownership.
+    Actualizează un fond și detectează necesitatea de reassignment.
+    
+    Args:
+        db: Session de baza de date
+        fond_id: ID-ul fondului de actualizat
+        fond_update: Datele de actualizare
+        auto_reassign: Dacă True, aplică automat reassignment-ul pentru match-uri exacte
+        confirmed_new_owner_id: ID-ul noului owner confirmat de admin
+    
+    Returns:
+        Tuple[Optional[Fond], Optional[Dict]]: (fondul actualizat, sugestii de reassignment)
     """
     db_fond = db.query(Fond).filter(Fond.id == fond_id).first()
     if not db_fond:
-        return None
+        return None, None
     
     # Salvează valorile vechi pentru comparație
     old_holder_name = db_fond.holder_name
     old_owner_id = db_fond.owner_id
     
-    # Actualizează doar câmpurile care nu sunt None
+    # Verifică dacă holder_name se schimbă
+    new_holder_name = fond_update.holder_name if fond_update.holder_name is not None else old_holder_name
+    holder_name_changed = old_holder_name != new_holder_name
+    
+    reassignment_suggestions = None
+    
+    # STEP 1: Dacă admin-ul a confirmat un nou owner
+    if confirmed_new_owner_id is not None:
+        print(f"🔄 Admin confirmed reassignment: Fond {fond_id} → Owner {confirmed_new_owner_id}")
+        # Aplică reassignment-ul confirmat
+        update_data = fond_update.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_fond, field, value)
+        
+        db_fond.owner_id = confirmed_new_owner_id
+        db.commit()
+        db.refresh(db_fond)
+        return db_fond, None
+    
+    # STEP 2: Actualizează doar câmpurile care nu sunt None
     update_data = fond_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(db_fond, field, value)
     
-    # Verifică dacă holder_name s-a schimbat și dacă există un owner curent
-    new_holder_name = getattr(db_fond, 'holder_name', old_holder_name)
-    
-    if (old_holder_name != new_holder_name and 
-        new_holder_name and 
-        old_holder_name):  # Ambele trebuie să existe pentru a fi o schimbare reală
-        
+    # STEP 3: Verifică dacă holder_name s-a schimbat și dacă există nevoie de reassignment
+    if holder_name_changed and new_holder_name:
         print(f"🔄 Holder name changed from '{old_holder_name}' to '{new_holder_name}'")
         
         # Găsește potențiali owner-i noi
@@ -289,20 +320,55 @@ def update_fond(db: Session, fond_id: int, fond_update: FondUpdate) -> Optional[
         )
         
         if potential_owners:
-            # Ia cel mai bun match (primul din listă)
             best_match = potential_owners[0]
             
-            if best_match["similarity"] >= 0.8:  # High confidence threshold
-                print(f"🎯 Auto-reassignment suggestion: {best_match['username']} ({best_match['similarity']:.2f} similarity)")
+            # STEP 4: Auto-reassignment pentru match-uri exacte (dacă activat)
+            if auto_reassign and best_match["similarity"] >= 0.95:
+                print(f"✅ Auto-reassigning to {best_match['username']} (exact match: {best_match['similarity']:.2f})")
+                db_fond.owner_id = best_match["user_id"]
+                db.commit()
+                db.refresh(db_fond)
+                return db_fond, None
+            
+            # STEP 5: Preparează sugestii pentru confirmare
+            elif best_match["similarity"] >= 0.7:  # Threshold pentru sugestii
+                current_owner = None
+                if old_owner_id:
+                    current_owner = db.query(User).filter(User.id == old_owner_id).first()
                 
-                # Pentru implementarea inițială, putem face auto-reassignment pentru match-uri foarte bune
-                if best_match["similarity"] >= 0.95:  # Exact match
-                    print(f"✅ Auto-reassigning to {best_match['username']} (exact match)")
-                    db_fond.owner_id = best_match["user_id"]
+                reassignment_suggestions = {
+                    "fond_id": fond_id,
+                    "fond_name": db_fond.company_name,
+                    "old_holder_name": old_holder_name,
+                    "new_holder_name": new_holder_name,
+                    "current_owner": {
+                        "id": current_owner.id if current_owner else None,
+                        "username": current_owner.username if current_owner else None,
+                        "company_name": current_owner.company_name if current_owner else None
+                    } if current_owner else None,
+                    "suggestions": potential_owners[:3],  # Top 3 suggestions
+                    "best_match": best_match,
+                    "requires_confirmation": True
+                }
+                
+                print(f"💡 Reassignment suggestion available: {best_match['username']} ({best_match['similarity']:.2f} similarity)")
     
+    # STEP 6: Salvează modificările (fără reassignment dacă nu e confirmat)
     db.commit()
     db.refresh(db_fond)
-    return db_fond
+    
+    return db_fond, reassignment_suggestions
+
+
+def update_fond(db: Session, fond_id: int, fond_update: FondUpdate) -> Optional[Fond]:
+    """
+    Funcția originală de update (pentru compatibilitate).
+    Folosește update_fond_with_reassignment_detection cu auto_reassign=False.
+    """
+    updated_fond, _ = update_fond_with_reassignment_detection(
+        db, fond_id, fond_update, auto_reassign=False
+    )
+    return updated_fond
 
 
 def get_reassignment_suggestions(db: Session, fond_id: int) -> Dict:

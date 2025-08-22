@@ -1,4 +1,4 @@
-# app/api/routes/fonds.py - FIXED with Auto Assignment and Owner Display
+# app/api/routes/fonds.py - ENHANCED with Auto-Reassignment Endpoints
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -12,6 +12,32 @@ from app.schemas.fond import FondCreate, FondUpdate, FondResponse
 from app.crud import fond as crud_fond, user as crud_user
 
 router = APIRouter()
+
+# NEW: Schema pentru reassignment suggestions
+from pydantic import BaseModel
+
+class ReassignmentSuggestion(BaseModel):
+    user_id: int
+    username: str
+    company_name: str
+    similarity: float
+    match_type: str
+    confidence: str
+
+class ReassignmentResponse(BaseModel):
+    fond_id: int
+    fond_name: str
+    old_holder_name: str
+    new_holder_name: str
+    current_owner: Optional[dict]
+    suggestions: List[ReassignmentSuggestion]
+    best_match: ReassignmentSuggestion
+    requires_confirmation: bool
+
+class ConfirmReassignmentRequest(BaseModel):
+    fond_id: int
+    new_owner_id: Optional[int]
+    confirmed: bool = True
 
 
 @router.get("/", response_model=List[FondResponse])
@@ -207,16 +233,28 @@ def create_fond(
     return crud_fond.create_fond(db, fond_in, owner_id=final_owner_id)
 
 
-@router.put("/{fond_id}", response_model=FondResponse)
+# NEW: Enhanced update endpoint with reassignment detection
+@router.put("/{fond_id}", response_model=dict)
 def update_fond(
     fond_id: int,
     fond_in: FondUpdate,
+    auto_reassign: bool = Query(False, description="Aplică automat reassignment pentru match-uri exacte"),
+    confirmed_owner_id: Optional[int] = Query(None, description="ID-ul noului owner confirmat de admin"),
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user)
 ):
     """
-    Actualizează un fond existent.
-    Verifică permisiunile de editare pe baza rolului și ownership-ului.
+    Actualizează un fond existent cu detectarea reassignment-ului.
+    
+    ENHANCED: Detectează automat schimbările de holder_name și sugerează reassignment.
+    
+    Query Parameters:
+    - auto_reassign: Dacă True, aplică automat reassignment pentru match-uri exacte (>=95% similaritate)
+    - confirmed_owner_id: ID-ul noului owner confirmat de admin (None pentru a nu schimba ownership-ul)
+    
+    Returns:
+    - fond: Fondul actualizat
+    - reassignment_suggestions: Sugestii de reassignment (dacă există)
     """
     # Verifică dacă utilizatorul poate edita acest fond
     if not crud_fond.can_user_edit_fond(db, current_user, fond_id):
@@ -227,11 +265,33 @@ def update_fond(
         else:
             raise HTTPException(status_code=403, detail="Nu ai permisiuni pentru a edita acest fond")
     
-    db_fond = crud_fond.update_fond(db, fond_id, fond_in)
+    # NEW: Folosește funcția enhanced pentru detectarea reassignment-ului
+    db_fond, reassignment_suggestions = crud_fond.update_fond_with_reassignment_detection(
+        db, 
+        fond_id, 
+        fond_in,
+        auto_reassign=auto_reassign,
+        confirmed_new_owner_id=confirmed_owner_id
+    )
+    
     if not db_fond:
         raise HTTPException(status_code=404, detail="Fond not found")
     
-    return db_fond
+    # Construiește răspunsul
+    response = {
+        "fond": db_fond,
+        "reassignment_applied": confirmed_owner_id is not None,
+        "auto_reassignment_applied": auto_reassign and reassignment_suggestions is None
+    }
+    
+    # Adaugă sugestii de reassignment dacă există
+    if reassignment_suggestions:
+        response["reassignment_suggestions"] = reassignment_suggestions
+        response["message"] = f"Fond actualizat cu succes. Detectate {len(reassignment_suggestions['suggestions'])} sugestii de reassignment."
+    else:
+        response["message"] = "Fond actualizat cu succes."
+    
+    return response
 
 
 @router.delete("/{fond_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -294,6 +354,83 @@ def get_fonds_stats(
         }
     else:
         raise HTTPException(status_code=403, detail="Invalid user role")
+
+
+# NEW: Reassignment endpoints pentru admin
+@router.get("/{fond_id}/reassignment-suggestions")
+def get_reassignment_suggestions(
+    fond_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
+    """
+    Returnează sugestii de reassignment pentru un fond dat (doar pentru admin).
+    """
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can get reassignment suggestions")
+    
+    suggestions = crud_fond.get_reassignment_suggestions(db, fond_id)
+    
+    if "error" in suggestions:
+        raise HTTPException(status_code=404, detail=suggestions["error"])
+    
+    return suggestions
+
+
+@router.post("/{fond_id}/confirm-reassignment")
+def confirm_reassignment(
+    fond_id: int,
+    request: ConfirmReassignmentRequest,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
+    """
+    Confirmă reassignment-ul unui fond către un nou owner (doar pentru admin).
+    """
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can confirm reassignments")
+    
+    if request.fond_id != fond_id:
+        raise HTTPException(status_code=400, detail="Fond ID mismatch")
+    
+    if not request.confirmed:
+        raise HTTPException(status_code=400, detail="Reassignment not confirmed")
+    
+    # Verifică că fondul există
+    fond = crud_fond.get_fond(db, fond_id)
+    if not fond:
+        raise HTTPException(status_code=404, detail="Fond not found")
+    
+    # Verifică că noul owner este valid (dacă nu e None)
+    if request.new_owner_id:
+        new_owner = crud_user.get_user_by_id(db, request.new_owner_id)
+        if not new_owner or new_owner.role != "client":
+            raise HTTPException(status_code=400, detail="Invalid client user")
+    
+    # Aplică reassignment-ul
+    success = crud_fond.apply_reassignment(db, fond_id, request.new_owner_id, confirmed_by_admin=True)
+    
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to apply reassignment")
+    
+    # Obține informații despre reassignment pentru răspuns
+    updated_fond = crud_fond.get_fond(db, fond_id)
+    new_owner_info = None
+    if request.new_owner_id:
+        new_owner = crud_user.get_user_by_id(db, request.new_owner_id)
+        new_owner_info = {
+            "id": new_owner.id,
+            "username": new_owner.username,
+            "company_name": new_owner.company_name
+        }
+    
+    return {
+        "message": "Reassignment confirmed and applied successfully",
+        "fond_id": fond_id,
+        "fond_name": updated_fond.company_name,
+        "new_owner": new_owner_info,
+        "reassignment_type": "unassigned" if request.new_owner_id is None else "assigned"
+    }
 
 
 # Admin-only ownership management endpoints
@@ -386,67 +523,81 @@ def get_ownership_suggestions(
         ]
     }
 
-def find_client_by_company_name(db: Session, holder_name: str) -> Optional[UserModel]:
+
+# NEW: Bulk reassignment endpoint pentru testare
+@router.post("/bulk-check-reassignments")
+def bulk_check_reassignments(
+    apply_automatic: bool = Query(False, description="Aplică automat reassignment-urile cu confidence mare"),
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_user)
+):
     """
-    Găsește un client pe baza numelui din holder_name.
-    Încearcă să facă match între holder_name și company_name din profil client.
+    Verifică toate fondurile pentru posibile reassignment-uri (doar pentru admin).
+    Util pentru a detecta fonduri care au nevoie de reassignment în masa.
     """
-    if not holder_name:
-        return None
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can perform bulk reassignment checks")
     
-    # Normalizează numele pentru căutare
-    normalized_holder = holder_name.lower().strip()
+    # Obține toate fondurile active
+    all_fonds = crud_fond.get_fonds(db, skip=0, limit=1000, active_only=True)
     
-    print(f"🔍 Căutare client pentru holder_name: '{holder_name}' (normalized: '{normalized_holder}')")
+    reassignment_candidates = []
+    automatic_reassignments = []
     
-    # Obține toți clienții
-    clients = db.query(UserModel).filter(UserModel.role == "client").all()
-    
-    print(f"📋 Găsiți {len(clients)} clienți în total")
-    
-    # Strategie 1: Exact match pe company_name
-    for client in clients:
-        if client.company_name:
-            normalized_company = client.company_name.lower().strip()
-            print(f"  🔸 Verificare client '{client.username}' cu companie '{client.company_name}'")
+    for fond in all_fonds:
+        # Găsește potențiali owner-i pentru fiecare fond
+        potential_owners = crud_fond.find_potential_owners_for_holder(
+            db, fond.holder_name, exclude_current_owner=fond.owner_id
+        )
+        
+        if potential_owners:
+            best_match = potential_owners[0]
             
-            if normalized_company == normalized_holder:
-                print(f"✅ Match exact găsit: {client.username} - {client.company_name}")
-                return client
-    
-    # Strategie 2: Verifică dacă holder_name conține company_name sau invers
-    for client in clients:
-        if client.company_name:
-            normalized_company = client.company_name.lower().strip()
+            # Dacă similaritatea este foarte mare și apply_automatic=True
+            if apply_automatic and best_match["similarity"] >= 0.95:
+                success = crud_fond.apply_reassignment(
+                    db, fond.id, best_match["user_id"], confirmed_by_admin=True
+                )
+                if success:
+                    automatic_reassignments.append({
+                        "fond_id": fond.id,
+                        "fond_name": fond.company_name,
+                        "holder_name": fond.holder_name,
+                        "old_owner_id": fond.owner_id,
+                        "new_owner_id": best_match["user_id"],
+                        "new_owner_username": best_match["username"],
+                        "similarity": best_match["similarity"]
+                    })
             
-            # Elimină sufixe comune pentru match mai bun
-            holder_clean = normalized_holder
-            company_clean = normalized_company
-            
-            for suffix in [' srl', ' sa', ' sc', ' ltd', ' inc', ' corp', 'srl', 'sa', 'sc']:
-                holder_clean = holder_clean.replace(suffix, '').strip()
-                company_clean = company_clean.replace(suffix, '').strip()
-            
-            # Check inclusion în ambele direcții
-            if (holder_clean in company_clean or company_clean in holder_clean) and len(holder_clean) > 3:
-                print(f"✅ Match parțial găsit: {client.username} - {client.company_name}")
-                return client
-    
-    # Strategie 3: Matching pe cuvinte cheie
-    holder_words = set(word for word in normalized_holder.split() if len(word) > 2)
-    
-    for client in clients:
-        if client.company_name and len(holder_words) >= 2:
-            company_words = set(word for word in client.company_name.lower().split() if len(word) > 2)
-            
-            # Verifică dacă au cel puțin 50% cuvinte comune
-            if company_words and holder_words:
-                common_words = holder_words.intersection(company_words)
-                similarity = len(common_words) / max(len(holder_words), len(company_words))
+            # Adaugă la candidații pentru reassignment manual
+            elif best_match["similarity"] >= 0.7:
+                current_owner = None
+                if fond.owner_id:
+                    current_owner = crud_user.get_user_by_id(db, fond.owner_id)
                 
-                if similarity >= 0.5:  # 50% similaritate
-                    print(f"✅ Match pe cuvinte găsit: {client.username} - {client.company_name} (similaritate: {similarity:.2f})")
-                    return client
+                reassignment_candidates.append({
+                    "fond_id": fond.id,
+                    "fond_name": fond.company_name,
+                    "holder_name": fond.holder_name,
+                    "current_owner": {
+                        "id": current_owner.id if current_owner else None,
+                        "username": current_owner.username if current_owner else None,
+                        "company_name": current_owner.company_name if current_owner else None
+                    } if current_owner else None,
+                    "suggested_owner": {
+                        "id": best_match["user_id"],
+                        "username": best_match["username"],
+                        "company_name": best_match["company_name"],
+                        "similarity": best_match["similarity"],
+                        "confidence": best_match["confidence"]
+                    }
+                })
     
-    print(f"❌ Nu s-a găsit client pentru holder_name: '{holder_name}'")
-    return None
+    return {
+        "total_fonds_checked": len(all_fonds),
+        "automatic_reassignments_applied": len(automatic_reassignments),
+        "manual_reassignment_candidates": len(reassignment_candidates),
+        "automatic_reassignments": automatic_reassignments,
+        "reassignment_candidates": reassignment_candidates,
+        "apply_automatic_was_enabled": apply_automatic
+    }
