@@ -385,3 +385,68 @@ def get_ownership_suggestions(
             for client in all_clients
         ]
     }
+
+def find_client_by_company_name(db: Session, holder_name: str) -> Optional[UserModel]:
+    """
+    Găsește un client pe baza numelui din holder_name.
+    Încearcă să facă match între holder_name și company_name din profil client.
+    """
+    if not holder_name:
+        return None
+    
+    # Normalizează numele pentru căutare
+    normalized_holder = holder_name.lower().strip()
+    
+    print(f"🔍 Căutare client pentru holder_name: '{holder_name}' (normalized: '{normalized_holder}')")
+    
+    # Obține toți clienții
+    clients = db.query(UserModel).filter(UserModel.role == "client").all()
+    
+    print(f"📋 Găsiți {len(clients)} clienți în total")
+    
+    # Strategie 1: Exact match pe company_name
+    for client in clients:
+        if client.company_name:
+            normalized_company = client.company_name.lower().strip()
+            print(f"  🔸 Verificare client '{client.username}' cu companie '{client.company_name}'")
+            
+            if normalized_company == normalized_holder:
+                print(f"✅ Match exact găsit: {client.username} - {client.company_name}")
+                return client
+    
+    # Strategie 2: Verifică dacă holder_name conține company_name sau invers
+    for client in clients:
+        if client.company_name:
+            normalized_company = client.company_name.lower().strip()
+            
+            # Elimină sufixe comune pentru match mai bun
+            holder_clean = normalized_holder
+            company_clean = normalized_company
+            
+            for suffix in [' srl', ' sa', ' sc', ' ltd', ' inc', ' corp', 'srl', 'sa', 'sc']:
+                holder_clean = holder_clean.replace(suffix, '').strip()
+                company_clean = company_clean.replace(suffix, '').strip()
+            
+            # Check inclusion în ambele direcții
+            if (holder_clean in company_clean or company_clean in holder_clean) and len(holder_clean) > 3:
+                print(f"✅ Match parțial găsit: {client.username} - {client.company_name}")
+                return client
+    
+    # Strategie 3: Matching pe cuvinte cheie
+    holder_words = set(word for word in normalized_holder.split() if len(word) > 2)
+    
+    for client in clients:
+        if client.company_name and len(holder_words) >= 2:
+            company_words = set(word for word in client.company_name.lower().split() if len(word) > 2)
+            
+            # Verifică dacă au cel puțin 50% cuvinte comune
+            if company_words and holder_words:
+                common_words = holder_words.intersection(company_words)
+                similarity = len(common_words) / max(len(holder_words), len(company_words))
+                
+                if similarity >= 0.5:  # 50% similaritate
+                    print(f"✅ Match pe cuvinte găsit: {client.username} - {client.company_name} (similaritate: {similarity:.2f})")
+                    return client
+    
+    print(f"❌ Nu s-a găsit client pentru holder_name: '{holder_name}'")
+    return None

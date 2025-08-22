@@ -77,5 +77,13 @@ class FondResponse(FondBase):
     created_at: datetime
     updated_at: datetime
     
+    # Owner information - NEW FIELDS for displaying assignment
+    owner_id: Optional[int] = Field(None, description="ID-ul clientului care deține fondul")
+    
     # Pydantic v2 - configurare pentru compatibilitate cu SQLAlchemy
     model_config = ConfigDict(from_attributes=True)
+
+class FondResponseWithOwner(FondResponse):
+    """Extended schema that includes owner details for admin/audit views."""
+    owner_username: Optional[str] = Field(None, description="Username-ul clientului")
+    owner_company: Optional[str] = Field(None, description="Numele companiei clientului")
