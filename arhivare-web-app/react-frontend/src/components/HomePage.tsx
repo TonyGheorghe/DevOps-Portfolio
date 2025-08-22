@@ -1,9 +1,9 @@
-// src/components/HomePage.tsx - FIXED with Role-Based Navigation
+// src/components/HomePage.tsx - FIXED with Removed Unused Imports
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Search, Phone, Mail, MapPin, Building2, Archive, LogIn, 
-  Users, BarChart3, Shield, Eye, FileText, Settings, User
+  Users, BarChart3, Eye, User
 } from 'lucide-react';
 import { useAuth } from './AuthSystem';
 

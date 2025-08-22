@@ -1,8 +1,8 @@
-// src/components/pages/UserProfile.tsx - FIXED with Client Access
+// src/components/pages/UserProfile.tsx - FIXED with Proper TypeScript Types
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  User, Lock, Shield, Save, ArrowLeft, Eye, EyeOff, 
+  User, ArrowLeft, Eye, EyeOff, 
   AlertCircle, CheckCircle, Key, Clock, Calendar, Building2, Mail
 } from 'lucide-react';
 import { useForm, SubmitHandler } from 'react-hook-form';
@@ -59,7 +59,7 @@ const passwordChangeSchema = yup.object({
     .oneOf([yup.ref('newPassword')], 'Parolele nu se potrivesc')
 });
 
-// Profile update validation schema
+// Profile update validation schema - FIXED to match TypeScript types
 const profileUpdateSchema = yup.object({
   company_name: yup
     .string()
@@ -69,11 +69,16 @@ const profileUpdateSchema = yup.object({
   
   contact_email: yup
     .string()
-    .email('Adresa de email nu este validă')
+    .default('')
+    .test('email', 'Adresa de email nu este validă', function(value) {
+      if (!value || value === '') return true;
+      return yup.string().email().isValidSync(value);
+    })
     .max(100, 'Email-ul poate avea maxim 100 caractere'),
   
   notes: yup
     .string()
+    .default('')
     .max(1000, 'Notele pot avea maxim 1000 caractere')
 });
 
@@ -124,15 +129,19 @@ const UserProfile: React.FC = () => {
     resolver: yupResolver(passwordChangeSchema)
   });
 
-  // Profile update form (only for clients)
+  // Profile update form (only for clients) - FIXED types
   const {
     register: registerProfile,
     handleSubmit: handleProfileSubmit,
     formState: { errors: profileErrors, isSubmitting: isProfileSubmitting },
-    reset: resetProfile,
     setValue: setProfileValue
   } = useForm<ProfileUpdateData>({
-    resolver: yupResolver(profileUpdateSchema)
+    resolver: yupResolver(profileUpdateSchema),
+    defaultValues: {
+      company_name: '',
+      contact_email: '',
+      notes: ''
+    }
   });
 
   const watchedNewPassword = watchPassword('newPassword');
@@ -403,11 +412,6 @@ const UserProfile: React.FC = () => {
                     <span>ID: {profileData.id}</span>
                   </div>
                   
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Shield className="h-4 w-4 mr-2" />
-                    <span>Rol: {profileData.role}</span>
-                  </div>
-                  
                   {isClient && profileData.company_name && (
                     <div className="flex items-center text-sm text-gray-600">
                       <Building2 className="h-4 w-4 mr-2" />
@@ -438,10 +442,6 @@ const UserProfile: React.FC = () => {
                         <div className="flex items-center">
                           <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
                           <span>Management utilizatori</span>
-                        </div>
-                        <div className="flex items-center">
-                          <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
-                          <span>Administrare sistem</span>
                         </div>
                       </>
                     )}
@@ -556,7 +556,6 @@ const UserProfile: React.FC = () => {
                         </>
                       ) : (
                         <>
-                          <Save className="h-4 w-4" />
                           <span>Actualizează Profilul</span>
                         </>
                       )}
@@ -682,9 +681,8 @@ const UserProfile: React.FC = () => {
                   <ul className="text-sm text-blue-700 space-y-1">
                     <li>• Folosește cel puțin 8 caractere</li>
                     <li>• Combină litere mari și mici, cifre și simboluri</li>
-                    <li>• Nu folosi informații personale (nume, dată nașterii)</li>
+                    <li>• Nu folosi informații personale</li>
                     <li>• Nu reutiliza parole de la alte conturi</li>
-                    <li>• Schimbă parola periodic</li>
                   </ul>
                 </div>
 
@@ -702,7 +700,7 @@ const UserProfile: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <Save className="h-4 w-4" />
+                        <Key className="h-4 w-4" />
                         <span>Schimbă Parola</span>
                       </>
                     )}
@@ -714,7 +712,7 @@ const UserProfile: React.FC = () => {
             {/* Security Information */}
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center space-x-3 mb-4">
-                <Shield className="h-6 w-6 text-green-600" />
+                <CheckCircle className="h-6 w-6 text-green-600" />
                 <h2 className="text-lg font-semibold text-gray-900">Informații Securitate</h2>
               </div>
 
@@ -738,19 +736,6 @@ const UserProfile: React.FC = () => {
                     Token JWT activ
                   </p>
                 </div>
-              </div>
-
-              {/* Security Recommendations */}
-              <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                <h4 className="text-sm font-medium text-amber-800 mb-2">
-                  🔒 Recomandări de Securitate
-                </h4>
-                <ul className="text-sm text-amber-700 space-y-1">
-                  <li>• Schimbă parola la fiecare 3-6 luni</li>
-                  <li>• Nu împărtăși datele de autentificare cu nimeni</li>
-                  <li>• Deconectează-te când părăsești aplicația</li>
-                  <li>• Raportează orice activitate suspectă</li>
-                </ul>
               </div>
             </div>
           </div>

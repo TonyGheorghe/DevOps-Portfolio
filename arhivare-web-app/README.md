@@ -1,360 +1,345 @@
-Arhivare Web App
-📌 Description
-Arhivare Web App is a comprehensive web application built with FastAPI and PostgreSQL that enables:
+# Arhivare Web App 🏛️
 
-Public search for archival fonds by company name
-Role-based management of archival fonds (CRUD) with JWT authentication
-Complete React frontend with modern UI/UX
-Advanced ownership system for client-specific fond management
+> **Aplicație web modernă pentru căutarea și managementul fondurilor arhivistice româneşti**
 
-This is the second application in the DevOps Portfolio, alongside hello-web-app.
-🎯 Purpose
-The goal of this application is to provide users with contact details of institutions or companies that hold the archives of certain companies (for example, to obtain employment history certificates).
-Example:
+[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 
-If a user searches for "Tractorul Brașov", the application will return the contact information of the relevant archival fond holder, e.g., "National Archive Brașov" – address, email, phone, etc.
+## 📌 Descriere
 
-🧩 User Roles & Features
+Arhivare Web App este o aplicație web completă care permite:
 
-Public User:
+- **🔍 Căutare publică** de fonduri arhivistice după numele companiei
+- **👥 Management utilizatori** cu roluri diferite (Admin, Audit, Client)
+- **📁 Management fonduri** cu sistem de ownership și assignment
+- **🎨 Interface modern React** cu TypeScript și Tailwind CSS
+- **🔒 Autentificare JWT** cu control de acces bazat pe roluri
 
-Can use the search function without authentication
-Access to modern React frontend for searches
+## 🎯 Scopul Aplicației
 
+Aplicația ajută utilizatorii să găsească informațiile de contact ale instituțiilor care dețin arhivele unor companii românești (pentru obținerea de adeverințe de vechime în muncă, certificate, etc.).
 
-Client:
+**Exemplu:** Dacă cauți "Tractorul Brașov", aplicația va returna contactul "Arhiva Națională Brașov" cu adresa, email-ul și telefonul.
 
-JWT login with personalized dashboard
-Manage assigned archival fonds (CRUD operations)
-View personal statistics and completion rates
-Add, edit, delete own fonds
+## 🧩 Roluri de Utilizator
 
+| Rol | Descriere | Permisiuni |
+|-----|-----------|------------|
+| **Admin** | Administrator sistem | ✅ Management complet utilizatori și fonduri<br>✅ Assignment fonduri către clienți<br>✅ Export și statistici |
+| **Audit** | Utilizator de monitorizare | ✅ Vizualizare toate datele (read-only)<br>✅ Export și rapoarte<br>❌ Fără modificări |
+| **Client** | Client cu fonduri assignate | ✅ Management fonduri proprii<br>✅ Căutare publică<br>❌ Fără acces la alte fonduri |
 
-Audit:
+## 🚀 Setup Dezvoltare
 
-Read-only access to all system data
-Advanced reporting and export capabilities
-System-wide statistics and insights
-Recent assignments tracking
+### Cerințe Sistem
 
+- **Docker** și **Docker Compose** (obligatoriu pentru backend)
+- **Node.js 18+** și **npm** (pentru frontend)
+- **Git** pentru clonarea repository-ului
 
-Admin:
+### Pașii de Setup
 
-Complete system management
-User management (create, edit, delete users)
-Fond ownership assignment and management
-Bulk operations and advanced administration
+#### 1. Clonează Repository-ul
 
+```bash
+git clone <repository-url>
+cd arhivare-web-app
+```
 
+#### 2. Configurează Environment
 
-🗄️ Tech Stack
-Backend:
+```bash
+# Copiază fișierul de configurare
+cp .env.example .env
 
-FastAPI (Python 3.11+) with advanced routing
-PostgreSQL with comprehensive migrations
-SQLAlchemy + Alembic for ORM & migrations
-JWT Authentication with role-based access control
-Pydantic for data validation and serialization
+# Editează .env dacă este necesar (opțional pentru dezvoltare locală)
+```
 
-Frontend:
+#### 3. Pornește Backend cu Docker
 
-React 18 with TypeScript
-Tailwind CSS for styling
-React Hook Form + Yup for form validation
-React Router for navigation
-Lucide React for icons
+```bash
+# Pornește serviciile backend (API + Database + Adminer)
+docker-compose up api db adminer
 
-Development & Deployment:
+# Sau în background
+docker-compose up -d api db adminer
+```
 
-Docker + Docker Compose for containerization
-pytest + pytest-asyncio + httpx for testing
-GitHub Actions ready for CI/CD
-Adminer for database management
+**Verifică că backend-ul funcționează:**
+- API: http://localhost:8000/health
+- API Docs: http://localhost:8000/docs
+- Adminer: http://localhost:8080
 
-📂 Project Structure
-basharhivare-web-app/
-├── app/                          # Backend application
-│   ├── api/                      # API routers
-│   │   ├── auth.py               # ✅ JWT Authentication
-│   │   ├── search.py             # ✅ Public search endpoints
-│   │   └── routes/
-│   │       ├── fonds.py          # ✅ General fonds CRUD
-│   │       ├── client_fonds.py   # ✅ Client-specific endpoints
-│   │       ├── admin_fonds.py    # ✅ Admin ownership management
-│   │       └── users.py          # ✅ User management
-│   ├── core/                     # Configuration and security
-│   │   ├── config.py             # ✅ Pydantic Settings
-│   │   └── security.py           # ✅ JWT & password hashing
-│   ├── models/                   # SQLAlchemy models
-│   │   ├── base.py               # ✅ Base class
-│   │   ├── user.py               # ✅ Enhanced user model with extended roles
-│   │   └── fond.py               # ✅ Fond model with ownership support
-│   ├── schemas/                  # Pydantic DTOs
-│   │   ├── user.py               # ✅ Extended user schemas with new roles
-│   │   └── fond.py               # ✅ Comprehensive fond schemas
-│   ├── crud/                     # Database operations
-│   │   ├── user.py               # ✅ Extended user operations
-│   │   └── fond.py               # ✅ Advanced fond CRUD with ownership
-│   ├── db/session.py             # ✅ Database connection
-│   ├── static/index.html         # ✅ Simple backend search interface
-│   └── main.py                   # ✅ FastAPI app with role-based routing
-├── react-frontend/               # Modern React application
+#### 4. Setup și Pornire Frontend
+
+```bash
+# Navighează la directorul frontend
+cd react-frontend
+
+# Instalează dependințele
+npm install
+
+# Pornește development server-ul (într-un terminal nou)
+npm start
+```
+
+**Verifică că frontend-ul funcționează:**
+- Frontend: http://localhost:3000
+
+#### 5. Creează Date Demo (Opțional)
+
+```bash
+# Execută scriptul pentru date demo
+docker-compose exec api python create_admin_user.py
+```
+
+## 🌐 Accesare Aplicație
+
+După setup, aplicația va fi disponibilă la:
+
+| Serviciu | URL | Descriere |
+|----------|-----|-----------|
+| **Frontend** | http://localhost:3000 | Interface principal React |
+| **Backend API** | http://localhost:8000 | API FastAPI |
+| **API Docs** | http://localhost:8000/docs | Documentație Swagger Interactive |
+| **Adminer** | http://localhost:8080 | Management bază de date PostgreSQL |
+
+### Conectare Adminer
+- **Server**: `db`
+- **Username**: `app`
+- **Password**: `app`
+- **Database**: `arhivare`
+
+## 🔐 Conturi Demo
+
+După rularea scriptului de date demo:
+
+| Rol | Username | Parolă | Descriere |
+|-----|----------|--------|-----------|
+| Admin | `admin` | `admin123` | Acces complet sistem |
+| Audit | `audit_user` | `Audit1234` | Read-only cu rapoarte |
+| Client | `client_brasov` | `Client1234` | Fonduri Brașov |
+| Client | `client_cluj` | `Client1234` | Fonduri Cluj |
+| Client | `client_bucuresti` | `Client1234` | Fonduri București |
+
+## 📊 Testare Funcționalități
+
+### 🔍 Căutare Publică (Fără Login)
+1. Accesează http://localhost:3000
+2. Caută termeni precum: "Tractorul", "Brașov", "Steagul Roșu"
+3. Verifică rezultatele cu contact detaliat
+
+### 👨‍💼 Dashboard Admin
+1. Login cu `admin` / `admin123`
+2. Accesează management fonduri și utilizatori
+3. Testează crearea de fonduri noi
+4. Testează assignment fonduri către clienți
+
+### 👁️ Dashboard Audit
+1. Login cu `audit_user` / `Audit1234`
+2. Vizualizează toate fondurile (read-only)
+3. Testează exportul de date
+4. Verifică statisticile și rapoartele
+
+### 👤 Dashboard Client
+1. Login cu `client_brasov` / `Client1234`
+2. Vezi doar fondurile assignate
+3. Testează editarea fondurilor proprii
+4. Verifică că nu poți accesa fondurile altor clienți
+
+## 🛠️ Dezvoltare
+
+### Structura Workflow
+
+```bash
+# Terminal 1: Backend
+docker-compose up api db adminer
+
+# Terminal 2: Frontend  
+cd react-frontend
+npm start
+
+# Terminal 3: Development commands (opțional)
+docker-compose logs -f api  # Vezi log-urile API
+```
+
+### Comenzi Utile
+
+```bash
+# Backend
+docker-compose up api db adminer         # Start backend services
+docker-compose down                      # Stop services
+docker-compose logs api                  # Vezi log-uri API
+docker-compose exec api bash             # Conectează la container API
+docker-compose exec api python create_admin_user.py  # Creează date demo
+
+# Frontend
+cd react-frontend
+npm start                                # Development server
+npm run build                            # Build pentru producție
+npm test                                 # Rulează teste
+
+# Database
+docker-compose exec api alembic upgrade head     # Aplică migrații
+docker-compose exec api alembic revision --autogenerate -m "Message"  # Creează migrație
+```
+
+### Hot Reload & Development
+
+- **Frontend**: Modificările în `react-frontend/src/` se reîncarcă automat
+- **Backend**: Docker container-ul are volume mount, modificările se reîncarcă automat
+- **Database**: Datele persistă în Docker volume
+
+## 🗂️ Structura Proiect
+
+```
+arhivare-web-app/
+├── app/                          # Backend FastAPI
+│   ├── api/                      # API routes
+│   │   ├── auth.py               # Autentificare JWT  
+│   │   ├── search.py             # Căutare publică
+│   │   └── routes/               # Rute organizate
+│   │       ├── fonds.py          # Management fonduri generale
+│   │       ├── client_fonds.py   # Endpoint-uri clienți
+│   │       ├── admin_fonds.py    # Management ownership
+│   │       └── users.py          # Management utilizatori
+│   ├── core/                     # Config și securitate
+│   ├── models/                   # Modele SQLAlchemy
+│   ├── schemas/                  # Scheme Pydantic
+│   ├── crud/                     # Operații DB
+│   └── main.py                   # App FastAPI
+├── react-frontend/               # Frontend React
 │   ├── src/
-│   │   ├── components/
-│   │   │   ├── AuthSystem.tsx    # ✅ Complete authentication system
-│   │   │   ├── HomePage.tsx      # ✅ Public search interface
-│   │   │   ├── AdminDashboard.tsx # ✅ Full admin management
-│   │   │   ├── AuditDashboard.tsx # ✅ Audit reporting interface
-│   │   │   ├── ClientDashboard.tsx # ✅ Client personal dashboard
-│   │   │   ├── forms/
-│   │   │   │   ├── FondForm.tsx  # ✅ Advanced form with duplicate detection
-│   │   │   │   └── UserForm.tsx  # ✅ User management form
-│   │   │   └── pages/
-│   │   │       ├── UsersPage.tsx # ✅ User management interface
-│   │   │       └── UserProfile.tsx # ✅ Profile management
-│   │   ├── services/api.ts       # ✅ API service layer
-│   │   └── types/index.ts        # ✅ TypeScript definitions
-│   ├── package.json              # ✅ Dependencies and scripts
-│   └── tailwind.config.js        # ✅ Tailwind configuration
-├── alembic/                      # ✅ Database migrations
-│   ├── versions/
-│   │   ├── 5caab2fd7444_create_users_and_fonds_tables.py
-│   │   ├── add_ownership_roles.py
-│   │   └── complete_ownership_roles.py
-├── tests/                        # ✅ Comprehensive test suite
-│   ├── conftest.py               # ✅ Test configuration and fixtures
-│   ├── test_health.py            # ✅ Health check tests
-│   ├── test_auth.py              # ✅ Authentication flow tests
-│   ├── test_search.py            # ✅ Public search functionality
-│   ├── test_crud.py              # ✅ Database operations tests
-│   ├── test_fonds_api.py         # ✅ API endpoint tests
-│   └── run_tests.py              # ✅ Test runner script
-├── docker-compose.yml            # ✅ Multi-service container setup
-├── Dockerfile                    # ✅ Optimized application container
-├── requirements.txt              # ✅ Python dependencies
-├── create_admin_user.py          # ✅ Demo data and user creation script
-└── README.md                     # ✅ This documentation
-🚀 Implementation Status
-✅ Fully Implemented:
+│   │   ├── components/           # Componente React
+│   │   │   ├── AuthSystem.tsx    # Sistem autentificare
+│   │   │   ├── HomePage.tsx      # Pagina principală
+│   │   │   ├── AdminDashboard.tsx# Dashboard admin
+│   │   │   ├── AuditDashboard.tsx# Dashboard audit  
+│   │   │   ├── ClientDashboard.tsx# Dashboard client
+│   │   │   ├── forms/            # Formulare
+│   │   │   └── pages/            # Pagini
+│   │   ├── services/             # Servicii API
+│   │   └── types/                # Tipuri TypeScript
+│   └── package.json              # Dependințe Node.js
+├── alembic/                      # Migrații DB
+├── tests/                        # Teste automate
+├── docker-compose.yml            # Configurare Docker
+├── requirements.txt              # Dependințe Python
+├── .env.example                  # Template configurare
+└── create_admin_user.py          # Script date demo
+```
 
-Complete Backend API with role-based access control
-Enhanced Data Models with ownership and extended user roles
-JWT Authentication with comprehensive endpoint protection
-Advanced CRUD Operations for all entities
-Public Search with filtering, pagination, and count endpoints
-Role-Based Routing (admin/audit/client specific endpoints)
-Ownership Management - assign fonds to clients
-Complete React Frontend with modern UI/UX
-User Management Interface with role-based permissions
-Client Dashboard for personal fond management
-Admin Dashboard with comprehensive management tools
-Audit Dashboard with reporting and analytics
-Form Validation with duplicate detection and error handling
-Responsive Design for mobile and desktop
-Database Migrations with ownership and role extensions
-Comprehensive Test Suite (>85% coverage)
-Docker Configuration ready for deployment
+## 🧪 Testare
 
-🎯 Ready for Production:
+```bash
+# Testare automată
+docker-compose exec api python -m pytest tests/ -v
 
-User Roles: Admin, Audit, Client with granular permissions
-Ownership System: Fonds can be assigned to specific clients
-Modern Frontend: React with TypeScript and Tailwind CSS
-Security: JWT authentication with protected routes
-Testing: Complete test coverage for all functionality
-Documentation: Comprehensive API docs and user guides
+# Teste specifice  
+docker-compose exec api python -m pytest tests/test_auth.py -v
+docker-compose exec api python -m pytest tests/test_search.py -v
+docker-compose exec api python -m pytest tests/test_fonds_api.py -v
 
-🔧 Environment Configuration
-Create .env file based on .env.example:
-env# Database Configuration
+# Cu coverage
+docker-compose exec api python -m pytest tests/ --cov=app --cov-report=html
+```
+
+## 🔧 Troubleshooting
+
+### Backend nu pornește
+```bash
+# Verifică log-urile
+docker-compose logs api
+
+# Restart clean
+docker-compose down
+docker-compose up api db adminer
+```
+
+### Frontend nu se conectează la API
+- Verifică că backend-ul rulează pe port 8000
+- Verifică că `REACT_APP_API_URL` din `package.json` proxy pointează corect
+
+### Database connection errors
+```bash
+# Verifică că PostgreSQL rulează
+docker-compose ps
+
+# Reset database
+docker-compose down -v
+docker-compose up -d db
+# Apoi pornește api
+```
+
+### Port-uri ocupate
+```bash
+# Verifică ce rulează pe port-uri
+lsof -i :3000  # Frontend
+lsof -i :8000  # Backend
+lsof -i :5432  # PostgreSQL
+lsof -i :8080  # Adminer
+```
+
+## 📋 Environment Configuration
+
+Fișierul `.env` (bazat pe `.env.example`):
+
+```env
+# Database Configuration
 DATABASE_URL=postgresql+psycopg2://app:app@db:5432/arhivare
 
 # JWT Security
-JWT_SECRET=your_super_secure_jwt_key_change_in_production
+JWT_SECRET=your_super_secure_jwt_secret_change_in_production
 JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 
-# Admin Bootstrap (optional)
+# Admin Bootstrap
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=admin123
-🚀 Quick Start
-Option 1: Docker Compose (Recommended)
-bash# Clone repository and navigate to project
-git clone <repository-url>
-cd arhivare-web-app
+```
 
-# Configure environment
-cp .env.example .env
-# Edit .env with your settings
+## 🚀 Deploy to Production
 
-# Start all services
-docker-compose up --build
+Pentru deployment în producție:
 
-# Create demo users and data
-docker-compose exec api python create_admin_user.py
-Option 2: Local Development
-bash# Backend setup
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
+1. **Environment Variables**:
+   - Schimbă `JWT_SECRET` cu o cheie securizată
+   - Configurează `DATABASE_URL` pentru DB de producție
+   - Setează parole sigure
 
-# Database setup
-createdb arhivare
-cp .env.example .env
-# Configure DATABASE_URL in .env
+2. **Frontend Build**:
+   ```bash
+   cd react-frontend
+   npm run build
+   # Servește folder-ul build/ cu un web server
+   ```
 
-# Run migrations and create demo data
-alembic upgrade head
-python create_admin_user.py
+3. **Backend Deploy**:
+   - Folosește imaginea Docker din `Dockerfile`
+   - Configurează reverse proxy (nginx)
+   - Setează HTTPS și CORS pentru domeniul de producție
 
-# Start backend
-uvicorn app.main:app --reload
+## 🎯 Status Actual
 
-# Frontend setup (new terminal)
-cd react-frontend
-npm install
-npm start
-🎯 Access Points
-After starting the application:
-Web Interfaces:
+✅ **Funcțional și Testat**
+- Backend FastAPI cu autentificare JWT completă
+- Frontend React cu TypeScript și design responsive  
+- Căutare publică funcțională
+- 3 tipuri de dashboard-uri role-based
+- Management utilizatori și fonduri
+- Sistem de ownership și assignment
+- Validări și securitate implementate
 
-Homepage & Search: http://localhost:3000
-Admin Dashboard: http://localhost:3000/admin
-Audit Dashboard: http://localhost:3000/audit
-Client Dashboard: http://localhost:3000/client
-User Management: http://localhost:3000/admin/users
+## 👨‍💻 Autor
 
-API Documentation:
+**Tony Gheorghe**
+- DevOps Portfolio Application
+- Arhivare Web App v1.0.0
 
-Swagger UI: http://localhost:8000/docs
-ReDoc: http://localhost:8000/redoc
-Database Admin: http://localhost:8080 (Adminer)
+---
 
-Demo Accounts:
-RoleUsernamePasswordDescriptionAdminadminadmin123Full system accessAuditaudit_userAudit1234Read-only with reportingClientclient_brasovClient1234Assigned Brașov fondsClientclient_clujClient1234Assigned Cluj fondsClientclient_bucurestiClient1234Assigned București fonds
-🧪 Testing
-Run Complete Test Suite:
-bash# Using test runner script
-python tests/run_tests.py
-
-# Direct pytest execution
-pytest tests/ -v
-
-# With coverage report
-pytest tests/ --cov=app --cov-report=html
-
-# Specific test categories
-pytest tests/test_auth.py -v        # Authentication tests
-pytest tests/test_search.py -v      # Search functionality
-pytest tests/test_fonds_api.py -v   # API endpoint tests
-Test Categories:
-
-✅ Authentication & Authorization - Login, JWT, role-based access
-✅ Public Search - Search functionality with pagination
-✅ CRUD Operations - Database operations for all entities
-✅ API Endpoints - Complete HTTP API testing
-✅ Role-Based Access - Permission testing for all roles
-✅ Ownership Management - Fond assignment functionality
-
-📊 API Endpoints Overview
-Public (No Authentication):
-
-GET /health - System health check
-GET /search - Search archival fonds
-GET /search/count - Count search results
-GET /static/index.html - Simple search interface
-
-Authentication:
-
-POST /auth/login - User authentication
-GET /auth/me - Current user information
-GET /auth/protected - Protected endpoint test
-
-Admin-Only Endpoints:
-
-GET|POST|PUT|DELETE /users/ - User management
-GET|POST|PUT|DELETE /fonds/ - General fond management
-POST /admin/fonds/assign - Assign fonds to clients
-GET /admin/fonds/statistics - System statistics
-GET /admin/fonds/export/ownership-report - Data export
-
-Client-Specific Endpoints:
-
-GET|POST|PUT|DELETE /fonds/my-fonds - Personal fond management
-GET /fonds/my-fonds/stats - Personal statistics
-
-Audit Endpoints:
-
-GET /admin/fonds/audit/recent-assignments - Assignment tracking
-GET /admin/fonds/client-stats/{client_id} - Client analytics
-
-🔒 Security Features
-
-JWT Authentication with configurable expiration
-Role-Based Access Control (RBAC) with granular permissions
-Password Hashing with bcrypt
-Input Validation with Pydantic schemas
-SQL Injection Protection via SQLAlchemy ORM
-CORS Configuration for frontend integration
-Secure Headers and error handling
-
-📈 Advanced Features
-Ownership Management:
-
-Assign fonds to specific clients
-Bulk assignment operations
-Transfer ownership between clients
-Unassigned fond tracking
-
-Analytics & Reporting:
-
-Client-specific statistics
-System-wide ownership analytics
-Recent assignment tracking
-Data export capabilities
-
-User Experience:
-
-Duplicate detection in forms
-Real-time search suggestions
-Responsive mobile interface
-Comprehensive error handling
-Loading states and feedback
-
-🛠 Development Tools
-Database Management:
-bash# Create new migration
-alembic revision --autogenerate -m "Description"
-
-# Apply migrations
-alembic upgrade head
-
-# Reset database (development only)
-python create_admin_user.py reset
-Code Quality:
-bash# Run tests with coverage
-pytest tests/ --cov=app
-
-# Type checking (if using mypy)
-mypy app/
-
-# Code formatting (if using black)
-black app/ tests/
-🚀 Deployment Ready
-The application includes:
-
-Docker Compose configuration for easy deployment
-Production-ready environment variable management
-Database migrations for schema management
-Comprehensive testing for reliability
-API documentation for integration
-CORS configuration for frontend deployment
-
-👨‍💻 Author
-Tony Gheorghe
-📄 License
-MIT License
-
-Status: ✅ Production Ready - Complete full-stack application with modern architecture
-Version: v1.0.0
-Last Updated: August 2025
+**Tehnologii**: FastAPI + React + PostgreSQL + Docker  
+**Status**: ✅ Ready for Development & Production  
+**Ultima actualizare**: August 2025
