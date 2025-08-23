@@ -1,30 +1,41 @@
-# 1. Imagine de bază
+# Dockerfile - Enhanced for health checks
 FROM python:3.11-slim
 
-# 2. Setare variabile de mediu (pentru Python)
+# Set environment variables for Python
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-# 3. Creare director aplicație
+# Create application directory
 WORKDIR /app
 
-# 4. Instalare dependințe sistem (psycopg2 are nevoie de libpq)
+# Install system dependencies (including curl for health checks)
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc libpq-dev \
+    && apt-get install -y --no-install-recommends \
+        gcc \
+        libpq-dev \
+        curl \
     && rm -rf /var/lib/apt/lists/*
 
-# 5. Copiere fișiere requirements și instalare pachete Python
+# Copy requirements and install Python packages
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 6. Copiere cod sursă
+# Copy source code
 COPY ./app ./app
 COPY alembic.ini .
 COPY ./alembic ./alembic
 
-# 7. Expunere port
+# Create a non-root user for security
+RUN useradd --create-home --shell /bin/bash app_user
+RUN chown -R app_user:app_user /app
+USER app_user
+
+# Expose port
 EXPOSE 8000
 
-# 8. Comanda de pornire (va fi suprascrisă de docker-compose)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Add health check at the Docker level (optional, but useful)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
 
+# Default command (will be overridden by docker-compose)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

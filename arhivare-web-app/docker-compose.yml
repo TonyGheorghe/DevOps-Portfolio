@@ -7,17 +7,21 @@ services:
       POSTGRES_DB: arhivare
       POSTGRES_USER: app
       POSTGRES_PASSWORD: app
+      # Adaugă variabile pentru healthcheck
+      PGUSER: app
     ports:
       - "5432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
     networks:
       - app_net
+    # FIXED: Enhanced healthcheck
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     restart: unless-stopped
 
   # Serviciul Adminer pentru administrarea bazei de date
@@ -26,7 +30,7 @@ services:
     container_name: arhivare_adminer
     depends_on:
       db:
-        condition: service_healthy
+        condition: service_healthy  # FIXED: Wait for database to be healthy
     ports:
       - "8080:8080"
     environment:
@@ -45,7 +49,8 @@ services:
       - .env
     depends_on:
       db:
-        condition: service_healthy
+        condition: service_healthy  # FIXED: Wait for database to be healthy
+        restart: true  # FIXED: Restart API if DB restarts
     ports:
       - "8000:8000"
     networks:
@@ -53,16 +58,24 @@ services:
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     volumes:
       - .:/app  # Pentru hot reload în development
+    # FIXED: Add healthcheck for API
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     restart: unless-stopped
 
-  # Serviciul frontend React
+  # Serviciul frontend React (Optional - pentru când vrei să rulezi și frontend-ul)
   frontend:
     build:
       context: ./react-frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: arhivare_frontend
     depends_on:
-      - api
+      api:
+        condition: service_healthy  # FIXED: Wait for API to be healthy
     ports:
       - "3000:3000"
     networks:
@@ -81,3 +94,4 @@ volumes:
 networks:
   app_net:
     driver: bridge
+

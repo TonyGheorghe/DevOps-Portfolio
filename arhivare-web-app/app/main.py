@@ -1,16 +1,18 @@
-# app/main.py - Updated with New Role-Based Endpoints
-from fastapi import FastAPI
+# app/main.py - Updated with Health Check endpoint
+from fastapi import FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
 from app.core.config import settings
+from app.db.session import SessionLocal, engine
 
 from app.api import search
 from app.api.auth import router as auth_router
 from app.api.routes import users, fonds
-from app.api.routes import client_fonds, admin_fonds  # NEW IMPORTS
+from app.api.routes import client_fonds, admin_fonds
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    version="0.7.0",  # Updated version
+    version="0.7.0",
     openapi_url="/openapi.json",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -30,6 +32,53 @@ app = FastAPI(
     - **Client**: Access only to assigned fonds
     """,
 )
+
+# === HEALTH CHECK ENDPOINT ===
+@app.get("/health", tags=["Health"])
+def health_check():
+    """
+    Health check endpoint for Docker and load balancers.
+    Verifies that the application and database connection are working.
+    """
+    try:
+        # Test database connection
+        db = SessionLocal()
+        try:
+            # Execute a simple query to verify DB connectivity
+            result = db.execute(text("SELECT 1")).fetchone()
+            if result is None:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Database query returned no results"
+                )
+        finally:
+            db.close()
+        
+        return {
+            "status": "healthy",
+            "app": settings.PROJECT_NAME,
+            "version": "0.7.0",
+            "database": "connected",
+            "features": [
+                "role_based_access_control",
+                "ownership_management",
+                "client_dashboards", 
+                "audit_capabilities"
+            ]
+        }
+    except Exception as e:
+        # Log the error (you might want to use proper logging here)
+        print(f"Health check failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Health check failed: {str(e)}"
+        )
+
+# === LIVENESS PROBE (simpler version) ===
+@app.get("/ping", tags=["Health"])
+def ping():
+    """Simple ping endpoint for basic liveness checks."""
+    return {"message": "pong"}
 
 # === PUBLIC ROUTES (No authentication required) ===
 app.include_router(search.router, tags=["Public Search"])
@@ -55,21 +104,6 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # Dezactivează auto-redirect pentru slash mismatch
 app.router.redirect_slashes = False
-
-# === HEALTH CHECK ===
-@app.get("/health", tags=["Health"])
-def health_check():
-    return {
-        "status": "ok", 
-        "app": settings.PROJECT_NAME, 
-        "version": "0.7.0",
-        "features": [
-            "role_based_access_control",
-            "ownership_management", 
-            "client_dashboards",
-            "audit_capabilities"
-        ]
-    }
 
 # === ROLE INFORMATION ENDPOINT ===
 @app.get("/roles", tags=["System Info"])
@@ -97,7 +131,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000", 
         "http://127.0.0.1:3000",
-        "http://localhost:3001",  # Additional port for audit dashboard
+        "http://localhost:3001",
         "http://127.0.0.1:3001"
     ],
     allow_credentials=True,
@@ -141,6 +175,19 @@ async def startup_event():
     print("   • Client-specific dashboards")
     print("   • Audit and reporting capabilities")
     print("   • Public search functionality")
+    
+    # Test database connection on startup
+    try:
+        db = SessionLocal()
+        try:
+            db.execute(text("SELECT 1"))
+            print("   • ✅ Database connection successful")
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"   • ❌ Database connection failed: {e}")
+        print("   • ⚠️  Application will continue but health checks will fail")
+    
     print("✅ Startup complete!")
 
 @app.on_event("shutdown")
@@ -152,7 +199,7 @@ async def shutdown_event():
     print("✅ Shutdown complete!")
 
 # === ERROR HANDLERS ===
-from fastapi import Request, HTTPException
+from fastapi import Request
 from fastapi.responses import JSONResponse
 
 @app.exception_handler(HTTPException)
