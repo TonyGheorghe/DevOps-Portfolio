@@ -1,17 +1,16 @@
-# app/database.py - Database configuration module
+# app/database.py - FIXED VERSION - Simplified database configuration
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
+from app.core.config import settings
 
-# Database URL from environment or default
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", 
-    "postgresql+psycopg2://app:app@db:5432/arhivare"
+# Create SQLAlchemy engine with basic configuration
+engine = create_engine(
+    settings.DATABASE_URL,
+    echo=False,  # Set to True for SQL debugging
+    pool_pre_ping=True,  # Verify connections before use
+    pool_recycle=3600,   # Recycle connections after 1 hour
 )
-
-# Create SQLAlchemy engine
-engine = create_engine(DATABASE_URL, echo=False)
 
 # Create SessionLocal class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -50,4 +49,3 @@ def drop_tables():
     Drop all database tables - USE WITH CAUTION!
     """
     Base.metadata.drop_all(bind=engine)
-
