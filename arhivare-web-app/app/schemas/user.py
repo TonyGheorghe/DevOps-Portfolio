@@ -1,156 +1,114 @@
-# app/schemas/user.py - FIXED VERSION with Proper Roles
+# app/schemas/user.py - User schema with UserResponse
+from pydantic import BaseModel, Field, validator
 from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel, Field, ConfigDict, field_validator
 
-# CORRECT ROLES - Updated from old admin/user system
-VALID_ROLES = ["admin", "audit", "client"]
-
+# Base User schema
 class UserBase(BaseModel):
-    username: str = Field(min_length=3, max_length=64, description="Nume de utilizator unic")
-    role: str = Field(default="client", max_length=16, description="Rolul utilizatorului")
-    company_name: Optional[str] = Field(None, max_length=255, description="Numele companiei (pentru clienți)")
-    contact_email: Optional[str] = Field(None, max_length=100, description="Email de contact suplimentar")
-    notes: Optional[str] = Field(None, max_length=1000, description="Note administrative")
+    username: str = Field(..., min_length=3, max_length=64)
+    role: str = Field(..., description="User role: admin, audit, or client")
+    company_name: Optional[str] = Field(None, max_length=255)
+    contact_email: Optional[str] = Field(None, max_length=100)
+    notes: Optional[str] = Field(None, max_length=1000)
 
-    @field_validator('role')
-    @classmethod
+    @validator('role')
     def validate_role(cls, v):
-        if v not in VALID_ROLES:
-            raise ValueError(f'Rolul trebuie să fie unul dintre: {", ".join(VALID_ROLES)}')
+        allowed_roles = ['admin', 'audit', 'client']
+        if v not in allowed_roles:
+            raise ValueError(f'Role must be one of: {", ".join(allowed_roles)}')
         return v
 
-    @field_validator('contact_email')
-    @classmethod
+    @validator('contact_email')
     def validate_contact_email(cls, v):
-        if v is not None and v.strip():
-            # Basic email validation
+        if v and v.strip():
             import re
-            email_pattern = r'^[^@]+@[^@]+\.[^@]+$'
-            if not re.match(email_pattern, v):
+            pattern = r'^[^@]+@[^@]+\.[^@]+$'
+            if not re.match(pattern, v):
                 raise ValueError('Invalid email format')
         return v
 
+# Create User schema
 class UserCreate(UserBase):
-    password: str = Field(min_length=8, description="Parola în clar; va fi stocată doar hash-uită")
-    
-    @field_validator('company_name')
-    @classmethod
-    def validate_company_name_for_client(cls, v, info):
-        """Company name should be provided for client role."""
-        if hasattr(info, 'data') and info.data.get('role') == 'client':
-            if not v or not v.strip():
-                raise ValueError('Numele companiei este obligatoriu pentru clienți')
+    password: str = Field(..., min_length=8, max_length=128)
+
+    @validator('password')
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters long')
+        
+        # Check for at least one uppercase, one lowercase, and one digit
+        import re
+        if not re.search(r'[A-Z]', v):
+            raise ValueError('Password must contain at least one uppercase letter')
+        if not re.search(r'[a-z]', v):
+            raise ValueError('Password must contain at least one lowercase letter')
+        if not re.search(r'\d', v):
+            raise ValueError('Password must contain at least one digit')
+        
         return v
 
+# Update User schema
 class UserUpdate(BaseModel):
-    username: Optional[str] = Field(default=None, min_length=3, max_length=64)
-    password: Optional[str] = Field(default=None, min_length=8)
-    role: Optional[str] = Field(default=None, max_length=16)
-    company_name: Optional[str] = Field(default=None, max_length=255)
-    contact_email: Optional[str] = Field(default=None, max_length=100)
-    notes: Optional[str] = Field(default=None, max_length=1000)
+    username: Optional[str] = Field(None, min_length=3, max_length=64)
+    password: Optional[str] = Field(None, min_length=8, max_length=128)
+    role: Optional[str] = None
+    company_name: Optional[str] = Field(None, max_length=255)
+    contact_email: Optional[str] = Field(None, max_length=100)
+    notes: Optional[str] = Field(None, max_length=1000)
 
-    @field_validator('role')
-    @classmethod
+    @validator('role')
     def validate_role(cls, v):
-        if v is not None and v not in VALID_ROLES:
-            raise ValueError(f'Rolul trebuie să fie unul dintre: {", ".join(VALID_ROLES)}')
+        if v is not None:
+            allowed_roles = ['admin', 'audit', 'client']
+            if v not in allowed_roles:
+                raise ValueError(f'Role must be one of: {", ".join(allowed_roles)}')
         return v
 
-    @field_validator('contact_email')
-    @classmethod
+    @validator('contact_email')
     def validate_contact_email(cls, v):
         if v is not None and v.strip():
             import re
-            email_pattern = r'^[^@]+@[^@]+\.[^@]+$'
-            if not re.match(email_pattern, v):
+            pattern = r'^[^@]+@[^@]+\.[^@]+$'
+            if not re.match(pattern, v):
                 raise ValueError('Invalid email format')
         return v
 
-class UserRead(BaseModel):
-    id: int
-    username: str
-    role: str
-    company_name: Optional[str] = None
-    contact_email: Optional[str] = None
-    notes: Optional[str] = None
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-# Role-specific display helpers
-class UserRoleInfo(BaseModel):
-    """Helper schema for role information"""
-    role: str
-    display_name: str
-    description: str
-    permissions: list[str]
-
-    @classmethod
-    def get_role_info(cls, role: str) -> 'UserRoleInfo':
-        role_mapping = {
-            "admin": {
-                "display_name": "Administrator",
-                "description": "Acces complet la toate funcționalitățile",
-                "permissions": [
-                    "Vizualizare toate fondurile",
-                    "Editare toate fondurile", 
-                    "Ștergere fonduri",
-                    "Management utilizatori",
-                    "Assignment fonduri către clienți",
-                    "Administrare sistem"
-                ]
-            },
-            "audit": {
-                "display_name": "Audit", 
-                "description": "Vizualizare completă, fără modificări",
-                "permissions": [
-                    "Vizualizare toate fondurile",
-                    "Export date și statistici",
-                    "Rapoarte și analize",
-                    "Monitorizare activitate"
-                ]
-            },
-            "client": {
-                "display_name": "Client",
-                "description": "Acces la fondurile proprii",
-                "permissions": [
-                    "Vizualizare fondurile proprii",
-                    "Editare fondurile proprii", 
-                    "Căutare fonduri publice",
-                    "Verificare completitudine date"
-                ]
-            }
-        }
+    @validator('password')
+    def validate_password(cls, v):
+        if v is not None and len(v) > 0:
+            if len(v) < 8:
+                raise ValueError('Password must be at least 8 characters long')
+            
+            import re
+            if not re.search(r'[A-Z]', v):
+                raise ValueError('Password must contain at least one uppercase letter')
+            if not re.search(r'[a-z]', v):
+                raise ValueError('Password must contain at least one lowercase letter')
+            if not re.search(r'\d', v):
+                raise ValueError('Password must contain at least one digit')
         
-        info = role_mapping.get(role, role_mapping["client"])
-        return cls(
-            role=role,
-            display_name=info["display_name"],
-            description=info["description"], 
-            permissions=info["permissions"]
-        )
+        return v
 
-# Assignment-related schemas
-class FondAssignment(BaseModel):
-    """Schema for assigning fonds to clients."""
-    fond_id: int
-    client_id: int
-    notes: Optional[str] = None
+# Response User schema - ADDED THIS!
+class UserResponse(UserBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
 
-class FondAssignmentResponse(BaseModel):
-    """Response for fond assignment operations."""
-    message: str
-    fond_id: int
-    client_id: int
-    client_username: str
-    fond_company_name: str
+    class Config:
+        from_attributes = True
 
-class ClientStats(BaseModel):
-    """Statistics for a client user."""
-    total_fonds: int
-    active_fonds: int
-    inactive_fonds: int
-    last_updated: Optional[datetime] = None
+# Login schemas
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
+    user_id: Optional[int] = None
+    role: Optional[str] = None
+

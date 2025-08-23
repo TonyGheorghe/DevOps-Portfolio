@@ -1,73 +1,103 @@
-# app/models/user.py - Updated with Extended Roles and Ownership Support
-from sqlalchemy import Column, String, Text, DateTime, Integer
+# app/models/user.py - Enhanced with fonds relationship
+from sqlalchemy import Column, Integer, String, DateTime, Text
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from app.models.base import Base
+from ..database import Base
 
 class User(Base):
     __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(64), unique=True, index=True, nullable=False)
+    hashed_password = Column(String(128), nullable=False)
+    role = Column(String(20), nullable=False, default="client", index=True)
     
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    username = Column(String(64), unique=True, nullable=False, index=True)
-    password_hash = Column(Text, nullable=False)
+    # Extended fields for client information
+    company_name = Column(String(255), nullable=True)
+    contact_email = Column(String(100), nullable=True)
+    notes = Column(Text, nullable=True)
     
-    # EXTENDED ROLES: admin, audit, client (was admin/user before)
-    role = Column(String(16), nullable=False, default="client")
+    # Timestamps
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     
-    # Optional fields for client information
-    company_name = Column(String(255), nullable=True)  # For client users - what company they represent
-    contact_email = Column(String(100), nullable=True)  # Additional contact info
-    notes = Column(Text, nullable=True)  # Admin notes about this user
-    
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    
+    # NEW: Relationship with owned fonds
+    owned_fonds = relationship("Fond", back_populates="owner", foreign_keys="Fond.owner_id")
+
     def __repr__(self):
-        return f"<User(id={self.id}, username='{self.username}', role='{self.role}')>"
+        return f"<User(id={self.id}, username='{self.username}', role='{self.role}', company='{self.company_name}')>"
+
+    def to_dict(self):
+        """Convert model instance to dictionary"""
+        return {
+            "id": self.id,
+            "username": self.username,
+            "role": self.role,
+            "company_name": self.company_name,
+            "contact_email": self.contact_email,
+            "notes": self.notes,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }
     
     @property
-    def is_admin(self) -> bool:
-        """Check if user has admin privileges."""
+    def is_admin(self):
+        """Check if user has admin role"""
         return self.role == "admin"
     
     @property
-    def is_audit(self) -> bool:
-        """Check if user has audit privileges."""
-        return self.role == "audit"
-    
-    @property
-    def is_client(self) -> bool:
-        """Check if user is a client."""
+    def is_client(self):
+        """Check if user has client role"""
         return self.role == "client"
     
     @property
-    def can_manage_users(self) -> bool:
-        """Check if user can manage other users."""
+    def is_audit(self):
+        """Check if user has audit role"""
+        return self.role == "audit"
+    
+    @property
+    def can_edit_fonds(self):
+        """Check if user can edit fonds"""
         return self.role == "admin"
     
     @property
-    def can_manage_all_fonds(self) -> bool:
-        """Check if user can manage all fonds."""
-        return self.role == "admin"
-    
-    @property
-    def can_view_all_fonds(self) -> bool:
-        """Check if user can view all fonds."""
+    def can_view_all_fonds(self):
+        """Check if user can view all fonds"""
         return self.role in ["admin", "audit"]
     
-    def can_edit_fond(self, fond) -> bool:
-        """Check if user can edit a specific fond."""
-        if self.role == "admin":
-            return True
-        elif self.role == "audit":
-            return False  # Audit can only view, not edit
-        elif self.role == "client":
-            return fond.owner_id == self.id  # Can only edit own fonds
-        return False
+    @property
+    def owned_fonds_count(self):
+        """Get count of owned fonds"""
+        return len(self.owned_fonds) if self.owned_fonds else 0
     
-    def can_view_fond(self, fond) -> bool:
-        """Check if user can view a specific fond."""
+    @property
+    def active_owned_fonds_count(self):
+        """Get count of active owned fonds"""
+        if not self.owned_fonds:
+            return 0
+        return len([fond for fond in self.owned_fonds if fond.active])
+
+    def can_access_fond(self, fond):
+        """Check if user can access a specific fond"""
+        # Admins and audit users can access all fonds
         if self.role in ["admin", "audit"]:
             return True
-        elif self.role == "client":
-            return fond.owner_id == self.id  # Can only view own fonds
+        
+        # Clients can only access their own fonds
+        if self.role == "client":
+            return fond.owner_id == self.id
+        
         return False
+
+    def can_edit_fond(self, fond):
+        """Check if user can edit a specific fond"""
+        # Only admins can edit any fond
+        if self.role == "admin":
+            return True
+        
+        # Clients can edit their own fonds
+        if self.role == "client":
+            return fond.owner_id == self.id
+        
+        return False
+

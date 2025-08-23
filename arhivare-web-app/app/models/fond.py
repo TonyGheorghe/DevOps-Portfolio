@@ -1,75 +1,84 @@
-# app/models/fond.py - Updated with Enhanced Ownership Logic
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, BigInteger, ForeignKey
+# app/models/fond.py - Enhanced with owner relationship
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from app.models.base import Base
+from ..database import Base
 
 class Fond(Base):
     __tablename__ = "fonds"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    company_name = Column(Text, nullable=False)
-    holder_name = Column(Text, nullable=False)
-    address = Column(Text, nullable=True)
-    email = Column(Text, nullable=True)
-    phone = Column(Text, nullable=True)
+    id = Column(Integer, primary_key=True, index=True)
+    company_name = Column(String(255), nullable=False, index=True)
+    holder_name = Column(String(255), nullable=False, index=True)
+    address = Column(String(500), nullable=True)
+    email = Column(String(100), nullable=True)
+    phone = Column(String(20), nullable=True)
     notes = Column(Text, nullable=True)
-    source_url = Column(Text, nullable=True)
-    active = Column(Boolean, default=True, nullable=False)
+    source_url = Column(String(500), nullable=True)
+    active = Column(Boolean, default=True, nullable=False, index=True)
     
-    # OWNERSHIP: which client user owns this fond (NULL = unassigned)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    # NEW: Owner relationship
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    owner = relationship("User", back_populates="owned_fonds", foreign_keys=[owner_id])
     
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    
-    # Relationship to User (owner)
-    owner = relationship("User", backref="owned_fonds")
-    
+    # Timestamps
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
     def __repr__(self):
-        return f"<Fond(id={self.id}, company='{self.company_name}', owner_id={self.owner_id})>"
+        return f"<Fond(id={self.id}, company_name='{self.company_name}', holder_name='{self.holder_name}', owner_id={self.owner_id})>"
+
+    def to_dict(self):
+        """Convert model instance to dictionary"""
+        return {
+            "id": self.id,
+            "company_name": self.company_name,
+            "holder_name": self.holder_name,
+            "address": self.address,
+            "email": self.email,
+            "phone": self.phone,
+            "notes": self.notes,
+            "source_url": self.source_url,
+            "active": self.active,
+            "owner_id": self.owner_id,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }
     
+    def to_search_dict(self):
+        """Convert model instance to search result dictionary"""
+        return {
+            "id": self.id,
+            "company_name": self.company_name,
+            "holder_name": self.holder_name,
+            "address": self.address,
+            "email": self.email,
+            "phone": self.phone,
+            "notes": self.notes,
+            "active": self.active
+        }
+
     @property
-    def is_assigned(self) -> bool:
-        """Check if fond is assigned to a client."""
+    def is_assigned(self):
+        """Check if fond is assigned to an owner"""
         return self.owner_id is not None
-    
+
     @property
-    def is_unassigned(self) -> bool:
-        """Check if fond is unassigned (available for assignment)."""
-        return self.owner_id is None
-    
-    @property
-    def owner_company(self) -> str:
-        """Get the company name of the owner."""
-        if self.owner and hasattr(self.owner, 'company_name') and self.owner.company_name:
-            return self.owner.company_name
-        return "Unassigned"
-    
-    @property
-    def display_status(self) -> str:
-        """Get display status for UI."""
-        if not self.active:
-            return "Inactive"
-        elif self.is_assigned:
-            return f"Assigned to {self.owner.username}"
-        else:
-            return "Unassigned"
-    
-    def can_be_edited_by(self, user) -> bool:
-        """Check if fond can be edited by user."""
-        return user.can_edit_fond(self)
-    
-    def can_be_viewed_by(self, user) -> bool:
-        """Check if fond can be viewed by user."""
-        return user.can_view_fond(self)
-    
-    def assign_to_client(self, client_user):
-        """Assign this fond to a client user."""
-        if client_user.role != "client":
-            raise ValueError("Can only assign fonds to client users")
-        self.owner_id = client_user.id
-    
-    def unassign(self):
-        """Remove assignment from this fond."""
-        self.owner_id = None
+    def completion_percentage(self):
+        """Calculate completion percentage based on filled fields"""
+        total_fields = 7  # company_name, holder_name, address, email, phone, notes, source_url
+        filled_fields = 2  # company_name and holder_name are required
+        
+        if self.address and self.address.strip():
+            filled_fields += 1
+        if self.email and self.email.strip():
+            filled_fields += 1
+        if self.phone and self.phone.strip():
+            filled_fields += 1
+        if self.notes and self.notes.strip():
+            filled_fields += 1
+        if self.source_url and self.source_url.strip():
+            filled_fields += 1
+            
+        return round((filled_fields / total_fields) * 100, 1)
+

@@ -1,484 +1,378 @@
-# app/api/routes/admin_fonds.py - Enhanced Admin Endpoints with Ownership Management
-from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.orm import Session
+# app/api/routes/admin_fonds.py - Enhanced with Owner Assignment
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
+from ...database import get_db
+from ...models.user import User
+from ...models.fond import Fond
+from ...schemas.fond import FondResponse, FondCreate, FondUpdate
+from ...schemas.user import UserResponse
+from ...core.auth import get_current_admin_user, get_current_user
+from ...crud import fond as fond_crud, user as user_crud
+import logging
 
-from app.db.session import get_db
-from app.api.auth import get_current_user
-from app.models.user import User as UserModel
-from app.schemas.fond import FondCreate, FondUpdate, FondResponse
-from app.schemas.user import FondAssignment, FondAssignmentResponse, ClientStats
-from app.crud import fond as crud_fond, user as crud_user
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+# NEW: Owner Assignment Schema
+from pydantic import BaseModel
 
-# === CORE ADMIN OPERATIONS ===
-@router.get("/unassigned", response_model=List[FondResponse])
-def list_unassigned_fonds(
+class OwnerAssignmentRequest(BaseModel):
+    owner_id: Optional[int] = None
+
+class OwnerAssignmentResponse(BaseModel):
+    message: str
+    fond_id: int
+    owner_id: Optional[int]
+    owner_username: Optional[str] = None
+    success: bool = True
+
+# Enhanced Fond endpoints with owner information
+@router.get("/fonds/", response_model=List[FondResponse])
+def get_all_fonds(
     skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=100),
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user)
-):
-    """
-    Listează fondurile care nu au owner (doar pentru admin).
-    Utile pentru assignment către clienți.
-    """
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admin can view unassigned fonds")
-    
-    fonds = crud_fond.get_unassigned_fonds(db, skip=skip, limit=limit)
-    return fonds
-
-
-@router.get("/by-client/{client_id}", response_model=List[FondResponse])
-def list_fonds_by_client(
-    client_id: int,
-    skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=100),
+    limit: int = Query(100, ge=1, le=1000),
     active_only: bool = Query(True),
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user)
+    include_owner: bool = Query(False),  # NEW: Include owner information
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
 ):
     """
-    Listează toate fondurile unui client specific (pentru admin/audit).
+    Get all fonds with optional owner information (Admin only)
     """
-    if current_user.role not in ["admin", "audit"]:
-        raise HTTPException(status_code=403, detail="Only admin and audit can view fonds by client")
-    
-    # Verifică că client_id este valid și este client
-    client = crud_user.get_user_by_id(db, client_id)
-    if not client or client.role != "client":
-        raise HTTPException(status_code=404, detail="Client not found")
-    
-    fonds = crud_fond.get_fonds_by_client(db, client_id, skip=skip, limit=limit, active_only=active_only)
-    return fonds
-
-
-# === OWNERSHIP MANAGEMENT ===
-@router.post("/assign", response_model=FondAssignmentResponse)
-def assign_fond_to_client(
-    assignment: FondAssignment,
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user)
-):
-    """
-    Assignează un fond unui client (doar pentru admin).
-    """
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admin can assign fond ownership")
-    
-    # Verifică că client-ul este valid
-    client = crud_user.get_user_by_id(db, assignment.client_id)
-    if not client or client.role != "client":
-        raise HTTPException(status_code=400, detail="Invalid client user")
-    
-    # Verifică că fondul există
-    fond = crud_fond.get_fond(db, assignment.fond_id)
-    if not fond:
-        raise HTTPException(status_code=404, detail="Fond not found")
-    
-    # Assignează fondul
-    success = crud_fond.assign_fond_ownership(db, assignment.fond_id, assignment.client_id)
-    if not success:
-        raise HTTPException(status_code=400, detail="Failed to assign fond")
-    
-    return FondAssignmentResponse(
-        message=f"Fond '{fond.company_name}' assigned to {client.username}",
-        fond_id=assignment.fond_id,
-        client_id=assignment.client_id,
-        client_username=client.username,
-        fond_company_name=fond.company_name
-    )
-
-
-@router.post("/bulk-assign")
-def bulk_assign_fonds_to_client(
-    client_id: int,
-    fond_ids: List[int],
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user)
-):
-    """
-    Assignează mai multe fonduri la un client dintr-o dată.
-    """
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admin can bulk assign fonds")
-    
-    # Verifică că client-ul este valid
-    client = crud_user.get_user_by_id(db, client_id)
-    if not client or client.role != "client":
-        raise HTTPException(status_code=400, detail="Invalid client user")
-    
-    # Execută bulk assignment
-    results = crud_fond.bulk_assign_fonds(db, fond_ids, client_id)
-    
-    return {
-        "message": f"Bulk assignment completed for {client.username}",
-        "client_username": client.username,
-        "results": results
-    }
-
-
-@router.delete("/unassign/{fond_id}")
-def unassign_fond(
-    fond_id: int,
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user)
-):
-    """
-    Elimină ownership-ul unui fond (îl face unassigned) - doar pentru admin.
-    """
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admin can remove fond ownership")
-    
-    fond = crud_fond.get_fond(db, fond_id)
-    if not fond:
-        raise HTTPException(status_code=404, detail="Fond not found")
-    
-    success = crud_fond.remove_fond_ownership(db, fond_id)
-    if not success:
-        raise HTTPException(status_code=400, detail="Failed to remove ownership")
-    
-    return {
-        "message": f"Ownership removed from fond '{fond.company_name}'",
-        "fond_id": fond_id,
-        "fond_company_name": fond.company_name
-    }
-
-
-@router.post("/transfer")
-def transfer_fond_ownership(
-    fond_id: int,
-    new_client_id: int,
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user)
-):
-    """
-    Transferă ownership-ul unui fond de la un client la altul.
-    """
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admin can transfer fond ownership")
-    
-    # Verifică că fondul există
-    fond = crud_fond.get_fond(db, fond_id)
-    if not fond:
-        raise HTTPException(status_code=404, detail="Fond not found")
-    
-    # Verifică că noul client este valid
-    new_client = crud_user.get_user_by_id(db, new_client_id)
-    if not new_client or new_client.role != "client":
-        raise HTTPException(status_code=400, detail="Invalid new client user")
-    
-    # Obține informații despre clientul anterior
-    old_client = None
-    if fond.owner_id:
-        old_client = crud_user.get_user_by_id(db, fond.owner_id)
-    
-    # Transferă ownership-ul
-    success = crud_fond.transfer_fond_ownership(db, fond_id, new_client_id)
-    if not success:
-        raise HTTPException(status_code=400, detail="Failed to transfer ownership")
-    
-    return {
-        "message": f"Fond '{fond.company_name}' transferred to {new_client.username}",
-        "fond_id": fond_id,
-        "fond_company_name": fond.company_name,
-        "old_owner": old_client.username if old_client else "Unassigned",
-        "new_owner": new_client.username
-    }
-
-
-# === STATISTICS AND REPORTING ===
-@router.get("/statistics")
-def get_ownership_statistics(
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user)
-):
-    """
-    Returnează statistici complete despre ownership fondurilor.
-    """
-    if current_user.role not in ["admin", "audit"]:
-        raise HTTPException(status_code=403, detail="Only admin and audit can view statistics")
-    
-    stats = crud_fond.get_ownership_statistics(db)
-    return {
-        **stats,
-        "generated_by": current_user.username,
-        "user_role": current_user.role
-    }
-
-
-@router.get("/client-stats/{client_id}", response_model=ClientStats)
-def get_client_statistics(
-    client_id: int,
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user)
-):
-    """
-    Returnează statistici pentru un client specific.
-    """
-    if current_user.role not in ["admin", "audit"]:
-        raise HTTPException(status_code=403, detail="Only admin and audit can view client statistics")
-    
-    # Verifică că client-ul există
-    client = crud_user.get_user_by_id(db, client_id)
-    if not client or client.role != "client":
-        raise HTTPException(status_code=404, detail="Client not found")
-    
-    stats = crud_fond.get_client_statistics(db, client_id)
-    return ClientStats(**stats)
-
-
-@router.get("/unassigned/count")
-def count_unassigned_fonds(
-    active_only: bool = Query(True),
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user)
-):
-    """
-    Returnează numărul de fonduri neasignate.
-    """
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admin can view unassigned count")
-    
-    count = crud_fond.get_unassigned_fonds_count(db, active_only=active_only)
-    return {
-        "unassigned_count": count,
-        "active_only": active_only
-    }
-
-
-# === ADVANCED MANAGEMENT ===
-@router.post("/validate-assignment")
-def validate_fond_assignment(
-    fond_id: int,
-    client_id: int,
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user)
-):
-    """
-    Validează dacă un fond poate fi assignat unui client.
-    """
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admin can validate assignments")
-    
-    # Verifică fondul
-    fond = crud_fond.get_fond(db, fond_id)
-    if not fond:
-        return {"valid": False, "reason": "Fond not found"}
-    
-    if fond.owner_id is not None:
-        current_owner = crud_user.get_user_by_id(db, fond.owner_id)
-        return {
-            "valid": False, 
-            "reason": f"Fond already assigned to {current_owner.username if current_owner else 'unknown user'}"
-        }
-    
-    # Verifică clientul
-    client = crud_user.get_user_by_id(db, client_id)
-    if not client:
-        return {"valid": False, "reason": "Client not found"}
-    
-    if client.role != "client":
-        return {"valid": False, "reason": "User is not a client"}
-    
-    return {
-        "valid": True,
-        "fond_name": fond.company_name,
-        "client_name": client.username,
-        "client_company": client.company_name
-    }
-
-
-@router.get("/clients-with-fonds")
-def list_clients_with_fonds(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=100),
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user)
-):
-    """
-    Listează clienții care au fonduri assignate.
-    """
-    if current_user.role not in ["admin", "audit"]:
-        raise HTTPException(status_code=403, detail="Only admin and audit can view this information")
-    
-    # Obține clienții cu fonduri folosind join
-    from sqlalchemy import func
-    clients_query = db.query(
-        UserModel.id,
-        UserModel.username,
-        UserModel.company_name,
-        UserModel.contact_email,
-        UserModel.created_at,
-        func.count(crud_fond.Fond.id).label('fond_count')
-    ).join(
-        crud_fond.Fond, UserModel.id == crud_fond.Fond.owner_id
-    ).filter(
-        UserModel.role == "client"
-    ).group_by(
-        UserModel.id, UserModel.username, UserModel.company_name, 
-        UserModel.contact_email, UserModel.created_at
-    ).offset(skip).limit(limit)
-    
-    results = clients_query.all()
-    
-    return [
-        {
-            "id": result.id,
-            "username": result.username,
-            "company_name": result.company_name,
-            "contact_email": result.contact_email,
-            "created_at": result.created_at,
-            "fond_count": result.fond_count
-        }
-        for result in results
-    ]
-
-
-@router.get("/clients-without-fonds")
-def list_clients_without_fonds(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=100),
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user)
-):
-    """
-    Listează clienții care nu au fonduri assignate.
-    """
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admin can view this information")
-    
-    # Obține clienții fără fonduri
-    clients_without_fonds = db.query(UserModel).filter(
-        UserModel.role == "client",
-        ~UserModel.id.in_(
-            db.query(crud_fond.Fond.owner_id).filter(
-                crud_fond.Fond.owner_id.isnot(None)
-            )
-        )
-    ).offset(skip).limit(limit).all()
-    
-    return [
-        {
-            "id": client.id,
-            "username": client.username,
-            "company_name": client.company_name,
-            "contact_email": client.contact_email,
-            "created_at": client.created_at,
-            "fond_count": 0
-        }
-        for client in clients_without_fonds
-    ]
-
-
-# === AUDIT TRAIL ENDPOINTS ===
-@router.get("/audit/recent-assignments")
-def get_recent_assignments(
-    days: int = Query(7, ge=1, le=30, description="Numărul de zile în urmă"),
-    limit: int = Query(20, ge=1, le=100),
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user)
-):
-    """
-    Returnează assignment-urile recente de fonduri (pentru audit/admin).
-    """
-    if current_user.role not in ["admin", "audit"]:
-        raise HTTPException(status_code=403, detail="Only admin and audit can view audit trail")
-    
-    from datetime import datetime, timedelta
-    from sqlalchemy import and_
-    
-    # Calculează data de început
-    start_date = datetime.utcnow() - timedelta(days=days)
-    
-    # Obține fondurile care au fost actualizate recent și au owner
-    recent_assignments = db.query(crud_fond.Fond).filter(
-        and_(
-            crud_fond.Fond.updated_at >= start_date,
-            crud_fond.Fond.owner_id.isnot(None)
-        )
-    ).order_by(crud_fond.Fond.updated_at.desc()).limit(limit).all()
-    
-    results = []
-    for fond in recent_assignments:
-        owner = crud_user.get_user_by_id(db, fond.owner_id) if fond.owner_id else None
-        results.append({
-            "fond_id": fond.id,
-            "company_name": fond.company_name,
-            "owner_username": owner.username if owner else None,
-            "owner_company": owner.company_name if owner else None,
-            "assigned_at": fond.updated_at,
-            "active": fond.active
-        })
-    
-    return {
-        "assignments": results,
-        "period_days": days,
-        "total_found": len(results)
-    }
-
-
-@router.get("/export/ownership-report")
-def export_ownership_report(
-    format: str = Query("json", regex="^(json|csv)$"),
-    include_inactive: bool = Query(False),
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_user)
-):
-    """
-    Exportă un raport complet cu ownership-ul fondurilor.
-    """
-    if current_user.role not in ["admin", "audit"]:
-        raise HTTPException(status_code=403, detail="Only admin and audit can export reports")
-    
-    # Obține toate fondurile cu owner-ii lor
-    query = db.query(crud_fond.Fond).outerjoin(
-        UserModel, crud_fond.Fond.owner_id == UserModel.id
-    )
-    
-    if not include_inactive:
-        query = query.filter(crud_fond.Fond.active == True)
-    
-    fonds_with_owners = query.all()
-    
-    report_data = []
-    for fond in fonds_with_owners:
-        owner = crud_user.get_user_by_id(db, fond.owner_id) if fond.owner_id else None
-        report_data.append({
-            "fond_id": fond.id,
-            "company_name": fond.company_name,
-            "holder_name": fond.holder_name,
-            "address": fond.address,
-            "email": fond.email,
-            "phone": fond.phone,
-            "active": fond.active,
-            "owner_id": fond.owner_id,
-            "owner_username": owner.username if owner else "Unassigned",
-            "owner_company": owner.company_name if owner else None,
-            "owner_contact": owner.contact_email if owner else None,
-            "created_at": fond.created_at.isoformat() if fond.created_at else None,
-            "updated_at": fond.updated_at.isoformat() if fond.updated_at else None
-        })
-    
-    if format == "csv":
-        # Pentru CSV, returnează instrucțiuni de download
-        return {
-            "message": "CSV export prepared",
-            "total_records": len(report_data),
-            "format": "csv",
-            "download_instructions": "Use the /export/download endpoint with this report ID"
-        }
-    else:
-        # Pentru JSON, returnează datele direct
-        return {
-            "report": report_data,
-            "metadata": {
-                "total_records": len(report_data),
-                "include_inactive": include_inactive,
-                "generated_at": datetime.utcnow().isoformat(),
-                "generated_by": current_user.username
+    try:
+        # Build query with optional owner join
+        query = db.query(Fond)
+        
+        if include_owner:
+            query = query.options(joinedload(Fond.owner))
+        
+        if active_only:
+            query = query.filter(Fond.active == True)
+        
+        fonds = query.offset(skip).limit(limit).all()
+        
+        # Convert to response format
+        result = []
+        for fond in fonds:
+            fond_dict = {
+                "id": fond.id,
+                "company_name": fond.company_name,
+                "holder_name": fond.holder_name,
+                "address": fond.address,
+                "email": fond.email,
+                "phone": fond.phone,
+                "notes": fond.notes,
+                "source_url": fond.source_url,
+                "active": fond.active,
+                "created_at": fond.created_at,
+                "updated_at": fond.updated_at,
+                "owner_id": fond.owner_id
             }
+            
+            # Add owner information if requested and available
+            if include_owner and fond.owner:
+                fond_dict["owner"] = {
+                    "id": fond.owner.id,
+                    "username": fond.owner.username,
+                    "company_name": fond.owner.company_name
+                }
+            
+            result.append(fond_dict)
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error getting fonds: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error retrieving fonds"
+        )
+
+# NEW: Manual Owner Assignment Endpoint
+@router.post("/fonds/{fond_id}/assign-owner", response_model=OwnerAssignmentResponse)
+def assign_fond_owner(
+    fond_id: int,
+    assignment_request: OwnerAssignmentRequest,
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Manually assign or unassign a fond to/from a user (Admin only)
+    """
+    try:
+        # Get the fond
+        fond = db.query(Fond).filter(Fond.id == fond_id).first()
+        if not fond:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Fond not found"
+            )
+        
+        old_owner_id = fond.owner_id
+        new_owner_id = assignment_request.owner_id
+        
+        # Validate new owner if provided
+        new_owner = None
+        if new_owner_id:
+            new_owner = db.query(User).filter(
+                User.id == new_owner_id,
+                User.role == "client"  # Only clients can own fonds
+            ).first()
+            
+            if not new_owner:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid owner ID or user is not a client"
+                )
+        
+        # Update the assignment
+        fond.owner_id = new_owner_id
+        db.commit()
+        db.refresh(fond)
+        
+        # Prepare response message
+        if new_owner_id and old_owner_id:
+            message = f"Fond reassigned from user {old_owner_id} to {new_owner.username}"
+        elif new_owner_id:
+            message = f"Fond assigned to {new_owner.username}"
+        elif old_owner_id:
+            message = "Fond assignment removed"
+        else:
+            message = "No assignment change"
+        
+        logger.info(f"Admin {current_user.username} {message.lower()} for fond {fond_id}")
+        
+        return OwnerAssignmentResponse(
+            message=message,
+            fond_id=fond_id,
+            owner_id=new_owner_id,
+            owner_username=new_owner.username if new_owner else None
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error assigning fond owner: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error assigning fond owner"
+        )
+
+# Enhanced Fond Creation with Owner Assignment
+@router.post("/fonds/", response_model=FondResponse)
+def create_fond_with_owner(
+    fond_data: FondCreate,
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a new fond with optional owner assignment (Admin only)
+    """
+    try:
+        # Validate owner if provided
+        if fond_data.owner_id:
+            owner = db.query(User).filter(
+                User.id == fond_data.owner_id,
+                User.role == "client"
+            ).first()
+            
+            if not owner:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid owner ID or user is not a client"
+                )
+        
+        # Create the fond
+        db_fond = fond_crud.create_fond(db=db, fond=fond_data)
+        
+        logger.info(f"Admin {current_user.username} created fond {db_fond.id}")
+        if fond_data.owner_id:
+            logger.info(f"Fond {db_fond.id} assigned to owner {fond_data.owner_id}")
+        
+        return db_fond
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating fond: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error creating fond"
+        )
+
+# Enhanced Fond Update with Owner Assignment
+@router.put("/fonds/{fond_id}", response_model=dict)
+def update_fond_with_owner(
+    fond_id: int,
+    fond_data: FondUpdate,
+    auto_reassign: bool = Query(False, description="Enable automatic reassignment based on similarity"),
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Update a fond with owner assignment and optional auto-reassignment (Admin only)
+    """
+    try:
+        # Get existing fond
+        db_fond = db.query(Fond).filter(Fond.id == fond_id).first()
+        if not db_fond:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Fond not found"
+            )
+        
+        old_holder_name = db_fond.holder_name
+        old_owner_id = db_fond.owner_id
+        
+        # Validate new owner if provided
+        if fond_data.owner_id:
+            owner = db.query(User).filter(
+                User.id == fond_data.owner_id,
+                User.role == "client"
+            ).first()
+            
+            if not owner:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid owner ID or user is not a client"
+                )
+        
+        # Update the fond
+        updated_fond = fond_crud.update_fond(db=db, fond_id=fond_id, fond_update=fond_data)
+        
+        # Check for auto-reassignment if holder name changed and auto_reassign is enabled
+        reassignment_suggestions = None
+        if auto_reassign and old_holder_name != updated_fond.holder_name:
+            # Import here to avoid circular imports
+            from ...services.reassignment_service import check_reassignment_needed
+            
+            reassignment_result = check_reassignment_needed(
+                db=db,
+                fond=updated_fond,
+                old_holder_name=old_holder_name
+            )
+            
+            if reassignment_result["requires_confirmation"]:
+                reassignment_suggestions = reassignment_result
+        
+        # Prepare response
+        response = {
+            "fond": {
+                "id": updated_fond.id,
+                "company_name": updated_fond.company_name,
+                "holder_name": updated_fond.holder_name,
+                "address": updated_fond.address,
+                "email": updated_fond.email,
+                "phone": updated_fond.phone,
+                "notes": updated_fond.notes,
+                "source_url": updated_fond.source_url,
+                "active": updated_fond.active,
+                "created_at": updated_fond.created_at,
+                "updated_at": updated_fond.updated_at,
+                "owner_id": updated_fond.owner_id
+            },
+            "auto_reassignment_applied": False,
+            "owner_change_applied": old_owner_id != updated_fond.owner_id
         }
+        
+        # Add reassignment suggestions if any
+        if reassignment_suggestions:
+            response["reassignment_suggestions"] = reassignment_suggestions
+        
+        logger.info(f"Admin {current_user.username} updated fond {fond_id}")
+        if old_owner_id != updated_fond.owner_id:
+            logger.info(f"Fond {fond_id} owner changed from {old_owner_id} to {updated_fond.owner_id}")
+        
+        return response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating fond: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error updating fond"
+        )
+
+# NEW: Get Available Users for Assignment
+@router.get("/users/clients", response_model=List[UserResponse])
+def get_client_users(
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get all client users available for fond assignment (Admin only)
+    """
+    try:
+        client_users = db.query(User).filter(User.role == "client").all()
+        return client_users
+        
+    except Exception as e:
+        logger.error(f"Error getting client users: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error retrieving client users"
+        )
+
+# NEW: Ownership Statistics
+@router.get("/fonds/statistics/ownership")
+def get_ownership_statistics(
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get ownership statistics for fonds (Admin only)
+    """
+    try:
+        total_fonds = db.query(Fond).count()
+        active_fonds = db.query(Fond).filter(Fond.active == True).count()
+        assigned_fonds = db.query(Fond).filter(Fond.owner_id.isnot(None)).count()
+        unassigned_fonds = total_fonds - assigned_fonds
+        
+        # Assignment rate
+        assignment_rate = round((assigned_fonds / total_fonds * 100) if total_fonds > 0 else 0, 1)
+        
+        # Client distribution
+        client_distribution = db.query(
+            User.id,
+            User.username, 
+            User.company_name,
+            db.func.count(Fond.id).label('fond_count')
+        ).join(
+            Fond, User.id == Fond.owner_id
+        ).filter(
+            User.role == "client"
+        ).group_by(
+            User.id, User.username, User.company_name
+        ).order_by(
+            db.func.count(Fond.id).desc()
+        ).all()
+        
+        clients_with_fonds = len(client_distribution)
+        
+        return {
+            "total_fonds": total_fonds,
+            "active_fonds": active_fonds,
+            "assigned_fonds": assigned_fonds,
+            "unassigned_fonds": unassigned_fonds,
+            "assignment_rate": assignment_rate,
+            "clients_with_fonds": clients_with_fonds,
+            "client_distribution": [
+                {
+                    "username": row.username,
+                    "company_name": row.company_name,
+                    "fond_count": row.fond_count
+                }
+                for row in client_distribution
+            ]
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting ownership statistics: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error retrieving ownership statistics"
+        )

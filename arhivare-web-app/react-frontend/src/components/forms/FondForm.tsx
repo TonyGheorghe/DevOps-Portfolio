@@ -1,11 +1,11 @@
-// src/components/forms/FondForm.tsx - Enhanced with Duplicate Detection
+// src/components/forms/FondForm.tsx - Enhanced with Owner Assignment
 import React, { useState, useEffect, useMemo } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { 
   Building2, User, MapPin, Mail, Phone, FileText, 
-  Link, Save, X, AlertCircle, AlertTriangle, Lightbulb
+  Link, Save, X, AlertCircle, AlertTriangle, Lightbulb, Users
 } from 'lucide-react';
 
 // Types
@@ -21,9 +21,18 @@ interface Fond {
   active: boolean;
   created_at: string;
   updated_at: string;
+  owner_id?: number; // ADDED: owner assignment field
 }
 
-// Form data type that matches exactly what Yup expects
+// NEW: User type for dropdown
+interface UserOption {
+  id: number;
+  username: string;
+  role: string;
+  company_name?: string;
+}
+
+// Form data type that includes owner_id
 interface FondFormData {
   company_name: string;
   holder_name: string;
@@ -33,27 +42,30 @@ interface FondFormData {
   notes: string;
   source_url: string;
   active: boolean;
+  owner_id?: number; // ADDED: owner assignment field
 }
 
 interface FondFormProps {
-  fond?: Fond;              // undefined = create mode, defined = edit mode
-  existingFonds?: Fond[];   // pentru detectarea duplicatelor
+  fond?: Fond;
+  existingFonds?: Fond[];
+  availableUsers?: UserOption[]; // NEW: list of users for assignment
+  currentUserRole?: string; // NEW: current user role to control visibility
   onSave: (fondData: FondFormData) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
 }
+
+// API Configuration
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 // Utility function pentru normalizarea numelor companiilor
 const normalizeCompanyName = (name: string): string => {
   return name
     .toLowerCase()
     .trim()
-    // Elimină prefixele comune
     .replace(/^(sc|sa|srl|sra|ltd|llc|inc|corp|corporation)\s+/i, '')
     .replace(/\s+(sc|sa|srl|sra|ltd|llc|inc|corp|corporation)$/i, '')
-    // Elimină caracterele speciale
     .replace(/[^\w\s]/g, '')
-    // Înlocuiește spațiile multiple cu unul singur
     .replace(/\s+/g, ' ')
     .trim();
 };
@@ -63,13 +75,9 @@ const calculateSimilarity = (str1: string, str2: string): number => {
   const norm1 = normalizeCompanyName(str1);
   const norm2 = normalizeCompanyName(str2);
   
-  // Exact match după normalizare
   if (norm1 === norm2) return 1.0;
-  
-  // Verifică dacă unul conține pe celălalt
   if (norm1.includes(norm2) || norm2.includes(norm1)) return 0.8;
   
-  // Levenshtein distance simplified pentru similaritate parțială
   const words1 = norm1.split(' ');
   const words2 = norm2.split(' ');
   
@@ -83,7 +91,7 @@ const calculateSimilarity = (str1: string, str2: string): number => {
   return commonWords / Math.max(words1.length, words2.length);
 };
 
-// Validation schema cu Yup - Enhanced cu validare duplicatelor
+// Enhanced validation schema with owner_id
 const createFondSchema = (existingFonds: Fond[] = [], currentFondId?: number) => 
   yup.object({
     company_name: yup
@@ -95,11 +103,9 @@ const createFondSchema = (existingFonds: Fond[] = [], currentFondId?: number) =>
         if (!value) return true;
         
         const duplicates = existingFonds.filter(fond => {
-          // Excludem fondul curent în modul edit
           if (currentFondId && fond.id === currentFondId) return false;
-          
           const similarity = calculateSimilarity(value, fond.company_name);
-          return similarity >= 0.8; // 80% similaritate = posibil duplicat
+          return similarity >= 0.8;
         });
         
         if (duplicates.length > 0) {
@@ -117,11 +123,7 @@ const createFondSchema = (existingFonds: Fond[] = [], currentFondId?: number) =>
       .min(2, 'Numele deținătorului trebuie să aibă cel puțin 2 caractere')
       .max(255, 'Numele poate avea maxim 255 caractere'),
     
-    address: yup
-      .string()
-      .default('')
-      .max(500, 'Adresa poate avea maxim 500 caractere'),
-    
+    address: yup.string().default('').max(500, 'Adresa poate avea maxim 500 caractere'),
     email: yup
       .string()
       .default('')
@@ -140,11 +142,7 @@ const createFondSchema = (existingFonds: Fond[] = [], currentFondId?: number) =>
       })
       .max(20, 'Numărul poate avea maxim 20 caractere'),
     
-    notes: yup
-      .string()
-      .default('')
-      .max(1000, 'Notele pot avea maxim 1000 caractere'),
-    
+    notes: yup.string().default('').max(1000, 'Notele pot avea maxim 1000 caractere'),
     source_url: yup
       .string()
       .default('')
@@ -154,27 +152,76 @@ const createFondSchema = (existingFonds: Fond[] = [], currentFondId?: number) =>
       })
       .max(500, 'URL-ul poate avea maxim 500 caractere'),
     
-    active: yup
-      .boolean()
-      .default(true)
-      .required()
+    active: yup.boolean().default(true).required(),
+    
+    // NEW: Owner assignment validation
+    owner_id: yup
+      .number()
+      .nullable()
+      .transform((value, originalValue) => {
+        if (originalValue === '' || originalValue === 'unassigned') return null;
+        return value;
+      })
+      .typeError('Selectați un utilizator valid')
   });
 
 export const FondForm: React.FC<FondFormProps> = ({
   fond,
   existingFonds = [],
+  availableUsers = [],
+  currentUserRole,
   onSave,
   onCancel,
   isLoading = false
 }) => {
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [companyName, setCompanyName] = useState(fond?.company_name || '');
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [users, setUsers] = useState<UserOption[]>(availableUsers);
   
   // Determină modul formularului
   const isEditMode = !!fond;
   const formTitle = isEditMode ? 'Editare Fond' : 'Fond Nou';
   const submitButtonText = isEditMode ? 'Actualizează' : 'Creează';
+  
+  // Check if current user is admin (only admins can assign owners)
+  const canAssignOwner = currentUserRole === 'admin';
+
+  // Get auth headers
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('auth_token');
+    return {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` })
+    };
+  };
+
+  // Load users if not provided and user is admin
+  useEffect(() => {
+    const loadUsers = async () => {
+      if (!canAssignOwner || availableUsers.length > 0) return;
+      
+      setLoadingUsers(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/users/?skip=0&limit=100`, {
+          headers: getAuthHeaders()
+        });
+        
+        if (response.ok) {
+          const usersData = await response.json();
+          // Filter only client users for assignment
+          const clientUsers = usersData.filter((user: UserOption) => user.role === 'client');
+          setUsers(clientUsers);
+        }
+      } catch (err) {
+        console.error('Error loading users:', err);
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+
+    loadUsers();
+  }, [canAssignOwner, availableUsers.length]);
 
   // Creează schema dinamică cu fondurile existente
   const fondSchema = useMemo(() => 
@@ -200,12 +247,14 @@ export const FondForm: React.FC<FondFormProps> = ({
       phone: fond?.phone || '',
       notes: fond?.notes || '',
       source_url: fond?.source_url || '',
-      active: fond?.active ?? true
+      active: fond?.active ?? true,
+      owner_id: fond?.owner_id || undefined // NEW: set owner_id from fond
     }
   });
 
   // Watch pentru company_name pentru detectarea duplicatelor în timp real
   const watchedCompanyName = watch('company_name');
+  const watchedOwnerId = watch('owner_id');
 
   // Detectarea duplicatelor în timp real
   const potentialDuplicates = useMemo(() => {
@@ -213,18 +262,16 @@ export const FondForm: React.FC<FondFormProps> = ({
     
     return existingFonds
       .filter(f => {
-        // Excludem fondul curent în modul edit
         if (isEditMode && f.id === fond?.id) return false;
-        
         const similarity = calculateSimilarity(watchedCompanyName, f.company_name);
-        return similarity >= 0.6; // 60% pentru warning, 80% pentru error
+        return similarity >= 0.6;
       })
       .sort((a, b) => {
         const simA = calculateSimilarity(watchedCompanyName, a.company_name);
         const simB = calculateSimilarity(watchedCompanyName, b.company_name);
-        return simB - simA; // Sortează desc după similaritate
+        return simB - simA;
       })
-      .slice(0, 3); // Maximum 3 sugestii
+      .slice(0, 3);
   }, [watchedCompanyName, existingFonds, isEditMode, fond?.id]);
 
   // Efect pentru afișarea warning-ului
@@ -239,7 +286,7 @@ export const FondForm: React.FC<FondFormProps> = ({
       await onSave(data);
       
       if (!isEditMode) {
-        reset(); // Resetează formularul după create
+        reset();
       }
     } catch (error) {
       setSubmitError(
@@ -259,6 +306,9 @@ export const FondForm: React.FC<FondFormProps> = ({
     setValue('phone', suggestion.phone || '');
     setShowDuplicateWarning(false);
   };
+
+  // Get currently selected user for display
+  const selectedUser = users.find(user => user.id === watchedOwnerId);
 
   // Loading state pentru tot formularul
   const formDisabled = isLoading || isSubmitting;
@@ -372,6 +422,56 @@ export const FondForm: React.FC<FondFormProps> = ({
           )}
         </div>
 
+        {/* NEW: Owner Assignment Section - Only for Admins */}
+        {canAssignOwner && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center space-x-3 mb-3">
+              <Users className="h-5 w-5 text-blue-600" />
+              <h4 className="font-medium text-blue-900">Assignment Proprietar</h4>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Assignează către client
+              </label>
+              <select
+                {...register('owner_id')}
+                disabled={formDisabled || loadingUsers}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 ${
+                  errors.owner_id ? 'border-red-300' : 'border-gray-300'
+                }`}
+              >
+                <option value="">-- Neasignat --</option>
+                {loadingUsers ? (
+                  <option disabled>Se încarcă utilizatorii...</option>
+                ) : (
+                  users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.username} {user.company_name ? `(${user.company_name})` : ''}
+                    </option>
+                  ))
+                )}
+              </select>
+              
+              {errors.owner_id && (
+                <p className="text-red-600 text-sm mt-1">{errors.owner_id.message}</p>
+              )}
+              
+              {/* Display selected user info */}
+              {selectedUser && (
+                <div className="mt-2 p-2 bg-blue-100 rounded text-sm text-blue-800">
+                  <strong>Selectat:</strong> {selectedUser.username}
+                  {selectedUser.company_name && ` - ${selectedUser.company_name}`}
+                </div>
+              )}
+              
+              <p className="text-xs text-gray-500 mt-1">
+                Fondul va fi vizibil și editabil doar de utilizatorul selectat
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Adresă */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -475,22 +575,20 @@ export const FondForm: React.FC<FondFormProps> = ({
           )}
         </div>
 
-        {/* Status activ - doar pentru edit mode */}
-        {isEditMode && (
-          <div>
-            <label className="flex items-center space-x-2">
-              <input
-                {...register('active')}
-                type="checkbox"
-                disabled={formDisabled}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-60"
-              />
-              <span className="text-sm font-medium text-gray-700">
-                Fond activ (vizibil în căutarea publică)
-              </span>
-            </label>
-          </div>
-        )}
+        {/* Status activ - pentru toate modurile */}
+        <div>
+          <label className="flex items-center space-x-2">
+            <input
+              {...register('active')}
+              type="checkbox"
+              disabled={formDisabled}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-60"
+            />
+            <span className="text-sm font-medium text-gray-700">
+              Fond activ (vizibil în căutarea publică)
+            </span>
+          </label>
+        </div>
 
         {/* Buttons */}
         <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">

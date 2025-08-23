@@ -1,47 +1,55 @@
-# app/schemas/fond.py
+# app/schemas/fond.py - FIXED VERSION with proper syntax
+from pydantic import BaseModel, Field, validator
 from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel, Field, ConfigDict, field_validator
-import re
 
-
+# Base Fond schema
 class FondBase(BaseModel):
-    company_name: str = Field(..., min_length=2, max_length=255, description="Numele companiei")
-    holder_name: str = Field(..., min_length=2, max_length=255, description="Numele deținătorului arhivei")
-    address: Optional[str] = Field(None, max_length=500, description="Adresa completă")
-    email: Optional[str] = Field(None, max_length=100, description="Adresa de email de contact")
-    phone: Optional[str] = Field(None, max_length=20, description="Numărul de telefon")
-    notes: Optional[str] = Field(None, max_length=1000, description="Note suplimentare")
-    source_url: Optional[str] = Field(None, max_length=500, description="URL sursă pentru informații")
+    company_name: str = Field(..., min_length=2, max_length=255, description="Company name")
+    holder_name: str = Field(..., min_length=2, max_length=255, description="Archive holder name") 
+    address: Optional[str] = Field(None, max_length=500, description="Address")
+    email: Optional[str] = Field(None, max_length=100, description="Email address")
+    phone: Optional[str] = Field(None, max_length=20, description="Phone number")
+    notes: Optional[str] = Field(None, max_length=1000, description="Additional notes")
+    source_url: Optional[str] = Field(None, max_length=500, description="Source URL")
+    active: bool = Field(True, description="Whether the fond is active")
+    owner_id: Optional[int] = Field(None, description="ID of the user who owns this fond")
 
-    @field_validator('email')
-    @classmethod
+    @validator('email')
     def validate_email(cls, v):
-        if v is not None and v.strip():
-            # Validare simplă de email
-            email_pattern = r'^[^@]+@[^@]+\.[^@]+$'
-            if not re.match(email_pattern, v):
+        if v and v.strip():
+            # Basic email validation
+            import re
+            pattern = r'^[^@]+@[^@]+\.[^@]+$'  # FIXED: Added missing closing quote
+            if not re.match(pattern, v):
                 raise ValueError('Invalid email format')
         return v
 
-    @field_validator('phone')
-    @classmethod
+    @validator('phone')
     def validate_phone(cls, v):
-        if v is not None and v.strip():
-            # Permite numere cu +, spații, cratimi și paranteză
-            phone_pattern = r'^[\+]?[\d\s\-\(\)]+$'
-            if not re.match(phone_pattern, v):
-                raise ValueError('Invalid phone number format')
+        if v and v.strip():
+            # Allow digits, spaces, dashes, parentheses, plus sign
+            import re
+            if not re.match(r'^[\+]?[\d\s\-\(\)]+$', v):
+                raise ValueError('Phone number contains invalid characters')
         return v
 
+    @validator('source_url')
+    def validate_source_url(cls, v):
+        if v and v.strip():
+            # Basic URL validation
+            import re
+            url_pattern = r'^https?://.+'
+            if not re.match(url_pattern, v):
+                raise ValueError('URL must start with http:// or https://')
+        return v
 
+# Create schema
 class FondCreate(FondBase):
-    """Schema pentru crearea unui fond nou."""
     pass
 
-
+# Update schema - all fields optional except those that should remain required
 class FondUpdate(BaseModel):
-    """Schema pentru actualizarea unui fond - toate câmpurile sunt opționale."""
     company_name: Optional[str] = Field(None, min_length=2, max_length=255)
     holder_name: Optional[str] = Field(None, min_length=2, max_length=255)
     address: Optional[str] = Field(None, max_length=500)
@@ -49,41 +57,64 @@ class FondUpdate(BaseModel):
     phone: Optional[str] = Field(None, max_length=20)
     notes: Optional[str] = Field(None, max_length=1000)
     source_url: Optional[str] = Field(None, max_length=500)
-    active: Optional[bool] = Field(None, description="Status activ/inactiv")
+    active: Optional[bool] = None
+    owner_id: Optional[int] = Field(None, description="ID of the user who owns this fond")
 
-    @field_validator('email')
-    @classmethod
+    @validator('email')
     def validate_email(cls, v):
         if v is not None and v.strip():
-            email_pattern = r'^[^@]+@[^@]+\.[^@]+$'
-            if not re.match(email_pattern, v):
+            import re
+            pattern = r'^[^@]+@[^@]+\.[^@]+$'
+            if not re.match(pattern, v):
                 raise ValueError('Invalid email format')
         return v
 
-    @field_validator('phone')
-    @classmethod
+    @validator('phone')
     def validate_phone(cls, v):
         if v is not None and v.strip():
-            phone_pattern = r'^[\+]?[\d\s\-\(\)]+$'
-            if not re.match(phone_pattern, v):
-                raise ValueError('Invalid phone number format')
+            import re
+            if not re.match(r'^[\+]?[\d\s\-\(\)]+$', v):
+                raise ValueError('Phone number contains invalid characters')
         return v
 
+    @validator('source_url')
+    def validate_source_url(cls, v):
+        if v is not None and v.strip():
+            import re
+            url_pattern = r'^https?://.+'
+            if not re.match(url_pattern, v):
+                raise ValueError('URL must start with http:// or https://')
+        return v
 
-class FondResponse(FondBase):
-    """Schema pentru răspunsurile API - include toate câmpurile modelului."""
+# Owner information schema
+class FondOwner(BaseModel):
     id: int
-    active: bool
+    username: str
+    company_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+# Response schema
+class FondResponse(FondBase):
+    id: int
     created_at: datetime
     updated_at: datetime
-    
-    # Owner information - NEW FIELDS for displaying assignment
-    owner_id: Optional[int] = Field(None, description="ID-ul clientului care deține fondul")
-    
-    # Pydantic v2 - configurare pentru compatibilitate cu SQLAlchemy
-    model_config = ConfigDict(from_attributes=True)
+    owner: Optional[FondOwner] = None
 
-class FondResponseWithOwner(FondResponse):
-    """Extended schema that includes owner details for admin/audit views."""
-    owner_username: Optional[str] = Field(None, description="Username-ul clientului")
-    owner_company: Optional[str] = Field(None, description="Numele companiei clientului")
+    class Config:
+        from_attributes = True
+
+# Search response schema (simple version for public search)
+class FondSearchResponse(BaseModel):
+    id: int
+    company_name: str
+    holder_name: str
+    address: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    notes: Optional[str] = None
+    active: bool
+
+    class Config:
+        from_attributes = True
