@@ -5,3 +5,21 @@ __pycache__/
 pytestcache/
 .pytest_cache/
 
+
+# Cleanup additions
+*.bak
+*.tmp
+*~
+.DS_Store
+debug_*.py
+fix_*.py
+setup_app.py
+docker-fix-*.sh
+
+# Test backups
+tests/backup_old/
+tests/old_tests_backup/
+
+# Development HTML (superseded by React)
+frontend/
+
