@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List
 
-from app.db.session import get_db
+from app.database import get_db
 from app.api.auth import get_current_user
 from app.models.user import User as UserModel
 from app.schemas.user import UserCreate, UserUpdate, UserResponse
@@ -326,7 +326,7 @@ def get_roles_info(
         roles_info.append(role_info.model_dump())
     
     # Adaugă statistici despre utilizatori pe rol
-    from app.db.session import get_db
+    from app.database import get_db
     db = next(get_db())
     role_stats = crud_user.count_users_by_role(db)
     

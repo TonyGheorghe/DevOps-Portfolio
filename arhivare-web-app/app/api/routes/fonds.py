@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
 
-from app.db.session import get_db
+from app.database import get_db
 from app.api.auth import get_current_user
 from app.models.user import User as UserModel
 from app.models.fond import Fond

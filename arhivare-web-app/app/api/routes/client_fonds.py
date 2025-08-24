@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-from app.db.session import get_db
+from app.database import get_db
 from app.api.auth import get_current_user
 from app.models.user import User as UserModel
 from app.schemas.fond import FondCreate, FondUpdate, FondResponse
