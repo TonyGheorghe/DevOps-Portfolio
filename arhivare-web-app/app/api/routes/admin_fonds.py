@@ -7,7 +7,7 @@ from ...models.user import User
 from ...models.fond import Fond
 from ...schemas.fond import FondResponse, FondCreate, FondUpdate
 from ...schemas.user import UserResponse
-from ...core.auth import get_current_admin_user, get_current_user
+from ...api.auth import get_current_user, get_current_admin_user
 from ...crud import fond as fond_crud, user as user_crud
 import logging
 

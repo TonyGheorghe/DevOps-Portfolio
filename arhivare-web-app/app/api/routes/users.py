@@ -6,12 +6,12 @@ from typing import List
 from app.db.session import get_db
 from app.api.auth import get_current_user
 from app.models.user import User as UserModel
-from app.schemas.user import UserCreate, UserUpdate, UserRead
+from app.schemas.user import UserCreate, UserUpdate, UserResponse
 from app.crud import user as crud_user
 
 router = APIRouter()
 
-@router.post("/", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def create_user(
     user_in: UserCreate,
     db: Session = Depends(get_db),
@@ -50,7 +50,7 @@ def create_user(
         raise HTTPException(status_code=400, detail=f"Eroare la crearea utilizatorului: {str(e)}")
 
 
-@router.get("/", response_model=List[UserRead])
+@router.get("/", response_model=List[UserResponse])
 def list_users(
     skip: int = Query(0, ge=0, description="Numărul de utilizatori de sărit"),
     limit: int = Query(100, ge=1, le=1000, description="Numărul maxim de utilizatori"),
@@ -79,7 +79,7 @@ def list_users(
     return crud_user.list_users(db, skip=skip, limit=limit)
 
 
-@router.get("/clients", response_model=List[UserRead])
+@router.get("/clients", response_model=List[UserResponse])
 def list_client_users(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
@@ -118,7 +118,7 @@ def get_users_statistics(
         raise HTTPException(status_code=500, detail=f"Eroare la calcularea statisticilor: {str(e)}")
 
 
-@router.get("/{user_id}", response_model=UserRead)
+@router.get("/{user_id}", response_model=UserResponse)
 def get_user(
     user_id: int,
     db: Session = Depends(get_db),
@@ -144,7 +144,7 @@ def get_user(
     return db_user
 
 
-@router.put("/{user_id}", response_model=UserRead)
+@router.put("/{user_id}", response_model=UserResponse)
 def update_user(
     user_id: int,
     user_in: UserUpdate,
