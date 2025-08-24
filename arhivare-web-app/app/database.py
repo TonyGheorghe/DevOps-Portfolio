@@ -1,15 +1,17 @@
-# app/database.py - FIXED VERSION - Simplified database configuration
+# app/database.py - CONFIGURAȚIE UNIFICATĂ (înlocuiește și database.py și db/session.py)
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 
-# Create SQLAlchemy engine with basic configuration
+# Create SQLAlchemy engine
 engine = create_engine(
     settings.DATABASE_URL,
-    echo=False,  # Set to True for SQL debugging
-    pool_pre_ping=True,  # Verify connections before use
-    pool_recycle=3600,   # Recycle connections after 1 hour
+    echo=False,
+    pool_pre_ping=True,
+    pool_recycle=3600,
+    pool_size=5,
+    max_overflow=10
 )
 
 # Create SessionLocal class
@@ -20,9 +22,7 @@ Base = declarative_base()
 
 # Dependency to get database session
 def get_db():
-    """
-    Database session dependency for FastAPI
-    """
+    """Database session dependency for FastAPI"""
     db = SessionLocal()
     try:
         yield db
@@ -31,21 +31,16 @@ def get_db():
 
 # Alternative function for direct database access
 def get_db_session():
-    """
-    Get database session for direct access (not as dependency)
-    """
+    """Get database session for direct access (not as dependency)"""
     return SessionLocal()
 
 # Create tables function
 def create_tables():
-    """
-    Create all database tables
-    """
+    """Create all database tables"""
     Base.metadata.create_all(bind=engine)
 
 # Drop tables function (for development/testing)
 def drop_tables():
-    """
-    Drop all database tables - USE WITH CAUTION!
-    """
+    """Drop all database tables - USE WITH CAUTION!"""
     Base.metadata.drop_all(bind=engine)
+

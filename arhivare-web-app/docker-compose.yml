@@ -1,5 +1,5 @@
 services:
-  # Serviciul de bază de date PostgreSQL
+  # PostgreSQL Database
   db:
     image: postgres:16-alpine
     container_name: arhivare_db
@@ -7,7 +7,6 @@ services:
       POSTGRES_DB: arhivare
       POSTGRES_USER: app
       POSTGRES_PASSWORD: app
-      # Adaugă variabile pentru healthcheck
       PGUSER: app
     ports:
       - "5432:5432"
@@ -15,7 +14,6 @@ services:
       - pg_data:/var/lib/postgresql/data
     networks:
       - app_net
-    # FIXED: Enhanced healthcheck
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -24,13 +22,13 @@ services:
       start_period: 30s
     restart: unless-stopped
 
-  # Serviciul Adminer pentru administrarea bazei de date
+  # Adminer for database management
   adminer:
     image: adminer:4
     container_name: arhivare_adminer
     depends_on:
       db:
-        condition: service_healthy  # FIXED: Wait for database to be healthy
+        condition: service_healthy
     ports:
       - "8080:8080"
     environment:
@@ -39,7 +37,7 @@ services:
       - app_net
     restart: unless-stopped
 
-  # Serviciul backend FastAPI
+  # FastAPI Backend
   api:
     build:
       context: .
@@ -49,16 +47,15 @@ services:
       - .env
     depends_on:
       db:
-        condition: service_healthy  # FIXED: Wait for database to be healthy
-        restart: true  # FIXED: Restart API if DB restarts
+        condition: service_healthy
+        restart: true
     ports:
       - "8000:8000"
     networks:
       - app_net
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     volumes:
-      - .:/app  # Pentru hot reload în development
-    # FIXED: Add healthcheck for API
+      - .:/app
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
       interval: 30s
@@ -66,27 +63,8 @@ services:
       retries: 3
       start_period: 40s
     restart: unless-stopped
-
-  # Serviciul frontend React (Optional - pentru când vrei să rulezi și frontend-ul)
-  frontend:
-    build:
-      context: ./react-frontend
-      dockerfile: Dockerfile.dev
-    container_name: arhivare_frontend
-    depends_on:
-      api:
-        condition: service_healthy  # FIXED: Wait for API to be healthy
-    ports:
-      - "3000:3000"
-    networks:
-      - app_net
     environment:
-      - REACT_APP_API_URL=http://localhost:8000
-      - CHOKIDAR_USEPOLLING=true  # Pentru hot reload în Docker
-    volumes:
-      - ./react-frontend:/app  # Pentru hot reload în development
-      - /app/node_modules  # Păstrează node_modules din container
-    restart: unless-stopped
+      - PYTHONPATH=/app
 
 volumes:
   pg_data:
@@ -94,4 +72,3 @@ volumes:
 networks:
   app_net:
     driver: bridge
-

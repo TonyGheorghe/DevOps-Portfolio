@@ -2,7 +2,7 @@
 """Add owner_id to fonds table
 
 Revision ID: add_owner_id_to_fonds
-Revises: previous_migration_id
+Revises: add_ownership_roles
 Create Date: 2025-01-01 12:00:00.000000
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'add_owner_id_to_fonds'
-down_revision = 'previous_migration_id'  # Replace with actual previous revision
+down_revision = 'add_ownership_roles'  # Replace with actual previous revision
 branch_labels = None
 depends_on = None
 
