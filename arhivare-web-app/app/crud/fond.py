@@ -221,3 +221,88 @@ def permanently_delete_fond(db: Session, fond_id: int) -> bool:
 def search_fonds_count(db: Session, query: str) -> int:
     """Count search results - alias for count_search_results"""
     return count_search_results(db, query)
+
+# Add this function to your app/crud/fond.py file
+
+def get_client_statistics(db: Session, client_id: int) -> Dict[str, Any]:
+    """Get statistics for a specific client's fonds"""
+    try:
+        # Get total count of client's fonds
+        total_fonds = get_my_fonds_count(db, client_id, active_only=False)
+        
+        # Get active fonds count
+        active_fonds = get_my_fonds_count(db, client_id, active_only=True)
+        
+        # Get inactive fonds count
+        inactive_fonds = total_fonds - active_fonds
+        
+        # You can add more statistics as needed, for example:
+        # - Most recent fond
+        # - Fonds by location/address
+        # - etc.
+        
+        recent_fond = db.query(Fond).filter(
+            Fond.owner_id == client_id
+        ).order_by(desc(Fond.id)).first()
+        
+        return {
+            'total_fonds': total_fonds,
+            'active_fonds': active_fonds,
+            'inactive_fonds': inactive_fonds,
+            'has_recent_fond': recent_fond is not None,
+            'recent_fond_id': recent_fond.id if recent_fond else None,
+            'recent_fond_company': recent_fond.company_name if recent_fond else None
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting client statistics for client {client_id}: {str(e)}")
+        return {
+            'total_fonds': 0,
+            'active_fonds': 0,
+            'inactive_fonds': 0,
+            'has_recent_fond': False,
+            'recent_fond_id': None,
+            'recent_fond_company': None
+        }
+
+# Add this function to your app/crud/fond.py file
+
+def get_fonds_for_user(
+    db: Session, 
+    user, 
+    skip: int = 0, 
+    limit: int = 100, 
+    active_only: bool = True,
+    include_owner: bool = False
+) -> List[Fond]:
+    """Get fonds based on user role - admins see all, clients see only their own"""
+    try:
+        # Check user role
+        if user.role == "admin":
+            # Admins see all fonds
+            return get_fonds(
+                db=db, 
+                skip=skip, 
+                limit=limit, 
+                active_only=active_only, 
+                include_owner=include_owner
+            )
+        elif user.role == "client":
+            # Clients see only their own fonds
+            query = db.query(Fond).filter(Fond.owner_id == user.id)
+            
+            if include_owner:
+                query = query.options(joinedload(Fond.owner))
+            
+            if active_only:
+                query = query.filter(Fond.active == True)
+            
+            return query.offset(skip).limit(limit).all()
+        else:
+            # Unknown role - return empty list
+            logger.warning(f"Unknown user role: {user.role} for user {user.id}")
+            return []
+            
+    except Exception as e:
+        logger.error(f"Error getting fonds for user {user.id} with role {user.role}: {str(e)}")
+        return []
