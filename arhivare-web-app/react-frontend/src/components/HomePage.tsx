@@ -1,9 +1,9 @@
-// src/components/HomePage.tsx - FIXED with Removed Unused Imports
+// src/components/HomePage.tsx - ENHANCED with User Dropdown Menu
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Search, Phone, Mail, MapPin, Building2, Archive, LogIn, 
-  Users, BarChart3, Eye, User
+  Users, BarChart3, Eye, User, ChevronDown
 } from 'lucide-react';
 import { useAuth } from './AuthSystem';
 
@@ -20,6 +20,232 @@ interface Fond {
   created_at: string;
   updated_at: string;
 }
+
+// UserDropdownMenu component
+interface UserDropdownMenuProps {
+  user: any;
+  isAdmin: boolean;
+  isAudit: boolean;
+  isClient: boolean;
+  onAdminNavigation: () => void;
+  onAuditNavigation: () => void;
+  onClientNavigation: () => void;
+  onUsersManagement: () => void;
+  onProfile: () => void;
+  onLogout: () => void;
+}
+
+const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
+  user,
+  isAdmin,
+  isAudit,
+  isClient,
+  onAdminNavigation,
+  onAuditNavigation,
+  onClientNavigation,
+  onUsersManagement,
+  onProfile,
+  onLogout
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggleDropdown = () => setIsOpen(!isOpen);
+  const closeDropdown = () => setIsOpen(false);
+
+  const handleOptionClick = (callback: () => void) => {
+    callback();
+    closeDropdown();
+  };
+
+  const getDropdownButtonColor = () => {
+    if (isAdmin) return 'bg-blue-600 hover:bg-blue-700 text-white';
+    if (isAudit) return 'bg-purple-600 hover:bg-purple-700 text-white';
+    if (isClient) return 'bg-green-600 hover:bg-green-700 text-white';
+    return 'bg-gray-600 hover:bg-gray-700 text-white';
+  };
+
+  const getDropdownIcon = () => {
+    if (isAdmin) return <Archive className="h-5 w-5" />;
+    if (isAudit) return <BarChart3 className="h-5 w-5" />;
+    if (isClient) return <Building2 className="h-5 w-5" />;
+    return <User className="h-5 w-5" />;
+  };
+
+  const getDropdownTitle = () => {
+    if (isAdmin) return 'Dashboard Admin';
+    if (isAudit) return 'Dashboard Audit';
+    if (isClient) return 'Zona Client';
+    return 'Meniu';
+  };
+
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.dropdown-container')) {
+        closeDropdown();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [isOpen]);
+
+  return (
+    <div className="relative dropdown-container">
+      {/* User info and dropdown button */}
+      <div className="flex items-center space-x-3">
+        <div className="text-right">
+          <p className="text-sm text-gray-600">
+            Bună, <span className="font-medium">{user?.username}</span>!
+          </p>
+          <p className={`text-xs capitalize ${
+            isAdmin ? 'text-blue-600' : isAudit ? 'text-purple-600' : 'text-green-600'
+          }`}>
+            {user?.role}
+          </p>
+        </div>
+
+        <button
+          onClick={toggleDropdown}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${getDropdownButtonColor()}`}
+        >
+          {getDropdownIcon()}
+          <span className="hidden md:block">{getDropdownTitle()}</span>
+          <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
+
+      {/* Dropdown menu */}
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+          <div className="px-4 py-2 border-b border-gray-100">
+            <p className="text-sm font-semibold text-gray-900">{user?.username}</p>
+            <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+          </div>
+
+          {/* Admin Menu Items */}
+          {isAdmin && (
+            <>
+              <button
+                onClick={() => handleOptionClick(onAdminNavigation)}
+                className="w-full text-left px-4 py-3 hover:bg-blue-50 flex items-center space-x-3 transition-colors"
+              >
+                <Archive className="h-5 w-5 text-blue-600" />
+                <div>
+                  <div className="text-sm font-medium text-gray-900">Dashboard Admin</div>
+                  <div className="text-xs text-gray-500">Management fonduri arhivistice</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleOptionClick(onUsersManagement)}
+                className="w-full text-left px-4 py-3 hover:bg-purple-50 flex items-center space-x-3 transition-colors"
+              >
+                <Users className="h-5 w-5 text-purple-600" />
+                <div>
+                  <div className="text-sm font-medium text-gray-900">Management Utilizatori</div>
+                  <div className="text-xs text-gray-500">Gestionează conturile utilizatorilor</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleOptionClick(onProfile)}
+                className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-3 transition-colors"
+              >
+                <User className="h-5 w-5 text-gray-600" />
+                <div>
+                  <div className="text-sm font-medium text-gray-900">Profil</div>
+                  <div className="text-xs text-gray-500">Setări cont și parolă</div>
+                </div>
+              </button>
+            </>
+          )}
+
+          {/* Audit Menu Items */}
+          {isAudit && (
+            <>
+              <button
+                onClick={() => handleOptionClick(onAuditNavigation)}
+                className="w-full text-left px-4 py-3 hover:bg-purple-50 flex items-center space-x-3 transition-colors"
+              >
+                <BarChart3 className="h-5 w-5 text-purple-600" />
+                <div>
+                  <div className="text-sm font-medium text-gray-900">Dashboard Audit</div>
+                  <div className="text-xs text-gray-500">Monitorizare și rapoarte (read-only)</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleOptionClick(onUsersManagement)}
+                className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-3 transition-colors"
+              >
+                <Eye className="h-5 w-5 text-gray-600" />
+                <div>
+                  <div className="text-sm font-medium text-gray-900">Vizualizare Utilizatori</div>
+                  <div className="text-xs text-gray-500">Vezi lista utilizatorilor (read-only)</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleOptionClick(onProfile)}
+                className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-3 transition-colors"
+              >
+                <User className="h-5 w-5 text-gray-600" />
+                <div>
+                  <div className="text-sm font-medium text-gray-900">Profil</div>
+                  <div className="text-xs text-gray-500">Setări cont și parolă</div>
+                </div>
+              </button>
+            </>
+          )}
+
+          {/* Client Menu Items */}
+          {isClient && (
+            <>
+              <button
+                onClick={() => handleOptionClick(onClientNavigation)}
+                className="w-full text-left px-4 py-3 hover:bg-green-50 flex items-center space-x-3 transition-colors"
+              >
+                <Building2 className="h-5 w-5 text-green-600" />
+                <div>
+                  <div className="text-sm font-medium text-gray-900">Fondurile Mele</div>
+                  <div className="text-xs text-gray-500">Gestionează fondurile tale arhivistice</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleOptionClick(onProfile)}
+                className="w-full text-left px-4 py-3 hover:bg-blue-50 flex items-center space-x-3 transition-colors"
+              >
+                <User className="h-5 w-5 text-blue-600" />
+                <div>
+                  <div className="text-sm font-medium text-gray-900">Profilul Meu</div>
+                  <div className="text-xs text-gray-500">Actualizează datele companiei și parola</div>
+                </div>
+              </button>
+            </>
+          )}
+
+          {/* Logout */}
+          <div className="border-t border-gray-100 mt-2">
+            <button
+              onClick={() => handleOptionClick(onLogout)}
+              className="w-full text-left px-4 py-3 hover:bg-red-50 flex items-center space-x-3 transition-colors"
+            >
+              <LogIn className="h-5 w-5 text-red-600" />
+              <div>
+                <div className="text-sm font-medium text-red-600">Deconectare</div>
+                <div className="text-xs text-gray-500">Închide sesiunea</div>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 // API Configuration
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
@@ -149,86 +375,18 @@ const HomePage: React.FC = () => {
             {/* Auth section */}
             <div className="flex items-center space-x-4">
               {isAuthenticated ? (
-                <div className="flex items-center space-x-3">
-                  <div className="text-right">
-                    <p className="text-sm text-gray-600">
-                      Bună, <span className="font-medium">{user?.username}</span>!
-                    </p>
-                    <p className={`text-xs capitalize ${
-                      isAdmin ? 'text-blue-600' : isAudit ? 'text-purple-600' : 'text-green-600'
-                    }`}>
-                      {user?.role}
-                    </p>
-                  </div>
-
-                  {/* Role-specific navigation buttons */}
-                  <div className="flex items-center space-x-2">
-                    {isAdmin && (
-                      <>
-                        <button 
-                          onClick={handleAdminNavigation}
-                          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-                        >
-                          <Archive className="h-4 w-4" />
-                          <span>Dashboard Admin</span>
-                        </button>
-                        <button 
-                          onClick={handleUsersManagement}
-                          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
-                        >
-                          <Users className="h-4 w-4" />
-                          <span>Utilizatori</span>
-                        </button>
-                      </>
-                    )}
-
-                    {isAudit && (
-                      <div className="flex items-center space-x-2">
-                        <button 
-                          onClick={handleAuditNavigation}
-                          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
-                        >
-                          <BarChart3 className="h-4 w-4" />
-                          <span>Dashboard Audit</span>
-                        </button>
-                        <button 
-                          onClick={handleUsersManagement}
-                          className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
-                        >
-                          <Users className="h-4 w-4" />
-                          <span>Utilizatori</span>
-                        </button>
-                      </div>
-                    )}
-
-                    {isClient && (
-                      <div className="flex items-center space-x-2">
-                        <button 
-                          onClick={handleClientNavigation}
-                          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
-                        >
-                          <Building2 className="h-4 w-4" />
-                          <span>Fondurile Mele</span>
-                        </button>
-                        <button 
-                          onClick={() => navigate('/profile')}
-                          className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2"
-                        >
-                          <User className="h-4 w-4" />
-                          <span>Profil</span>
-                        </button>
-                      </div>
-                    )}
-
-                    <button
-                      onClick={handleLogout}
-                      className="text-gray-600 hover:text-red-600 transition-colors text-sm font-medium flex items-center space-x-1 px-3 py-2 rounded-md hover:bg-red-50"
-                    >
-                      <LogIn className="h-4 w-4" />
-                      <span>Deconectare</span>
-                    </button>
-                  </div>
-                </div>
+                <UserDropdownMenu 
+                  user={user}
+                  isAdmin={isAdmin}
+                  isAudit={isAudit}
+                  isClient={isClient}
+                  onAdminNavigation={handleAdminNavigation}
+                  onAuditNavigation={handleAuditNavigation}
+                  onClientNavigation={handleClientNavigation}
+                  onUsersManagement={handleUsersManagement}
+                  onProfile={() => navigate('/profile')}
+                  onLogout={handleLogout}
+                />
               ) : (
                 <button 
                   onClick={handleLogin}
@@ -245,108 +403,6 @@ const HomePage: React.FC = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Role-Specific Quick Actions */}
-        {isAuthenticated && (
-          <div className="mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Acțiuni Rapide</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              
-              {/* Admin Quick Actions */}
-              {isAdmin && (
-                <>
-                  <div 
-                    onClick={handleAdminNavigation}
-                    className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-blue-500"
-                  >
-                    <div className="flex items-center">
-                      <Archive className="h-8 w-8 text-blue-600" />
-                      <div className="ml-4">
-                        <h3 className="text-lg font-semibold text-gray-900">Management Fonduri</h3>
-                        <p className="text-sm text-gray-600">Administrează toate fondurile arhivistice</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div 
-                    onClick={handleUsersManagement}
-                    className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-purple-500"
-                  >
-                    <div className="flex items-center">
-                      <Users className="h-8 w-8 text-purple-600" />
-                      <div className="ml-4">
-                        <h3 className="text-lg font-semibold text-gray-900">Management Utilizatori</h3>
-                        <p className="text-sm text-gray-600">Gestionează conturile utilizatorilor</p>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Audit Quick Actions */}
-              {isAudit && (
-                <>
-                  <div 
-                    onClick={handleAuditNavigation}
-                    className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-purple-500"
-                  >
-                    <div className="flex items-center">
-                      <BarChart3 className="h-8 w-8 text-purple-600" />
-                      <div className="ml-4">
-                        <h3 className="text-lg font-semibold text-gray-900">Dashboard Audit</h3>
-                        <p className="text-sm text-gray-600">Monitorizare și rapoarte (read-only)</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div 
-                    onClick={handleUsersManagement}
-                    className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-gray-500"
-                  >
-                    <div className="flex items-center">
-                      <Eye className="h-8 w-8 text-gray-600" />
-                      <div className="ml-4">
-                        <h3 className="text-lg font-semibold text-gray-900">Vizualizare Utilizatori</h3>
-                        <p className="text-sm text-gray-600">Vezi lista utilizatorilor (read-only)</p>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Client Quick Actions */}
-              {isClient && (
-                <>
-                  <div 
-                    onClick={handleClientNavigation}
-                    className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-green-500"
-                  >
-                    <div className="flex items-center">
-                      <Building2 className="h-8 w-8 text-green-600" />
-                      <div className="ml-4">
-                        <h3 className="text-lg font-semibold text-gray-900">Fondurile Mele</h3>
-                        <p className="text-sm text-gray-600">Gestionează fondurile tale arhivistice</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div 
-                    onClick={() => navigate('/profile')}
-                    className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-blue-500"
-                  >
-                    <div className="flex items-center">
-                      <User className="h-8 w-8 text-blue-600" />
-                      <div className="ml-4">
-                        <h3 className="text-lg font-semibold text-gray-900">Profilul Meu</h3>
-                        <p className="text-sm text-gray-600">Actualizează datele companiei și parola</p>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Search Section */}
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
