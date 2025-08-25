@@ -1,3 +1,5 @@
+/* src/index.css - Additional CSS for Critical Systems */
+
 @import 'tailwindcss/base';
 @import 'tailwindcss/components'; 
 @import 'tailwindcss/utilities';
@@ -15,10 +17,165 @@
   }
 }
 
-/* Custom components */
+/* ===========================================
+   ACCESSIBILITY STYLES
+   =========================================== */
+
+/* High contrast mode */
+[data-contrast="high"] {
+  --bg-primary: #ffffff !important;
+  --bg-secondary: #f8f9fa !important;
+  --text-primary: #000000 !important;
+  --text-secondary: #212529 !important;
+  --border-color: #000000 !important;
+  --focus-color: #0066cc !important;
+}
+
+[data-contrast="dark"] {
+  --bg-primary: #1a1a1a !important;
+  --bg-secondary: #2d2d2d !important;
+  --text-primary: #ffffff !important;
+  --text-secondary: #e0e0e0 !important;
+  --border-color: #ffffff !important;
+  --focus-color: #66b3ff !important;
+  
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+}
+
+[data-contrast="dark"] * {
+  background-color: inherit;
+  color: inherit;
+  border-color: var(--border-color);
+}
+
+[data-contrast="dark"] .bg-white {
+  background-color: var(--bg-primary) !important;
+}
+
+[data-contrast="dark"] .bg-gray-50 {
+  background-color: var(--bg-secondary) !important;
+}
+
+[data-contrast="dark"] .text-gray-900 {
+  color: var(--text-primary) !important;
+}
+
+[data-contrast="dark"] .text-gray-600 {
+  color: var(--text-secondary) !important;
+}
+
+/* Focus indicators */
+.focus-visible *:focus-visible {
+  outline: 2px solid var(--focus-color, #0066cc) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 2px var(--focus-color, #0066cc) !important;
+}
+
+/* Enhanced focus for buttons */
+.focus-visible button:focus-visible,
+.focus-visible a:focus-visible {
+  outline: 3px solid var(--focus-color, #0066cc) !important;
+  outline-offset: 2px !important;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .animate-spin {
+    animation: none !important;
+  }
+  
+  .animate-pulse {
+    animation: none !important;
+  }
+}
+
+/* Screen reader only class */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Skip link */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #000;
+  color: #fff;
+  padding: 8px;
+  text-decoration: none;
+  z-index: 1000;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+/* ===========================================
+   NETWORK STATUS ANIMATIONS
+   =========================================== */
+
+@keyframes slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* ===========================================
+   CUSTOM COMPONENTS
+   =========================================== */
+
 @layer components {
   .btn-primary {
-    @apply bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors;
+    @apply bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+  }
+  
+  .btn-danger {
+    @apply bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
   }
   
   .card {
@@ -26,11 +183,66 @@
   }
   
   .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none;
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors;
+  }
+  
+  .input-error {
+    @apply border-red-300 focus:ring-red-500;
+  }
+  
+  .modal-overlay {
+    @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50;
+  }
+  
+  .modal-content {
+    @apply bg-white rounded-lg shadow-xl w-full max-h-[90vh] overflow-y-auto;
   }
 }
 
-/* Custom utilities */
+/* ===========================================
+   LOADING STATES
+   =========================================== */
+
+.loading-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ===========================================
+   ERROR BOUNDARY STYLES
+   =========================================== */
+
+.error-boundary-fallback {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f9fafb;
+}
+
+.error-details {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  max-height: 24rem;
+  overflow-y: auto;
+}
+
+/* ===========================================
+   UTILITY CLASSES
+   =========================================== */
+
 @layer utilities {
   .text-shadow {
     text-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -39,12 +251,144 @@
   .gradient-bg {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   }
+  
+  .backdrop-blur {
+    backdrop-filter: blur(8px);
+  }
+  
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
-/* Responsive utilities */
+/* ===========================================
+   PRINT STYLES
+   =========================================== */
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+  }
+  
+  * {
+    color: black !important;
+    background: white !important;
+    box-shadow: none !important;
+  }
+}
+
+/* ===========================================
+   RESPONSIVE UTILITIES
+   =========================================== */
+
 @media (max-width: 640px) {
   .container {
     padding-left: 1rem;
     padding-right: 1rem;
+  }
+  
+  .modal-content {
+    margin: 1rem;
+    max-width: calc(100vw - 2rem);
+  }
+}
+
+/* ===========================================
+   CUSTOM SCROLLBAR
+   =========================================== */
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f7fafc;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f7fafc;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
+/* ===========================================
+   HIGH CONTRAST IMPROVEMENTS
+   =========================================== */
+
+[data-contrast="high"] .shadow,
+[data-contrast="high"] .shadow-sm,
+[data-contrast="high"] .shadow-md,
+[data-contrast="high"] .shadow-lg,
+[data-contrast="high"] .shadow-xl {
+  box-shadow: 0 0 0 2px var(--border-color, #000000) !important;
+}
+
+[data-contrast="high"] .border {
+  border-width: 2px !important;
+  border-color: var(--border-color, #000000) !important;
+}
+
+[data-contrast="high"] .rounded,
+[data-contrast="high"] .rounded-lg,
+[data-contrast="high"] .rounded-md {
+  border-radius: 0 !important;
+}
+
+/* ===========================================
+   KEYBOARD NAVIGATION IMPROVEMENTS
+   =========================================== */
+
+/* Show focus indicators only when navigating with keyboard */
+.js-focus-visible :focus:not(.focus-visible) {
+  outline: none;
+}
+
+/* Enhanced focus for interactive elements */
+.focus-visible [role="button"]:focus-visible,
+.focus-visible [role="tab"]:focus-visible,
+.focus-visible [role="menuitem"]:focus-visible {
+  outline: 3px solid var(--focus-color, #0066cc);
+  outline-offset: 2px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Focus within containers */
+.focus-visible :focus-within {
+  outline: 1px solid var(--focus-color, #0066cc);
+  outline-offset: 1px;
+}
+
+/* ===========================================
+   ANIMATION PREFERENCES
+   =========================================== */
+
+/* Honor system animation preferences */
+@media (prefers-reduced-motion: no-preference) {
+  .animate-on-preference {
+    transition: all 0.3s ease;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-on-preference {
+    transition: none;
   }
 }
