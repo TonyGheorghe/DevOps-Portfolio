@@ -1,4 +1,4 @@
-// src/components/AdminDashboard.tsx - COMPLETE VERSION with LoadingButtons
+// src/components/AdminDashboard.tsx - FIXED VERSION
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -8,11 +8,10 @@ import {
   RefreshCw, Zap, Target, UserCheck
 } from 'lucide-react';
 import { useAuth } from './AuthSystem';
-import { LoadingButton, PageLoader, TableSkeleton } from './common/LoadingStates'; // ADD THIS IMPORT
 import FondForm from './forms/FondForm';
 import ReassignmentModal from './ReassignmentModal';
 
-// Types (same as before)
+// Types
 interface Fond {
   id: number;
   company_name: string;
@@ -105,11 +104,6 @@ const AdminDashboard: React.FC = () => {
   // Auto-reassignment settings
   const [autoReassignEnabled, setAutoReassignEnabled] = useState(false);
 
-  // NEW: Specific loading states for different operations
-  const [bulkLoading, setBulkLoading] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState<Record<number, boolean>>({});
-  const [assignmentLoading, setAssignmentLoading] = useState<Record<number, boolean>>({});
-
   // Role-based access control
   const isAdmin = user?.role === 'admin';
   const isAudit = user?.role === 'audit';
@@ -175,6 +169,7 @@ const AdminDashboard: React.FC = () => {
 
       if (response.ok) {
         const usersData = await response.json();
+        // Filter only client users for assignment
         const clientUsers = usersData.filter((u: UserOption) => u.role === 'client');
         setAvailableUsers(clientUsers);
       }
@@ -312,6 +307,7 @@ const AdminDashboard: React.FC = () => {
 
       const responseData = await response.json();
       
+      // Check if reassignment suggestions were returned
       if (responseData.reassignment_suggestions) {
         console.log('🔄 Reassignment suggestions detected:', responseData.reassignment_suggestions);
         
@@ -321,6 +317,7 @@ const AdminDashboard: React.FC = () => {
         return;
       }
       
+      // If no reassignment needed, proceed normally
       setShowForm(false);
       setEditingFond(undefined);
       await loadFonds();
@@ -412,7 +409,7 @@ const AdminDashboard: React.FC = () => {
     setReassignmentData(null);
   };
 
-  // ENHANCED Delete operation with per-item loading
+  // Delete operation
   const handleDeleteFond = async (fond: Fond) => {
     if (!canEdit) {
       setError('Nu ai permisiuni pentru a șterge fonduri');
@@ -422,9 +419,6 @@ const AdminDashboard: React.FC = () => {
     if (!window.confirm(`Ești sigur că vrei să ștergi fondul "${fond.company_name}"?`)) {
       return;
     }
-
-    // Set loading for specific fond
-    setDeleteLoading(prev => ({ ...prev, [fond.id]: true }));
 
     try {
       const response = await fetch(`${API_BASE_URL}/fonds/${fond.id}`, {
@@ -445,25 +439,15 @@ const AdminDashboard: React.FC = () => {
       setSuccessMessage(`Fondul "${fond.company_name}" a fost șters cu succes!`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error deleting fond');
-    } finally {
-      // Remove loading for specific fond
-      setDeleteLoading(prev => {
-        const newState = { ...prev };
-        delete newState[fond.id];
-        return newState;
-      });
     }
   };
 
-  // Quick owner assignment function with loading
+  // Quick owner assignment function
   const handleQuickAssignment = async (fondId: number, newOwnerId: number | null) => {
     if (!canEdit) {
       setError('Nu ai permisiuni pentru a modifica assignment-urile');
       return;
     }
-
-    // Set loading for specific assignment
-    setAssignmentLoading(prev => ({ ...prev, [fondId]: true }));
 
     try {
       const response = await fetch(`${API_BASE_URL}/fonds/${fondId}/assign-owner`, {
@@ -488,21 +472,14 @@ const AdminDashboard: React.FC = () => {
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error updating assignment');
-    } finally {
-      // Remove loading for specific assignment
-      setAssignmentLoading(prev => {
-        const newState = { ...prev };
-        delete newState[fondId];
-        return newState;
-      });
     }
   };
 
-  // ENHANCED Bulk check reassignments with loading
+  // Bulk check reassignments
   const handleBulkCheckReassignments = async () => {
     if (!isAdmin) return;
     
-    setBulkLoading(true);
+    setLoading(true);
     setError(null);
     
     try {
@@ -531,7 +508,7 @@ const AdminDashboard: React.FC = () => {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error checking reassignments');
     } finally {
-      setBulkLoading(false);
+      setLoading(false);
     }
   };
 
@@ -542,6 +519,7 @@ const AdminDashboard: React.FC = () => {
 
   // Enhanced filter fonds based on search and owner
   const filteredFonds = fonds.filter(fond => {
+    // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const matchesSearch = (
@@ -553,12 +531,14 @@ const AdminDashboard: React.FC = () => {
       if (!matchesSearch) return false;
     }
     
+    // Owner filter
     if (ownerFilter !== 'all') {
       if (ownerFilter === 'unassigned') {
         return !fond.owner_id;
       } else if (ownerFilter === 'assigned') {
         return !!fond.owner_id;
       } else {
+        // Specific user ID
         return fond.owner_id === parseInt(ownerFilter);
       }
     }
@@ -588,13 +568,14 @@ const AdminDashboard: React.FC = () => {
     return 'Vizualizare fonduri';
   };
 
-  // ENHANCED: Show page loader instead of simple spinner
   if (loading && !reassignmentData) {
     return (
-      <PageLoader 
-        message="Se încarcă dashboard-ul..." 
-        submessage="Vă rugăm să așteptați"
-      />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="text-gray-600 mt-4">Se încarcă dashboard-ul...</p>
+        </div>
+      </div>
     );
   }
 
@@ -615,39 +596,33 @@ const AdminDashboard: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-4">
-              {/* Navigation Menu with LoadingButton */}
+              {/* Navigation Menu */}
               <nav className="hidden md:flex items-center space-x-2">
-                <LoadingButton
+                <button 
                   onClick={goToHomepage}
-                  variant="secondary"
-                  size="sm"
-                  className="text-gray-600 hover:text-blue-600 bg-transparent hover:bg-gray-50"
-                  icon={<Home className="h-4 w-4" />}
+                  className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
                 >
-                  Căutare
-                </LoadingButton>
+                  <Home className="h-4 w-4" />
+                  <span>Căutare</span>
+                </button>
                 
                 {(isAdmin || isAudit) && (
-                  <LoadingButton
+                  <button 
                     onClick={goToUsersManagement}
-                    variant="secondary"
-                    size="sm"
-                    className="text-gray-600 hover:text-purple-600 bg-transparent hover:bg-purple-50"
-                    icon={<Users className="h-4 w-4" />}
+                    className="flex items-center space-x-2 text-gray-600 hover:text-purple-600 transition-colors px-3 py-2 rounded-md hover:bg-purple-50"
                   >
-                    Utilizatori
-                  </LoadingButton>
+                    <Users className="h-4 w-4" />
+                    <span>Utilizatori</span>
+                  </button>
                 )}
 
-                <LoadingButton
+                <button 
                   onClick={goToProfile}
-                  variant="secondary"
-                  size="sm"
-                  className="text-gray-600 hover:text-green-600 bg-transparent hover:bg-green-50"
-                  icon={<User className="h-4 w-4" />}
+                  className="flex items-center space-x-2 text-gray-600 hover:text-green-600 transition-colors px-3 py-2 rounded-md hover:bg-green-50"
                 >
-                  Profil
-                </LoadingButton>
+                  <User className="h-4 w-4" />
+                  <span>Profil</span>
+                </button>
               </nav>
               
               {/* User profile section */}
@@ -672,15 +647,13 @@ const AdminDashboard: React.FC = () => {
                     {isAudit && ' (Read-Only)'}
                   </p>
                 </div>
-                <LoadingButton
+                <button
                   onClick={handleLogout}
-                  variant="danger"
-                  size="sm"
-                  className="text-gray-400 hover:text-red-600 bg-transparent hover:bg-red-50 p-1"
-                  icon={<LogOut className="h-5 w-5" />}
+                  className="text-gray-400 hover:text-red-600 transition-colors p-1 rounded-md hover:bg-red-50"
+                  title="Deconectare"
                 >
-                  <span className="sr-only">Deconectare</span>
-                </LoadingButton>
+                  <LogOut className="h-5 w-5" />
+                </button>
               </div>
             </div>
           </div>
@@ -726,16 +699,14 @@ const AdminDashboard: React.FC = () => {
                   />
                   <span className="text-sm text-blue-700">Auto-assignment pentru match-uri exacte</span>
                 </label>
-                <LoadingButton
+                <button
                   onClick={handleBulkCheckReassignments}
-                  isLoading={bulkLoading}
-                  icon={<Zap className="h-4 w-4" />}
-                  size="sm"
-                  loadingText="Se verifică..."
                   disabled={loading}
+                  className="flex items-center space-x-2 px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition-colors disabled:opacity-50"
                 >
-                  Verifică Toate
-                </LoadingButton>
+                  <Zap className="h-4 w-4" />
+                  <span>Verifică Toate</span>
+                </button>
               </div>
             </div>
           </div>
@@ -743,27 +714,20 @@ const AdminDashboard: React.FC = () => {
 
         {/* Enhanced Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-          {/* Total Fonds with Action Button */}
-          <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Archive className="h-8 w-8 text-blue-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Fonduri</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-                </div>
+          {/* Total Fonds */}
+          <div 
+            className={`bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow ${
+              canEdit ? 'cursor-pointer' : ''
+            }`}
+            onClick={canEdit ? () => setShowForm(true) : undefined}
+          >
+            <div className="flex items-center">
+              <Archive className="h-8 w-8 text-blue-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">Total Fonduri</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                {canEdit && <p className="text-xs text-blue-600 mt-1">Click pentru adăugare</p>}
               </div>
-              {canEdit && (
-                <LoadingButton
-                  onClick={() => setShowForm(true)}
-                  size="sm"
-                  className="bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200"
-                  icon={<Plus className="h-4 w-4" />}
-                  disabled={formLoading}
-                >
-                  <span className="sr-only">Adaugă fond</span>
-                </LoadingButton>
-              )}
             </div>
           </div>
 
@@ -896,7 +860,7 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* NEW: Enhanced filters row */}
+              {/* Enhanced filters row */}
               <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
                 <label className="flex items-center space-x-2">
                   <input
@@ -908,7 +872,7 @@ const AdminDashboard: React.FC = () => {
                   <span className="text-sm text-gray-700">Arată inactive</span>
                 </label>
 
-                {/* NEW: Owner filter */}
+                {/* Owner filter */}
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-700">Owner:</span>
                   <select
@@ -1028,7 +992,7 @@ const AdminDashboard: React.FC = () => {
                             {fond.active ? 'Activ' : 'Inactiv'}
                           </span>
                           
-                          {/* NEW: Enhanced ownership status with quick assignment */}
+                          {/* Enhanced ownership status with quick assignment */}
                           {fond.owner_id && fond.owner ? (
                             <div className="space-y-1">
                               <div className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
@@ -1082,7 +1046,7 @@ const AdminDashboard: React.FC = () => {
                                     <option key={user.id} value={user.id}>
                                       {user.username} {user.company_name ? `(${user.company_name})` : ''}
                                     </option>
-                                ))}
+                                  ))}
                                 </select>
                               )}
                             </div>
@@ -1104,8 +1068,8 @@ const AdminDashboard: React.FC = () => {
                               <Edit2 className="h-4 w-4" />
                             </button>
                             <button
-                              onClick={() => handleDeleteFond(fond)}
-                             className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
+                             onClick={() => handleDeleteFond(fond)}
+                              className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
                               title="Șterge"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -1113,8 +1077,8 @@ const AdminDashboard: React.FC = () => {
                           </>
                         ) : (
                           <button
-                            onClick={() => handleViewOnlyClick('edita fonduri')}
-                            className="text-gray-400p-1 rounded cursor-not-allowed opacity-50"
+                            onClick={() => handleViewOnlyClick('edita fondui')}
+                            className="text-gray-400 p-1 rounded cursor-not-allowed opacity-50"
                             title="Doar vizualizare"
                             disabled
                           >
@@ -1142,7 +1106,7 @@ const AdminDashboard: React.FC = () => {
                 <span>
                   Owner: {
                     ownerFilter === 'assigned' ? 'Assignate' :
-                 ownerFilter === 'unassigned' ? 'Neasignate' :
+                    ownerFilter === 'unassigned' ? 'Neasignate' :
                     availableUsers.find(u => u.id.toString() === ownerFilter)?.username || 'Necunoscut'
                   }
                 </span>
@@ -1158,8 +1122,8 @@ const AdminDashboard: React.FC = () => {
           <FondForm
             fond={editingFond}
             existingFonds={fonds}
-            availableUsers={availableUsers} // NEW: Pass available users
-            currentUserRole={user?.role} // NEW: Pass current user role
+            availableUsers={availableUsers}
+            currentUserRole={user?.role}
             onSave={handleFormSave}
             onCancel={handleFormCancel}
             isLoading={formLoading}

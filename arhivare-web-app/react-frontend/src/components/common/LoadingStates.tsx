@@ -361,14 +361,14 @@ const LoadingStatesDemo: React.FC = () => {
           </div>
         </div>
 
-        {/* Usage Examples */}
+        {/* Usage Examples - FIXED JSX */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
           <h2 className="text-xl font-semibold text-blue-900 mb-4">
             💡 Cum să implementezi în aplicația ta
           </h2>
           <div className="space-y-3 text-blue-800">
             <p><strong>1. Pentru dashboard loading:</strong> Înlocuiește loading simple cu <code>&lt;PageLoader /&gt;</code></p>
-            <p><strong>2. Pentru butoane:</strong> Folosește <code>&lt;LoadingButton isLoading={{formLoading}} /&gt;</code></p>
+            <p><strong>2. Pentru butoane:</strong> Folosește <code>&lt;LoadingButton isLoading=&#123;formLoading&#125; /&gt;</code></p>
             <p><strong>3. Pentru căutare:</strong> Afișează <code>&lt;SearchLoader /&gt;</code> când <code>loading === true</code></p>
             <p><strong>4. Pentru tabele:</strong> Condiționează între <code>&lt;TableSkeleton /&gt;</code> și datele reale</p>
             <p><strong>5. Pentru formulare:</strong> Disable toate input-urile când <code>isSubmitting === true</code></p>
@@ -413,6 +413,16 @@ const LoadingStatesDemo: React.FC = () => {
       </div>
     </div>
   );
+};
+
+// Export all components for use in other parts of the app
+export {
+  LoadingSpinner,
+  PageLoader,
+  CardSkeleton,
+  TableSkeleton,
+  LoadingButton,
+  SearchLoader
 };
 
 export default LoadingStatesDemo;
