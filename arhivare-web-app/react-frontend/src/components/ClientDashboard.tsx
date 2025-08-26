@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from './AuthSystem';
 import FondForm from './forms/FondForm';
+import { DarkModeToggle, useDarkMode } from './common/DarkModeSystem';
 
 // Types
 interface Fond {
@@ -47,6 +48,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const ClientDashboard: React.FC = () => {
   const { user, logout } = useAuth();
+  const { currentTheme } = useDarkMode(); // Add dark mode hook 
   const navigate = useNavigate();
   
   // State management
