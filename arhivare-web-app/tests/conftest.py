@@ -13,7 +13,7 @@ from app.main import app
 from app.models.base import Base
 from app.models.user import User
 from app.models.fond import Fond
-from app.db.session import get_db
+from app.database import get_db
 from app.core.security import get_password_hash
 
 # ======================================================
