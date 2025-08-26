@@ -1,10 +1,13 @@
-/* src/index.css - FIXED Dark Mode Implementation */
+/* src/index.css - COMPLETELY FIXED Dark Mode CSS */
 
 @import 'tailwindcss/base';
 @import 'tailwindcss/components'; 
 @import 'tailwindcss/utilities';
 
-/* Custom base styles */
+/* ===========================================
+   BASE STYLES - LET TAILWIND HANDLE EVERYTHING
+   =========================================== */
+
 @layer base {
   html {
     font-family: Inter, system-ui, sans-serif;
@@ -18,81 +21,18 @@
 }
 
 /* ===========================================
-   🔴 FIXED DARK MODE SYSTEM
+   🔴 REMOVE ALL CONFLICTING CSS CUSTOM PROPERTIES
+   LET TAILWIND'S DARK MODE HANDLE EVERYTHING
    =========================================== */
 
-/* CSS Custom Properties for Clean Theme Management */
-:root {
-  /* Light theme (default) */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --bg-tertiary: #f1f3f4;
-  
-  --text-primary: #1f2937;
-  --text-secondary: #6b7280;
-  --text-tertiary: #9ca3af;
-  
-  --border-primary: #e5e7eb;
-  --border-secondary: #d1d5db;
-  --border-focus: #3b82f6;
-  
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-}
-
-/* 🔴 DARK THEME - Only applied when .dark class is present */
-.dark {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #334155;
-  
-  --text-primary: #f1f5f9;
-  --text-secondary: #cbd5e1;
-  --text-tertiary: #94a3b8;
-  
-  --border-primary: #334155;
-  --border-secondary: #475569;
-  --border-focus: #60a5fa;
-  
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3);
-  
-  color-scheme: dark;
-}
-
-/* 🔴 HIGH CONTRAST MODE */
-.high-contrast {
-  --bg-primary: #ffffff;
-  --text-primary: #000000;
-  --border-primary: #000000;
-  --border-focus: #0066cc;
-}
-
-.dark.high-contrast {
-  --bg-primary: #000000;
-  --text-primary: #ffffff;
-  --border-primary: #ffffff;
-  --border-focus: #66b3ff;
-}
-
 /* ===========================================
-   🔴 REMOVE CONFLICTING CSS
-   =========================================== */
-
-/* Remove the old CSS that was overriding Tailwind */
-/* These were causing the mixed dark/light mode appearance */
-
-/* ===========================================
-   ACCESSIBILITY STYLES (kept as-is)
+   ACCESSIBILITY STYLES (unchanged)
    =========================================== */
 
 /* Focus indicators */
 .focus-visible *:focus-visible {
-  outline: 2px solid var(--border-focus) !important;
+  outline: 2px solid #3b82f6 !important;
   outline-offset: 2px !important;
-  box-shadow: 0 0 0 2px var(--border-focus) !important;
 }
 
 /* Reduced motion support */
@@ -145,14 +85,8 @@
   top: 6px;
 }
 
-.dark .skip-link {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  border: 2px solid var(--border-focus);
-}
-
 /* ===========================================
-   NETWORK STATUS ANIMATIONS (kept as-is)
+   NETWORK STATUS ANIMATIONS
    =========================================== */
 
 @keyframes slide-down {
@@ -184,50 +118,17 @@
 }
 
 /* ===========================================
-   🔴 CLEAN COMPONENT STYLES
+   COMPONENT STYLES - MINIMAL, LET TAILWIND WORK
    =========================================== */
 
 @layer components {
-  .btn-primary {
-    @apply bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors;
-    @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
-  }
-  
-  .btn-secondary {
-    @apply bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors;
-    @apply focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
-  }
-  
-  .btn-danger {
-    @apply bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors;
-    @apply focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
-  }
-  
-  .card {
-    @apply bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700;
-  }
-  
-  .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg;
-    @apply focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors;
-    @apply bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100;
-  }
-  
-  .input-error {
-    @apply border-red-300 dark:border-red-600 focus:ring-red-500;
-  }
-  
-  .modal-overlay {
-    @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50;
-  }
-  
-  .modal-content {
-    @apply bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-h-[90vh] overflow-y-auto;
+  .theme-transition {
+    @apply transition-colors duration-300 ease-in-out;
   }
 }
 
 /* ===========================================
-   🔴 CLEAN LOADING STATES
+   LOADING STATES
    =========================================== */
 
 .loading-skeleton {
@@ -251,7 +152,7 @@
 }
 
 /* ===========================================
-   🔴 CLEAN SCROLLBAR STYLES
+   SCROLLBAR STYLES
    =========================================== */
 
 .custom-scrollbar {
@@ -295,97 +196,7 @@
 }
 
 /* ===========================================
-   🔴 THEME TRANSITION UTILITIES
-   =========================================== */
-
-.theme-transition {
-  transition: background-color 300ms ease-in-out, color 300ms ease-in-out, border-color 300ms ease-in-out;
-}
-
-/* Apply smooth transitions to all elements */
-* {
-  transition: color 150ms ease-in-out, background-color 150ms ease-in-out, border-color 150ms ease-in-out;
-}
-
-/* ===========================================
-   🔴 UTILITY CLASSES
-   =========================================== */
-
-@layer utilities {
-  .text-shadow {
-    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  }
-  
-  .gradient-bg {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  }
-  
-  .backdrop-blur {
-    backdrop-filter: blur(8px);
-  }
-  
-  .safe-area-top {
-    padding-top: env(safe-area-inset-top);
-  }
-  
-  .safe-area-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-}
-
-/* ===========================================
-   🔴 ENHANCED FOCUS INDICATORS
-   =========================================== */
-
-/* Show focus indicators only when navigating with keyboard */
-.js-focus-visible :focus:not(.focus-visible) {
-  outline: none;
-}
-
-/* Enhanced focus for interactive elements */
-.focus-visible [role="button"]:focus-visible,
-.focus-visible [role="tab"]:focus-visible,
-.focus-visible [role="menuitem"]:focus-visible {
-  outline: 3px solid var(--border-focus);
-  outline-offset: 2px;
-  position: relative;
-  z-index: 1;
-}
-
-/* Focus within containers */
-.focus-visible :focus-within {
-  outline: 1px solid var(--border-focus);
-  outline-offset: 1px;
-}
-
-/* ===========================================
-   🔴 ANIMATION PREFERENCES
-   =========================================== */
-
-/* Honor system animation preferences */
-@media (prefers-reduced-motion: no-preference) {
-  .animate-on-preference {
-    transition: all 0.3s ease;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-on-preference {
-    transition: none;
-  }
-  
-  /* Disable all theme transitions for motion sensitivity */
-  .theme-transition {
-    transition: none !important;
-  }
-  
-  * {
-    transition: none !important;
-  }
-}
-
-/* ===========================================
-   🔴 RESPONSIVE UTILITIES
+   RESPONSIVE UTILITIES
    =========================================== */
 
 @media (max-width: 640px) {
@@ -401,7 +212,7 @@
 }
 
 /* ===========================================
-   🔴 PRINT STYLES
+   PRINT STYLES
    =========================================== */
 
 @media print {
@@ -419,40 +230,10 @@
     background: white !important;
     box-shadow: none !important;
   }
-  
-  .dark * {
-    color: black !important;
-    background: white !important;
-  }
 }
 
 /* ===========================================
-   🔴 DEBUG UTILITIES (Development Only)
-   =========================================== */
-
-/* Theme debug info - only visible in development */
-.theme-debug {
-  position: fixed;
-  bottom: 80px;
-  right: 20px;
-  z-index: 1000;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  padding: 8px 12px;
-  border-radius: 8px;
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border-primary);
-  font-size: 12px;
-  opacity: 0.9;
-  transition: opacity 0.3s ease;
-}
-
-.theme-debug:hover {
-  opacity: 1;
-}
-
-/* ===========================================
-   🔴 ERROR BOUNDARY STYLES
+   ERROR BOUNDARY STYLES
    =========================================== */
 
 .error-boundary-fallback {
@@ -460,70 +241,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f9fafb;
-}
-
-.dark .error-boundary-fallback {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
 }
 
 .error-details {
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
   border-radius: 0.5rem;
   padding: 1rem;
   max-height: 24rem;
   overflow-y: auto;
 }
 
-.dark .error-details {
-  background-color: #7f1d1d;
-  border-color: #dc2626;
-  color: #fecaca;
-}
-
 /* ===========================================
-   🔴 FINAL CLEANUP - Remove any remaining conflicts
+   🔴 IMPORTANT: LET TAILWIND HANDLE ALL DARK MODE
+   NO CUSTOM OVERRIDES FOR COLORS OR BACKGROUNDS
    =========================================== */
-
-/* Ensure Tailwind's dark mode classes work properly */
-html {
-  background-color: rgb(255 255 255);
-  color: rgb(31 41 55);
-}
-
-html.dark {
-  background-color: rgb(15 23 42);
-  color: rgb(241 245 249);
-}
-
-body {
-  background-color: inherit;
-  color: inherit;
-}
-
-/* Remove any conflicting styles that might interfere with Tailwind's dark mode */
-.dark .bg-white {
-  background-color: rgb(30 41 59) !important;
-}
-
-.dark .bg-gray-50 {
-  background-color: rgb(51 65 85) !important;
-}
-
-.dark .text-gray-900 {
-  color: rgb(241 245 249) !important;
-}
-
-.dark .text-gray-600 {
-  color: rgb(203 213 225) !important;
-}
-
-.dark .border-gray-200 {
-  border-color: rgb(51 65 85) !important;
-}
-
-.dark .border-gray-300 {
-  border-color: rgb(71 85 105) !important;
-}

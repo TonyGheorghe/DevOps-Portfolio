@@ -7,7 +7,7 @@ import {
   Building2, User, MapPin, Mail, Phone, FileText, 
   Link, Save, X, AlertCircle, AlertTriangle, Lightbulb, Users
 } from 'lucide-react';
-import { DarkModeSettings, DarkModeToggle } from '../common/DarkModeSystem';
+import { DarkModeToggle } from '../common/DarkModeSystem';
 
 // Types
 interface Fond {

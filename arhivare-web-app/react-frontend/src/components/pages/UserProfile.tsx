@@ -1,4 +1,4 @@
-// src/components/pages/UserProfile.tsx - FIXED with Proper TypeScript Types
+// src/components/pages/UserProfile.tsx - FIXED Dark Mode Support
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -59,7 +59,7 @@ const passwordChangeSchema = yup.object({
     .oneOf([yup.ref('newPassword')], 'Parolele nu se potrivesc')
 });
 
-// Profile update validation schema - FIXED to match TypeScript types
+// Profile update validation schema
 const profileUpdateSchema = yup.object({
   company_name: yup
     .string()
@@ -129,7 +129,7 @@ const UserProfile: React.FC = () => {
     resolver: yupResolver(passwordChangeSchema)
   });
 
-  // Profile update form (only for clients) - FIXED types
+  // Profile update form (only for clients)
   const {
     register: registerProfile,
     handleSubmit: handleProfileSubmit,
@@ -307,10 +307,10 @@ const UserProfile: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="text-gray-600 mt-4">Se încarcă profilul...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
+          <p className="text-gray-600 dark:text-gray-300 mt-4">Se încarcă profilul...</p>
         </div>
       </div>
     );
@@ -318,14 +318,14 @@ const UserProfile: React.FC = () => {
 
   if (!profileData) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900">Eroare</h2>
-          <p className="text-gray-600 mt-2">Nu s-au putut încărca datele profilului</p>
+          <AlertCircle className="h-16 w-16 text-red-500 dark:text-red-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Eroare</h2>
+          <p className="text-gray-600 dark:text-gray-300 mt-2">Nu s-au putut încărca datele profilului</p>
           <button
             onClick={handleBack}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
           >
             Înapoi la Dashboard
           </button>
@@ -335,22 +335,22 @@ const UserProfile: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Header - FIXED Dark Mode */}
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <button
                 onClick={handleBack}
-                className="text-gray-600 hover:text-blue-600 transition-colors p-2 rounded-md hover:bg-gray-50"
+                className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
-              <User className="h-8 w-8 text-blue-600" />
+              <User className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Profilul Meu</h1>
-                <p className="text-sm text-gray-600">Gestionează contul și securitatea</p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Profilul Meu</h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Gestionează contul și securitatea</p>
               </div>
             </div>
           </div>
@@ -358,30 +358,30 @@ const UserProfile: React.FC = () => {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Messages */}
+        {/* Messages - FIXED Dark Mode */}
         {successMessage && (
-          <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
             <div className="flex items-center">
-              <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-              <p className="text-green-800">{successMessage}</p>
+              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mr-3" />
+              <p className="text-green-800 dark:text-green-200">{successMessage}</p>
             </div>
           </div>
         )}
 
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <div className="flex items-center">
-              <AlertCircle className="h-5 w-5 text-red-600 mr-3" />
-              <p className="text-red-800">{error}</p>
+              <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mr-3" />
+              <p className="text-red-800 dark:text-red-200">{error}</p>
             </div>
           </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Profile Information */}
+          {/* Profile Information - FIXED Dark Mode */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Informații Profil</h2>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Informații Profil</h2>
               
               <div className="space-y-4">
                 {/* Avatar */}
@@ -395,52 +395,52 @@ const UserProfile: React.FC = () => {
 
                 {/* User Details */}
                 <div className="text-center space-y-2">
-                  <h3 className="text-xl font-semibold text-gray-900">{profileData.username}</h3>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{profileData.username}</h3>
                   <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-                    isAdmin ? 'bg-blue-100 text-blue-800' : 
-                    isAudit ? 'bg-purple-100 text-purple-800' :
-                    'bg-green-100 text-green-800'
+                    isAdmin ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' : 
+                    isAudit ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300' :
+                    'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
                   }`}>
                     {isAdmin ? 'Administrator' : isAudit ? 'Audit' : 'Client'}
                   </span>
                 </div>
 
-                {/* Account Details */}
-                <div className="border-t pt-4 space-y-3">
-                  <div className="flex items-center text-sm text-gray-600">
+                {/* Account Details - FIXED Dark Mode */}
+                <div className="border-t border-gray-200 dark:border-gray-600 pt-4 space-y-3">
+                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                     <User className="h-4 w-4 mr-2" />
                     <span>ID: {profileData.id}</span>
                   </div>
                   
                   {isClient && profileData.company_name && (
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                       <Building2 className="h-4 w-4 mr-2" />
                       <span>Companie: {profileData.company_name}</span>
                     </div>
                   )}
                   
-                  <div className="flex items-center text-sm text-gray-600">
+                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                     <Calendar className="h-4 w-4 mr-2" />
                     <span>Înregistrat: {new Date(profileData.created_at).toLocaleDateString('ro-RO')}</span>
                   </div>
                 </div>
 
-                {/* Role Permissions */}
-                <div className="border-t pt-4">
-                  <h4 className="text-sm font-medium text-gray-900 mb-2">Permisiuni</h4>
-                  <div className="space-y-1 text-xs text-gray-600">
+                {/* Role Permissions - FIXED Dark Mode */}
+                <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Permisiuni</h4>
+                  <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
                     <div className="flex items-center">
-                      <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                      <CheckCircle className="h-3 w-3 mr-1 text-green-500 dark:text-green-400" />
                       <span>Căutare fonduri publice</span>
                     </div>
                     {isAdmin && (
                       <>
                         <div className="flex items-center">
-                          <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                          <CheckCircle className="h-3 w-3 mr-1 text-green-500 dark:text-green-400" />
                           <span>Management fonduri</span>
                         </div>
                         <div className="flex items-center">
-                          <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                          <CheckCircle className="h-3 w-3 mr-1 text-green-500 dark:text-green-400" />
                           <span>Management utilizatori</span>
                         </div>
                       </>
@@ -448,11 +448,11 @@ const UserProfile: React.FC = () => {
                     {isAudit && (
                       <>
                         <div className="flex items-center">
-                          <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                          <CheckCircle className="h-3 w-3 mr-1 text-green-500 dark:text-green-400" />
                           <span>Vizualizare toate fondurile</span>
                         </div>
                         <div className="flex items-center">
-                          <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                          <CheckCircle className="h-3 w-3 mr-1 text-green-500 dark:text-green-400" />
                           <span>Export și rapoarte</span>
                         </div>
                       </>
@@ -460,11 +460,11 @@ const UserProfile: React.FC = () => {
                     {isClient && (
                       <>
                         <div className="flex items-center">
-                          <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                          <CheckCircle className="h-3 w-3 mr-1 text-green-500 dark:text-green-400" />
                           <span>Management fonduri proprii</span>
                         </div>
                         <div className="flex items-center">
-                          <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                          <CheckCircle className="h-3 w-3 mr-1 text-green-500 dark:text-green-400" />
                           <span>Adăugare fonduri noi</span>
                         </div>
                       </>
@@ -475,20 +475,20 @@ const UserProfile: React.FC = () => {
             </div>
           </div>
 
-          {/* Forms Column */}
+          {/* Forms Column - FIXED Dark Mode */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Client Profile Update Form */}
+            {/* Client Profile Update Form - FIXED Dark Mode */}
             {isClient && (
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border dark:border-gray-700">
                 <div className="flex items-center space-x-3 mb-6">
-                  <Building2 className="h-6 w-6 text-green-600" />
-                  <h2 className="text-lg font-semibold text-gray-900">Actualizează Profilul</h2>
+                  <Building2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Actualizează Profilul</h2>
                 </div>
 
                 <form onSubmit={handleProfileSubmit(onSubmitProfileUpdate)} className="space-y-6">
-                  {/* Company Name */}
+                  {/* Company Name - FIXED Dark Mode */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       <Building2 className="h-4 w-4 inline mr-1" />
                       Numele Companiei *
                     </label>
@@ -496,18 +496,18 @@ const UserProfile: React.FC = () => {
                       {...registerProfile('company_name')}
                       type="text"
                       placeholder="ex: Test Company SRL"
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${
-                        profileErrors.company_name ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${
+                        profileErrors.company_name ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
                       }`}
                     />
                     {profileErrors.company_name && (
-                      <p className="text-red-600 text-sm mt-1">{profileErrors.company_name.message}</p>
+                      <p className="text-red-600 dark:text-red-400 text-sm mt-1">{profileErrors.company_name.message}</p>
                     )}
                   </div>
 
-                  {/* Contact Email */}
+                  {/* Contact Email - FIXED Dark Mode */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       <Mail className="h-4 w-4 inline mr-1" />
                       Email de Contact
                     </label>
@@ -515,30 +515,30 @@ const UserProfile: React.FC = () => {
                       {...registerProfile('contact_email')}
                       type="email"
                       placeholder="ex: contact@companie.ro"
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none ${
-                        profileErrors.contact_email ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${
+                        profileErrors.contact_email ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
                       }`}
                     />
                     {profileErrors.contact_email && (
-                      <p className="text-red-600 text-sm mt-1">{profileErrors.contact_email.message}</p>
+                      <p className="text-red-600 dark:text-red-400 text-sm mt-1">{profileErrors.contact_email.message}</p>
                     )}
                   </div>
 
-                  {/* Notes */}
+                  {/* Notes - FIXED Dark Mode */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Note
                     </label>
                     <textarea
                       {...registerProfile('notes')}
                       rows={3}
                       placeholder="Note despre companie..."
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none resize-none ${
-                        profileErrors.notes ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${
+                        profileErrors.notes ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
                       }`}
                     />
                     {profileErrors.notes && (
-                      <p className="text-red-600 text-sm mt-1">{profileErrors.notes.message}</p>
+                      <p className="text-red-600 dark:text-red-400 text-sm mt-1">{profileErrors.notes.message}</p>
                     )}
                   </div>
 
@@ -555,9 +555,7 @@ const UserProfile: React.FC = () => {
                           <span>Se actualizează...</span>
                         </>
                       ) : (
-                        <>
-                          <span>Actualizează Profilul</span>
-                        </>
+                        <span>Actualizează Profilul</span>
                       )}
                     </button>
                   </div>
@@ -565,17 +563,17 @@ const UserProfile: React.FC = () => {
               </div>
             )}
 
-            {/* Password Change Form */}
-            <div className="bg-white rounded-lg shadow p-6">
+            {/* Password Change Form - FIXED Dark Mode */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border dark:border-gray-700">
               <div className="flex items-center space-x-3 mb-6">
-                <Key className="h-6 w-6 text-blue-600" />
-                <h2 className="text-lg font-semibold text-gray-900">Schimbă Parola</h2>
+                <Key className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Schimbă Parola</h2>
               </div>
 
               <form onSubmit={handlePasswordSubmit(onSubmitPasswordChange)} className="space-y-6">
-                {/* Current Password */}
+                {/* Current Password - FIXED Dark Mode */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Parola Actuală *
                   </label>
                   <div className="relative">
@@ -583,26 +581,26 @@ const UserProfile: React.FC = () => {
                       {...registerPassword('currentPassword')}
                       type={showCurrentPassword ? 'text' : 'password'}
                       placeholder="Introdu parola actuală"
-                      className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none ${
-                        passwordErrors.currentPassword ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${
+                        passwordErrors.currentPassword ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
                       }`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                     >
                       {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                   {passwordErrors.currentPassword && (
-                    <p className="text-red-600 text-sm mt-1">{passwordErrors.currentPassword.message}</p>
+                    <p className="text-red-600 dark:text-red-400 text-sm mt-1">{passwordErrors.currentPassword.message}</p>
                   )}
                 </div>
 
-                {/* New Password */}
+                {/* New Password - FIXED Dark Mode */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Parola Nouă *
                   </label>
                   <div className="relative">
@@ -610,33 +608,33 @@ const UserProfile: React.FC = () => {
                       {...registerPassword('newPassword')}
                       type={showNewPassword ? 'text' : 'password'}
                       placeholder="Introdu parola nouă"
-                      className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none ${
-                        passwordErrors.newPassword ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${
+                        passwordErrors.newPassword ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
                       }`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                     >
                       {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                   
                   {passwordErrors.newPassword && (
-                    <p className="text-red-600 text-sm mt-1">{passwordErrors.newPassword.message}</p>
+                    <p className="text-red-600 dark:text-red-400 text-sm mt-1">{passwordErrors.newPassword.message}</p>
                   )}
 
-                  {/* Password strength indicator */}
+                  {/* Password strength indicator - FIXED Dark Mode */}
                   {watchedNewPassword && (
                     <div className="mt-2">
                       <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="text-gray-600">Puterea parolei:</span>
-                        <span className={`font-medium text-${passwordStrength.color}-600`}>
+                        <span className="text-gray-600 dark:text-gray-400">Puterea parolei:</span>
+                        <span className={`font-medium text-${passwordStrength.color}-600 dark:text-${passwordStrength.color}-400`}>
                           {passwordStrength.label}
                         </span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                         <div
                           className={`h-2 rounded-full transition-all duration-300 bg-${passwordStrength.color}-500`}
                           style={{ width: `${(passwordStrength.score / 6) * 100}%` }}
@@ -646,9 +644,9 @@ const UserProfile: React.FC = () => {
                   )}
                 </div>
 
-                {/* Confirm Password */}
+                {/* Confirm Password - FIXED Dark Mode */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Confirmă Parola Nouă *
                   </label>
                   <div className="relative">
@@ -656,29 +654,29 @@ const UserProfile: React.FC = () => {
                       {...registerPassword('confirmPassword')}
                       type={showConfirmPassword ? 'text' : 'password'}
                       placeholder="Confirmă parola nouă"
-                      className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none ${
-                        passwordErrors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                      className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${
+                        passwordErrors.confirmPassword ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
                       }`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                     >
                       {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                   {passwordErrors.confirmPassword && (
-                    <p className="text-red-600 text-sm mt-1">{passwordErrors.confirmPassword.message}</p>
+                    <p className="text-red-600 dark:text-red-400 text-sm mt-1">{passwordErrors.confirmPassword.message}</p>
                   )}
                 </div>
 
-                {/* Security Tips */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="text-sm font-medium text-blue-800 mb-2">
+                {/* Security Tips - FIXED Dark Mode */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
                     💡 Sfaturi pentru o parolă sigură
                   </h4>
-                  <ul className="text-sm text-blue-700 space-y-1">
+                  <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
                     <li>• Folosește cel puțin 8 caractere</li>
                     <li>• Combină litere mari și mici, cifre și simboluri</li>
                     <li>• Nu folosi informații personale</li>
@@ -709,30 +707,30 @@ const UserProfile: React.FC = () => {
               </form>
             </div>
 
-            {/* Security Information */}
-            <div className="bg-white rounded-lg shadow p-6">
+            {/* Security Information - FIXED Dark Mode */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border dark:border-gray-700">
               <div className="flex items-center space-x-3 mb-4">
-                <CheckCircle className="h-6 w-6 text-green-600" />
-                <h2 className="text-lg font-semibold text-gray-900">Informații Securitate</h2>
+                <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Informații Securitate</h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                   <div className="flex items-center space-x-2 mb-2">
-                    <Clock className="h-4 w-4 text-gray-600" />
-                    <h3 className="font-medium text-gray-900">Ultima Activitate</h3>
+                    <Clock className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                    <h3 className="font-medium text-gray-900 dark:text-gray-100">Ultima Activitate</h3>
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     Sesiune activă: {new Date().toLocaleString('ro-RO')}
                   </p>
                 </div>
 
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                   <div className="flex items-center space-x-2 mb-2">
-                    <Key className="h-4 w-4 text-gray-600" />
-                    <h3 className="font-medium text-gray-900">Autentificare</h3>
+                    <Key className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                    <h3 className="font-medium text-gray-900 dark:text-gray-100">Autentificare</h3>
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     Token JWT activ
                   </p>
                 </div>

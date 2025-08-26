@@ -34,7 +34,7 @@ import {
   NetworkRequestsMonitor 
 } from './components/common/NetworkHandling';
 
-// 🔴 FIXED: Dark Mode Provider with debug component
+// 🔴 FIXED: Clean Dark Mode Provider
 import { 
   DarkModeProvider, 
   ThemeDebugger 
@@ -57,8 +57,8 @@ function App() {
           <AuthProvider>
             <Router>
               <RouteErrorBoundary>
-                {/* 🔴 FIXED: Added theme-transition class for smooth theme switching */}
-                <div className="App theme-transition min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+                {/* 🔴 FIXED: Simplified wrapper with proper Tailwind classes */}
+                <div className="App min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 theme-transition">
                   {/* Skip link for accessibility */}
                   <SkipLink />
                   
@@ -254,10 +254,10 @@ function App() {
 }
 
 // ========================================
-// HELPER COMPONENTS - FIXED with Dark Mode support
+// HELPER COMPONENTS - FIXED with proper Tailwind classes
 // ========================================
 
-// 🔴 FIXED: Role-based redirect component with dark mode support
+// 🔴 FIXED: Role-based redirect component
 const RoleBasedRedirect: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -284,14 +284,13 @@ const RoleBasedRedirect: React.FC = () => {
   );
 };
 
-// 🔴 FIXED: 404 Handler with smart redirects and dark mode
+// 🔴 FIXED: 404 Handler
 const NotFoundRedirect: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   
   React.useEffect(() => {
     if (isAuthenticated && user) {
-      // Redirect to appropriate dashboard
       if (user.role === 'admin') {
         navigate('/admin', { replace: true });
       } else if (user.role === 'audit') {
@@ -302,7 +301,6 @@ const NotFoundRedirect: React.FC = () => {
         navigate('/', { replace: true });
       }
     } else {
-      // Redirect unauthenticated users to homepage
       navigate('/', { replace: true });
     }
   }, [isAuthenticated, user, navigate]);
@@ -321,7 +319,7 @@ const NotFoundRedirect: React.FC = () => {
   );
 };
 
-// 🔴 FIXED: Settings placeholder with dark mode
+// 🔴 FIXED: Settings placeholder
 const SettingsPlaceholder: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -372,49 +370,6 @@ const SettingsPlaceholder: React.FC = () => {
           <p className="text-sm text-blue-800 dark:text-blue-300">
             💡 <strong>Sfat:</strong> Folosește butonul de accesibilitate din colțul din dreapta jos pentru setări avansate de afișare.
           </p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// 🔴 FIXED: Reports placeholder with dark mode
-const ReportsPlaceholder: React.FC = () => {
-  const navigate = useNavigate();
-
-  const handleNavigateAudit = () => {
-    navigate('/audit');
-  };
-
-  const handleNavigateAdmin = () => {
-    navigate('/admin');
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-      <div className="text-center max-w-md mx-auto p-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Rapoarte Avansate</h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-4">
-          Sistemul de rapoarte avansate va fi implementat în următoarea versiune.
-        </p>
-        <p className="text-sm text-gray-500 dark:text-gray-500 mb-6">
-          Pentru moment poți accesa funcționalitățile de export din dashboard-ul Audit.
-        </p>
-        
-        <div className="space-y-3">
-          <button 
-            onClick={handleNavigateAudit}
-            className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-          >
-            Accesează Dashboard Audit
-          </button>
-          
-          <button 
-            onClick={handleNavigateAdmin}
-            className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 text-white rounded-lg transition-colors"
-          >
-            Înapoi la Dashboard Admin
-          </button>
         </div>
       </div>
     </div>
