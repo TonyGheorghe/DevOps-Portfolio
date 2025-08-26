@@ -1,4 +1,4 @@
-// src/components/HomePage.tsx - ENHANCED with User Dropdown Menu
+// src/components/HomePage.tsx - ENHANCED with Dark Mode Toggle
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -6,6 +6,9 @@ import {
   Users, BarChart3, Eye, User, ChevronDown
 } from 'lucide-react';
 import { useAuth } from './AuthSystem';
+
+// 🔴 ADD DARK MODE IMPORTS
+import { DarkModeToggle } from './common/DarkModeSystem';
 
 // Type definitions bazate pe schema din backend
 interface Fond {
@@ -21,7 +24,7 @@ interface Fond {
   updated_at: string;
 }
 
-// UserDropdownMenu component
+// UserDropdownMenu component - ENHANCED with Dark Mode
 interface UserDropdownMenuProps {
   user: any;
   isAdmin: boolean;
@@ -96,12 +99,17 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
     <div className="relative dropdown-container">
       {/* User info and dropdown button */}
       <div className="flex items-center space-x-3">
+        {/* 🔴 ADD DARK MODE TOGGLE HERE */}
+        <DarkModeToggle size="sm" />
+        
         <div className="text-right">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             Bună, <span className="font-medium">{user?.username}</span>!
           </p>
           <p className={`text-xs capitalize ${
-            isAdmin ? 'text-blue-600' : isAudit ? 'text-purple-600' : 'text-green-600'
+            isAdmin ? 'text-blue-600 dark:text-blue-400' : 
+            isAudit ? 'text-purple-600 dark:text-purple-400' : 
+            'text-green-600 dark:text-green-400'
           }`}>
             {user?.role}
           </p>
@@ -117,12 +125,12 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
         </button>
       </div>
 
-      {/* Dropdown menu */}
+      {/* Dropdown menu - ENHANCED with Dark Mode */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-          <div className="px-4 py-2 border-b border-gray-100">
-            <p className="text-sm font-semibold text-gray-900">{user?.username}</p>
-            <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+        <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-2 z-50">
+          <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-600">
+            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{user?.username}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{user?.role}</p>
           </div>
 
           {/* Admin Menu Items */}
@@ -130,34 +138,34 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
             <>
               <button
                 onClick={() => handleOptionClick(onAdminNavigation)}
-                className="w-full text-left px-4 py-3 hover:bg-blue-50 flex items-center space-x-3 transition-colors"
+                className="w-full text-left px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center space-x-3 transition-colors"
               >
-                <Archive className="h-5 w-5 text-blue-600" />
+                <Archive className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 <div>
-                  <div className="text-sm font-medium text-gray-900">Dashboard Admin</div>
-                  <div className="text-xs text-gray-500">Management fonduri arhivistice</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Dashboard Admin</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Management fonduri arhivistice</div>
                 </div>
               </button>
 
               <button
                 onClick={() => handleOptionClick(onUsersManagement)}
-                className="w-full text-left px-4 py-3 hover:bg-purple-50 flex items-center space-x-3 transition-colors"
+                className="w-full text-left px-4 py-3 hover:bg-purple-50 dark:hover:bg-purple-900/20 flex items-center space-x-3 transition-colors"
               >
-                <Users className="h-5 w-5 text-purple-600" />
+                <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 <div>
-                  <div className="text-sm font-medium text-gray-900">Management Utilizatori</div>
-                  <div className="text-xs text-gray-500">Gestionează conturile utilizatorilor</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Management Utilizatori</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Gestionează conturile utilizatorilor</div>
                 </div>
               </button>
 
               <button
                 onClick={() => handleOptionClick(onProfile)}
-                className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-3 transition-colors"
+                className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center space-x-3 transition-colors"
               >
-                <User className="h-5 w-5 text-gray-600" />
+                <User className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                 <div>
-                  <div className="text-sm font-medium text-gray-900">Profil</div>
-                  <div className="text-xs text-gray-500">Setări cont și parolă</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Profil</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Setări cont și parolă</div>
                 </div>
               </button>
             </>
@@ -168,34 +176,34 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
             <>
               <button
                 onClick={() => handleOptionClick(onAuditNavigation)}
-                className="w-full text-left px-4 py-3 hover:bg-purple-50 flex items-center space-x-3 transition-colors"
+                className="w-full text-left px-4 py-3 hover:bg-purple-50 dark:hover:bg-purple-900/20 flex items-center space-x-3 transition-colors"
               >
-                <BarChart3 className="h-5 w-5 text-purple-600" />
+                <BarChart3 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 <div>
-                  <div className="text-sm font-medium text-gray-900">Dashboard Audit</div>
-                  <div className="text-xs text-gray-500">Monitorizare și rapoarte (read-only)</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Dashboard Audit</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Monitorizare și rapoarte (read-only)</div>
                 </div>
               </button>
 
               <button
                 onClick={() => handleOptionClick(onUsersManagement)}
-                className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-3 transition-colors"
+                className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center space-x-3 transition-colors"
               >
-                <Eye className="h-5 w-5 text-gray-600" />
+                <Eye className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                 <div>
-                  <div className="text-sm font-medium text-gray-900">Vizualizare Utilizatori</div>
-                  <div className="text-xs text-gray-500">Vezi lista utilizatorilor (read-only)</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Vizualizare Utilizatori</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Vezi lista utilizatorilor (read-only)</div>
                 </div>
               </button>
 
               <button
                 onClick={() => handleOptionClick(onProfile)}
-                className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-3 transition-colors"
+                className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center space-x-3 transition-colors"
               >
-                <User className="h-5 w-5 text-gray-600" />
+                <User className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                 <div>
-                  <div className="text-sm font-medium text-gray-900">Profil</div>
-                  <div className="text-xs text-gray-500">Setări cont și parolă</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Profil</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Setări cont și parolă</div>
                 </div>
               </button>
             </>
@@ -206,38 +214,38 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
             <>
               <button
                 onClick={() => handleOptionClick(onClientNavigation)}
-                className="w-full text-left px-4 py-3 hover:bg-green-50 flex items-center space-x-3 transition-colors"
+                className="w-full text-left px-4 py-3 hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center space-x-3 transition-colors"
               >
-                <Building2 className="h-5 w-5 text-green-600" />
+                <Building2 className="h-5 w-5 text-green-600 dark:text-green-400" />
                 <div>
-                  <div className="text-sm font-medium text-gray-900">Fondurile Mele</div>
-                  <div className="text-xs text-gray-500">Gestionează fondurile tale arhivistice</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Fondurile Mele</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Gestionează fondurile tale arhivistice</div>
                 </div>
               </button>
 
               <button
                 onClick={() => handleOptionClick(onProfile)}
-                className="w-full text-left px-4 py-3 hover:bg-blue-50 flex items-center space-x-3 transition-colors"
+                className="w-full text-left px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center space-x-3 transition-colors"
               >
-                <User className="h-5 w-5 text-blue-600" />
+                <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 <div>
-                  <div className="text-sm font-medium text-gray-900">Profilul Meu</div>
-                  <div className="text-xs text-gray-500">Actualizează datele companiei și parola</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Profilul Meu</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Actualizează datele companiei și parola</div>
                 </div>
               </button>
             </>
           )}
 
           {/* Logout */}
-          <div className="border-t border-gray-100 mt-2">
+          <div className="border-t border-gray-100 dark:border-gray-600 mt-2">
             <button
               onClick={() => handleOptionClick(onLogout)}
-              className="w-full text-left px-4 py-3 hover:bg-red-50 flex items-center space-x-3 transition-colors"
+              className="w-full text-left px-4 py-3 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-3 transition-colors"
             >
-              <LogIn className="h-5 w-5 text-red-600" />
+              <LogIn className="h-5 w-5 text-red-600 dark:text-red-400" />
               <div>
-                <div className="text-sm font-medium text-red-600">Deconectare</div>
-                <div className="text-xs text-gray-500">Închide sesiunea</div>
+                <div className="text-sm font-medium text-red-600 dark:text-red-400">Deconectare</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Închide sesiunea</div>
               </div>
             </button>
           </div>
@@ -359,20 +367,20 @@ const HomePage: React.FC = () => {
   const endResult = Math.min(currentPage * resultsPerPage, totalResults);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      {/* Header - ENHANCED with Dark Mode */}
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <Archive className="h-8 w-8 text-blue-600" />
+              <Archive className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Arhivare Web App</h1>
-                <p className="text-sm text-gray-600">Căutare fonduri arhivistice româneşti</p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Arhivare Web App</h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Căutare fonduri arhivistice româneşti</p>
               </div>
             </div>
             
-            {/* Auth section */}
+            {/* Auth section - ENHANCED with Dark Mode */}
             <div className="flex items-center space-x-4">
               {isAuthenticated ? (
                 <UserDropdownMenu 
@@ -388,59 +396,64 @@ const HomePage: React.FC = () => {
                   onLogout={handleLogout}
                 />
               ) : (
-                <button 
-                  onClick={handleLogin}
-                  className="text-gray-600 hover:text-blue-600 transition-colors text-sm font-medium flex items-center space-x-2"
-                >
-                  <LogIn className="h-4 w-4" />
-                  <span>Conectare</span>
-                </button>
+                <div className="flex items-center space-x-3">
+                  {/* 🔴 ADD DARK MODE TOGGLE FOR NON-AUTHENTICATED USERS */}
+                  <DarkModeToggle size="sm" />
+                  
+                  <button 
+                    onClick={handleLogin}
+                    className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm font-medium flex items-center space-x-2"
+                  >
+                    <LogIn className="h-4 w-4" />
+                    <span>Conectare</span>
+                  </button>
+                </div>
               )}
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* Main Content - ENHANCED with Dark Mode */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search Section */}
+        {/* Search Section - ENHANCED with Dark Mode */}
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
             Găsește arhiva companiei tale
           </h2>
-          <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
             Căutează în baza noastră de date pentru a găsi informațiile de contact ale instituției 
             care deține arhiva unei companii româneşti.
           </p>
 
-          {/* Search Form */}
+          {/* Search Form - ENHANCED with Dark Mode */}
           <div className="max-w-xl mx-auto">
             <form onSubmit={handleSearch} className="flex gap-2">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
                 <input
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
                   placeholder="Ex: Tractorul Brașov, Steagul Roșu..."
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-lg"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 />
               </div>
               <button
                 type="submit"
                 onClick={handleSearch}
                 disabled={loading || query.length < 2}
-                className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? 'Caută...' : 'Caută'}
               </button>
             </form>
           </div>
 
-          {/* Quick suggestions */}
+          {/* Quick suggestions - ENHANCED with Dark Mode */}
           <div className="mt-4 flex flex-wrap justify-center gap-2">
-            <span className="text-sm text-gray-500">Sugestii:</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">Sugestii:</span>
             {['Tractorul', 'Steagul Roșu', 'Brașov', 'Cluj'].map((suggestion) => (
               <button
                 key={suggestion}
@@ -448,7 +461,7 @@ const HomePage: React.FC = () => {
                   setQuery(suggestion);
                   performSearch(suggestion, 1);
                 }}
-                className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+                className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full transition-colors"
               >
                 {suggestion}
               </button>
@@ -456,49 +469,49 @@ const HomePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Error Message */}
+        {/* Error Message - ENHANCED with Dark Mode */}
         {error && (
           <div className="max-w-4xl mx-auto mb-6">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">{error}</p>
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+              <p className="text-red-800 dark:text-red-300">{error}</p>
             </div>
           </div>
         )}
 
-        {/* Loading State */}
+        {/* Loading State - ENHANCED with Dark Mode */}
         {loading && (
           <div className="max-w-4xl mx-auto text-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="text-gray-600 mt-4">Se caută în baza de date...</p>
+            <p className="text-gray-600 dark:text-gray-400 mt-4">Se caută în baza de date...</p>
           </div>
         )}
 
-        {/* Results Section */}
+        {/* Results Section - ENHANCED with Dark Mode */}
         {hasSearched && !loading && (
           <div className="max-w-4xl mx-auto">
             {/* Results Header */}
             {totalResults > 0 && (
               <div className="mb-6 flex justify-between items-center">
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   Afișând rezultatele {startResult}-{endResult} din {totalResults} pentru "{query}"
                 </p>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-gray-500 dark:text-gray-500">
                   {totalResults === 1 ? '1 rezultat găsit' : `${totalResults} rezultate găsite`}
                 </div>
               </div>
             )}
 
-            {/* Results List */}
+            {/* Results List - ENHANCED with Dark Mode */}
             {results.length === 0 ? (
               <div className="text-center py-12">
-                <Building2 className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-medium text-gray-900 mb-2">
+                <Building2 className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <h3 className="text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">
                   Niciun rezultat găsit
                 </h3>
-                <p className="text-gray-600 mb-4">
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
                   Nu am găsit nicio companie care să corespundă cu căutarea "{query}".
                 </p>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-gray-500 dark:text-gray-500">
                   <p>Sugestii:</p>
                   <ul className="mt-2 space-y-1">
                     <li>• Verifică ortografia</li>
@@ -512,37 +525,37 @@ const HomePage: React.FC = () => {
                 {results.map((fond) => (
                   <div
                     key={fond.id}
-                    className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
+                    className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 p-6 hover:shadow-md dark:hover:shadow-xl transition-shadow"
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
                           {fond.company_name}
                         </h3>
                         
                         <div className="space-y-2">
                           <div className="flex items-start space-x-2">
-                            <Archive className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                            <Archive className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                             <div>
-                              <p className="font-medium text-gray-900">{fond.holder_name}</p>
-                              <p className="text-sm text-gray-600">Deținător arhivă</p>
+                              <p className="font-medium text-gray-900 dark:text-gray-100">{fond.holder_name}</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">Deținător arhivă</p>
                             </div>
                           </div>
 
                           {fond.address && (
                             <div className="flex items-start space-x-2">
-                              <MapPin className="h-5 w-5 text-gray-500 mt-0.5 flex-shrink-0" />
-                              <p className="text-gray-700">{fond.address}</p>
+                              <MapPin className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
+                              <p className="text-gray-700 dark:text-gray-300">{fond.address}</p>
                             </div>
                           )}
 
                           <div className="flex flex-wrap gap-4">
                             {fond.email && (
                               <div className="flex items-center space-x-2">
-                                <Mail className="h-4 w-4 text-gray-500" />
+                                <Mail className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                                 <a
                                   href={`mailto:${fond.email}`}
-                                  className="text-blue-600 hover:text-blue-800 transition-colors"
+                                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
                                 >
                                   {fond.email}
                                 </a>
@@ -551,10 +564,10 @@ const HomePage: React.FC = () => {
 
                             {fond.phone && (
                               <div className="flex items-center space-x-2">
-                                <Phone className="h-4 w-4 text-gray-500" />
+                                <Phone className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                                 <a
                                   href={`tel:${fond.phone}`}
-                                  className="text-blue-600 hover:text-blue-800 transition-colors"
+                                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
                                 >
                                   {fond.phone}
                                 </a>
@@ -563,8 +576,8 @@ const HomePage: React.FC = () => {
                           </div>
 
                           {fond.notes && (
-                            <div className="mt-3 p-3 bg-gray-50 rounded-md">
-                              <p className="text-sm text-gray-700">{fond.notes}</p>
+                            <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
+                              <p className="text-sm text-gray-700 dark:text-gray-300">{fond.notes}</p>
                             </div>
                           )}
                         </div>
@@ -575,14 +588,14 @@ const HomePage: React.FC = () => {
               </div>
             )}
 
-            {/* Pagination */}
+            {/* Pagination - ENHANCED with Dark Mode */}
             {totalPages > 1 && (
               <div className="mt-8 flex justify-center">
                 <nav className="flex items-center space-x-1">
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Anterior
                   </button>
@@ -602,7 +615,7 @@ const HomePage: React.FC = () => {
                         className={`px-3 py-2 text-sm font-medium border rounded-md ${
                           pageNum === currentPage
                             ? 'bg-blue-600 text-white border-blue-600'
-                            : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-50'
+                            : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                         }`}
                       >
                         {pageNum}
@@ -613,7 +626,7 @@ const HomePage: React.FC = () => {
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Următor
                   </button>
@@ -624,10 +637,10 @@ const HomePage: React.FC = () => {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="bg-gray-50 border-t border-gray-200 mt-16">
+      {/* Footer - ENHANCED with Dark Mode */}
+      <footer className="bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center text-gray-600">
+          <div className="text-center text-gray-600 dark:text-gray-400">
             <p className="mb-2">© 2025 Arhivare Web App - Tony Gheorghe</p>
             <p className="text-sm">
               Aplicație pentru căutarea fondurilor arhivistice româneşti

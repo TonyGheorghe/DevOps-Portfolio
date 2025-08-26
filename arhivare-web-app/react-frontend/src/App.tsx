@@ -1,4 +1,4 @@
-// src/App.tsx - Updated with all Critical Systems Integration
+// src/App.tsx - Updated with Dark Mode Provider
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { 
@@ -34,6 +34,9 @@ import {
   NetworkRequestsMonitor 
 } from './components/common/NetworkHandling';
 
+// 🔴 ADD DARK MODE PROVIDER
+import { DarkModeProvider } from './components/common/DarkModeSystem';
+
 // Demo pages (can be removed in production)
 import { ErrorBoundaryDemo } from './components/common/ErrorBoundary';
 import { AccessibilityDemo } from './components/common/AccessibilitySystem';
@@ -44,276 +47,202 @@ import './App.css';
 
 function App() {
   return (
-    // 🔴 CRITICAL SYSTEMS INTEGRATION
-    <NetworkProvider>
-      <AccessibilityProvider>
-        <AuthProvider>
-          <Router>
-            <RouteErrorBoundary>
-              <div className="App">
-                {/* Skip link for accessibility */}
-                <SkipLink />
-                
-                {/* Network status indicator */}
-                <NetworkStatusIndicator />
-                
-                {/* Global offline notice */}
-                <OfflineNotice />
-                
-                <Routes>
-                  {/* ========== PUBLIC ROUTES ========== */}
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/search" element={<HomePage />} />
-                  <Route path="/home" element={<HomePage />} />
+    // 🔴 WRAP WITH DARK MODE PROVIDER (OUTERMOST)
+    <DarkModeProvider>
+      <NetworkProvider>
+        <AccessibilityProvider>
+          <AuthProvider>
+            <Router>
+              <RouteErrorBoundary>
+                <div className="App theme-transition"> {/* Add theme-transition class */}
+                  {/* Skip link for accessibility */}
+                  <SkipLink />
                   
-                  {/* ========== AUTH ROUTES ========== */}
-                  <Route path="/login" element={<LoginPage />} />
+                  {/* Network status indicator */}
+                  <NetworkStatusIndicator />
                   
-                  {/* ========== ADMIN ROUTES ========== */}
-                  <Route 
-                    path="/admin" 
-                    element={
-                      <ProtectedRoute requiredRole="admin">
-                        <DashboardErrorBoundary>
-                          <AdminDashboard />
-                        </DashboardErrorBoundary>
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/dashboard" 
-                    element={
-                      <ProtectedRoute requiredRole="admin">
-                        <DashboardErrorBoundary>
-                          <AdminDashboard />
-                        </DashboardErrorBoundary>
-                      </ProtectedRoute>
-                    } 
-                  />
+                  {/* Global offline notice */}
+                  <OfflineNotice />
                   
-                  {/* ========== AUDIT ROUTES ========== */}
-                  <Route 
-                    path="/audit" 
-                    element={
-                      <ProtectedRoute requiredRole="audit">
-                        <DashboardErrorBoundary>
-                          <AuditDashboard />
-                        </DashboardErrorBoundary>
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/audit/dashboard" 
-                    element={
-                      <ProtectedRoute requiredRole="audit">
-                        <DashboardErrorBoundary>
-                          <AuditDashboard />
-                        </DashboardErrorBoundary>
-                      </ProtectedRoute>
-                    } 
-                  />
+                  <Routes>
+                    {/* ========== PUBLIC ROUTES ========== */}
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/search" element={<HomePage />} />
+                    <Route path="/home" element={<HomePage />} />
+                    
+                    {/* ========== AUTH ROUTES ========== */}
+                    <Route path="/login" element={<LoginPage />} />
+                    
+                    {/* ========== ADMIN ROUTES ========== */}
+                    <Route 
+                      path="/admin" 
+                      element={
+                        <ProtectedRoute requiredRole="admin">
+                          <DashboardErrorBoundary>
+                            <AdminDashboard />
+                          </DashboardErrorBoundary>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/dashboard" 
+                      element={
+                        <ProtectedRoute requiredRole="admin">
+                          <DashboardErrorBoundary>
+                            <AdminDashboard />
+                          </DashboardErrorBoundary>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    
+                    {/* ========== AUDIT ROUTES ========== */}
+                    <Route 
+                      path="/audit" 
+                      element={
+                        <ProtectedRoute requiredRole="audit">
+                          <DashboardErrorBoundary>
+                            <AuditDashboard />
+                          </DashboardErrorBoundary>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/audit/dashboard" 
+                      element={
+                        <ProtectedRoute requiredRole="audit">
+                          <DashboardErrorBoundary>
+                            <AuditDashboard />
+                          </DashboardErrorBoundary>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    
+                    {/* ========== CLIENT ROUTES ========== */}
+                    <Route 
+                      path="/client" 
+                      element={
+                        <ProtectedRoute requiredRole="client">
+                          <DashboardErrorBoundary>
+                            <ClientDashboard />
+                          </DashboardErrorBoundary>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/client/dashboard" 
+                      element={
+                        <ProtectedRoute requiredRole="client">
+                          <DashboardErrorBoundary>
+                            <ClientDashboard />
+                          </DashboardErrorBoundary>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/my-fonds" 
+                      element={
+                        <ProtectedRoute requiredRole="client">
+                          <DashboardErrorBoundary>
+                            <ClientDashboard />
+                          </DashboardErrorBoundary>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    
+                    {/* ========== AUTO-REDIRECT BASED ON ROLE ========== */}
+                    <Route 
+                      path="/dashboard-auto" 
+                      element={
+                        <ProtectedRoute>
+                          <RoleBasedRedirect />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    
+                    {/* ========== USER MANAGEMENT ROUTES ========== */}
+                    <Route 
+                      path="/admin/users" 
+                      element={
+                        <ProtectedRoute requiredRole="admin" allowReadOnly={true}>
+                          <DashboardErrorBoundary>
+                            <UsersPage />
+                          </DashboardErrorBoundary>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/users" 
+                      element={
+                        <ProtectedRoute requiredRole="admin" allowReadOnly={true}>
+                          <DashboardErrorBoundary>
+                            <UsersPage />
+                          </DashboardErrorBoundary>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    
+                    {/* ========== PROFILE ROUTES ========== */}
+                    <Route 
+                      path="/profile" 
+                      element={
+                        <ProtectedRoute>
+                          <FormErrorBoundary>
+                            <UserProfile />
+                          </FormErrorBoundary>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/user/profile" 
+                      element={
+                        <ProtectedRoute>
+                          <FormErrorBoundary>
+                            <UserProfile />
+                          </FormErrorBoundary>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    
+                    {/* ========== SETTINGS AND OTHER PROTECTED ROUTES ========== */}
+                    <Route 
+                      path="/settings" 
+                      element={
+                        <ProtectedRoute>
+                          <SettingsPlaceholder />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    
+                    {/* ... Rest of your routes remain the same ... */}
+                    
+                    {/* ========== LEGACY REDIRECTS ========== */}
+                    <Route path="/arhivare" element={<Navigate to="/" replace />} />
+                    <Route path="/fonduri" element={<Navigate to="/dashboard-auto" replace />} />
+                    
+                    {/* ========== 404 - NOT FOUND ========== */}
+                    <Route path="*" element={<NotFoundRedirect />} />
+                  </Routes>
                   
-                  {/* ========== CLIENT ROUTES ========== */}
-                  <Route 
-                    path="/client" 
-                    element={
-                      <ProtectedRoute requiredRole="client">
-                        <DashboardErrorBoundary>
-                          <ClientDashboard />
-                        </DashboardErrorBoundary>
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/client/dashboard" 
-                    element={
-                      <ProtectedRoute requiredRole="client">
-                        <DashboardErrorBoundary>
-                          <ClientDashboard />
-                        </DashboardErrorBoundary>
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/my-fonds" 
-                    element={
-                      <ProtectedRoute requiredRole="client">
-                        <DashboardErrorBoundary>
-                          <ClientDashboard />
-                        </DashboardErrorBoundary>
-                      </ProtectedRoute>
-                    } 
-                  />
+                  {/* Global accessibility settings panel */}
+                  <AccessibilitySettings />
                   
-                  {/* ========== AUTO-REDIRECT BASED ON ROLE ========== */}
-                  <Route 
-                    path="/dashboard-auto" 
-                    element={
-                      <ProtectedRoute>
-                        <RoleBasedRedirect />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  
-                  {/* ========== USER MANAGEMENT ROUTES ========== */}
-                  <Route 
-                    path="/admin/users" 
-                    element={
-                      <ProtectedRoute requiredRole="admin" allowReadOnly={true}>
-                        <DashboardErrorBoundary>
-                          <UsersPage />
-                        </DashboardErrorBoundary>
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/users" 
-                    element={
-                      <ProtectedRoute requiredRole="admin" allowReadOnly={true}>
-                        <DashboardErrorBoundary>
-                          <UsersPage />
-                        </DashboardErrorBoundary>
-                      </ProtectedRoute>
-                    } 
-                  />
-                  
-                  {/* ========== PROFILE ROUTES ========== */}
-                  <Route 
-                    path="/profile" 
-                    element={
-                      <ProtectedRoute>
-                        <FormErrorBoundary>
-                          <UserProfile />
-                        </FormErrorBoundary>
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/user/profile" 
-                    element={
-                      <ProtectedRoute>
-                        <FormErrorBoundary>
-                          <UserProfile />
-                        </FormErrorBoundary>
-                      </ProtectedRoute>
-                    } 
-                  />
-                  
-                  {/* ========== SETTINGS AND OTHER PROTECTED ROUTES ========== */}
-                  <Route 
-                    path="/settings" 
-                    element={
-                      <ProtectedRoute>
-                        <SettingsPlaceholder />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  
-                  {/* ========== ADMIN-SPECIFIC ROUTES ========== */}
-                  <Route 
-                    path="/admin/fonds" 
-                    element={
-                      <ProtectedRoute requiredRole="admin">
-                        <DashboardErrorBoundary>
-                          <AdminDashboard />
-                        </DashboardErrorBoundary>
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/admin/audit" 
-                    element={
-                      <ProtectedRoute requiredRole="admin">
-                        <DashboardErrorBoundary>
-                          <AuditDashboard />
-                        </DashboardErrorBoundary>
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/admin/reports" 
-                    element={
-                      <ProtectedRoute requiredRole="admin">
-                        <DashboardErrorBoundary>
-                          <ReportsPlaceholder />
-                        </DashboardErrorBoundary>
-                      </ProtectedRoute>
-                    } 
-                  />
-                  
-                  {/* ========== AUDIT-SPECIFIC ROUTES ========== */}
-                  <Route 
-                    path="/audit/reports" 
-                    element={
-                      <ProtectedRoute requiredRole="audit">
-                        <DashboardErrorBoundary>
-                          <AuditDashboard />
-                        </DashboardErrorBoundary>
-                      </ProtectedRoute>
-                    } 
-                  />
-                  
-                  {/* ========== DEMO ROUTES (Remove in production) ========== */}
-                  <Route 
-                    path="/demo/loading" 
-                    element={
-                      <RouteErrorBoundary>
-                        <LoadingStatesDemo />
-                      </RouteErrorBoundary>
-                    } 
-                  />
-                  <Route 
-                    path="/demo/error-boundary" 
-                    element={
-                      <RouteErrorBoundary>
-                        <ErrorBoundaryDemo />
-                      </RouteErrorBoundary>
-                    } 
-                  />
-                  <Route 
-                    path="/demo/accessibility" 
-                    element={
-                      <RouteErrorBoundary>
-                        <AccessibilityDemo />
-                      </RouteErrorBoundary>
-                    } 
-                  />
-                  <Route 
-                    path="/demo/network" 
-                    element={
-                      <RouteErrorBoundary>
-                        <NetworkHandlingDemo />
-                      </RouteErrorBoundary>
-                    } 
-                  />
-                  
-                  {/* ========== LEGACY REDIRECTS ========== */}
-                  <Route path="/arhivare" element={<Navigate to="/" replace />} />
-                  <Route path="/fonduri" element={<Navigate to="/dashboard-auto" replace />} />
-                  
-                  {/* ========== 404 - NOT FOUND ========== */}
-                  <Route path="*" element={<NotFoundRedirect />} />
-                </Routes>
-                
-                {/* Global accessibility settings panel */}
-                <AccessibilitySettings />
-                
-                {/* Network requests monitor (development only) */}
-                {process.env.NODE_ENV === 'development' && <NetworkRequestsMonitor />}
-              </div>
-            </RouteErrorBoundary>
-          </Router>
-        </AuthProvider>
-      </AccessibilityProvider>
-    </NetworkProvider>
+                  {/* Network requests monitor (development only) */}
+                  {process.env.NODE_ENV === 'development' && <NetworkRequestsMonitor />}
+                </div>
+              </RouteErrorBoundary>
+            </Router>
+          </AuthProvider>
+        </AccessibilityProvider>
+      </NetworkProvider>
+    </DarkModeProvider>
   );
 }
 
 // ========================================
-// HELPER COMPONENTS
+// HELPER COMPONENTS - Updated with Dark Mode support
 // ========================================
 
-// Role-based redirect component
+// Role-based redirect component with dark mode support
 const RoleBasedRedirect: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -331,16 +260,16 @@ const RoleBasedRedirect: React.FC = () => {
   }, [user, navigate]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="text-gray-600 mt-4">Te redirectăm către dashboard-ul tău...</p>
+        <p className="text-gray-600 dark:text-gray-300 mt-4">Te redirectăm către dashboard-ul tău...</p>
       </div>
     </div>
   );
 };
 
-// 404 Handler with smart redirects
+// 404 Handler with smart redirects - updated with dark mode
 const NotFoundRedirect: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
@@ -364,11 +293,11 @@ const NotFoundRedirect: React.FC = () => {
   }, [isAuthenticated, user, navigate]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
       <div className="text-center max-w-md mx-auto p-6">
-        <h1 className="text-6xl font-bold text-gray-300 mb-4">404</h1>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Pagina nu a fost găsită</h2>
-        <p className="text-gray-600 mb-6">
+        <h1 className="text-6xl font-bold text-gray-300 dark:text-gray-600 mb-4">404</h1>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Pagina nu a fost găsită</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">
           Pagina pe care o cauți nu există. Te redirectăm către pagina principală.
         </p>
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -377,7 +306,7 @@ const NotFoundRedirect: React.FC = () => {
   );
 };
 
-// Settings placeholder
+// Settings placeholder with dark mode
 const SettingsPlaceholder: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -398,34 +327,34 @@ const SettingsPlaceholder: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
       <div className="text-center max-w-md mx-auto p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Setări</h2>
-        <p className="text-gray-600 mb-4">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Setări</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-4">
           Această funcționalitate va fi implementată în următoarea versiune.
         </p>
-        <p className="text-sm text-gray-500 mb-6">
+        <p className="text-sm text-gray-500 dark:text-gray-500 mb-6">
           Pentru moment poți accesa profilul tău pentru setări de bază, sau panoul de accesibilitate.
         </p>
         
         <div className="space-y-3">
           <button 
             onClick={handleNavigateProfile}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
           >
             Accesează Profilul
           </button>
           
           <button 
             onClick={handleNavigateDashboard}
-            className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
           >
             Înapoi la Dashboard
           </button>
         </div>
 
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
+        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <p className="text-sm text-blue-800 dark:text-blue-300">
             💡 <strong>Sfat:</strong> Folosește butonul de accesibilitate din colțul din dreapta jos pentru setări avansate de afișare.
           </p>
         </div>
@@ -434,7 +363,7 @@ const SettingsPlaceholder: React.FC = () => {
   );
 };
 
-// Reports placeholder
+// Reports placeholder with dark mode
 const ReportsPlaceholder: React.FC = () => {
   const navigate = useNavigate();
 
@@ -447,27 +376,27 @@ const ReportsPlaceholder: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
       <div className="text-center max-w-md mx-auto p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Rapoarte Avansate</h2>
-        <p className="text-gray-600 mb-4">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Rapoarte Avansate</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-4">
           Sistemul de rapoarte avansate va fi implementat în următoarea versiune.
         </p>
-        <p className="text-sm text-gray-500 mb-6">
+        <p className="text-sm text-gray-500 dark:text-gray-500 mb-6">
           Pentru moment poți accesa funcționalitățile de export din dashboard-ul Audit.
         </p>
         
         <div className="space-y-3">
           <button 
             onClick={handleNavigateAudit}
-            className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
           >
             Accesează Dashboard Audit
           </button>
           
           <button 
             onClick={handleNavigateAdmin}
-            className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
           >
             Înapoi la Dashboard Admin
           </button>

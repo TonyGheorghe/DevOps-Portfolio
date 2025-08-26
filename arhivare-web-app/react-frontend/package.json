@@ -28,7 +28,10 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "build:light": "REACT_APP_DEFAULT_THEME=light npm run build",
+    "build:dark": "REACT_APP_DEFAULT_THEME=dark npm run build",
+    "build:auto": "REACT_APP_DEFAULT_THEME=system npm run build"
   },
   "proxy": "http://localhost:8000",
   "eslintConfig": {
