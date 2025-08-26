@@ -422,7 +422,7 @@ const HomePage: React.FC = () => {
             Găsește arhiva companiei tale
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-            Căutează în baza noastră de date pentru a găsi informațiile de contact ale instituției 
+            Căută în baza noastră de date pentru a găsi informațiile de contact ale instituției responsabile
             care deține arhiva unei companii româneşti.
           </p>
 

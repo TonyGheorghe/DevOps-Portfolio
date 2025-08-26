@@ -1,4 +1,4 @@
-// src/App.tsx - Updated with Dark Mode Provider
+// src/App.tsx - FIXED Dark Mode Integration
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { 
@@ -34,8 +34,11 @@ import {
   NetworkRequestsMonitor 
 } from './components/common/NetworkHandling';
 
-// 🔴 ADD DARK MODE PROVIDER
-import { DarkModeProvider } from './components/common/DarkModeSystem';
+// 🔴 FIXED: Dark Mode Provider with debug component
+import { 
+  DarkModeProvider, 
+  ThemeDebugger 
+} from './components/common/DarkModeSystem';
 
 // Demo pages (can be removed in production)
 import { ErrorBoundaryDemo } from './components/common/ErrorBoundary';
@@ -47,14 +50,15 @@ import './App.css';
 
 function App() {
   return (
-    // 🔴 WRAP WITH DARK MODE PROVIDER (OUTERMOST)
+    // 🔴 FIXED: Dark Mode Provider as outermost wrapper
     <DarkModeProvider>
       <NetworkProvider>
         <AccessibilityProvider>
           <AuthProvider>
             <Router>
               <RouteErrorBoundary>
-                <div className="App theme-transition"> {/* Add theme-transition class */}
+                {/* 🔴 FIXED: Added theme-transition class for smooth theme switching */}
+                <div className="App theme-transition min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
                   {/* Skip link for accessibility */}
                   <SkipLink />
                   
@@ -213,7 +217,15 @@ function App() {
                       } 
                     />
                     
-                    {/* ... Rest of your routes remain the same ... */}
+                    {/* ========== DEMO ROUTES (Development Only) ========== */}
+                    {process.env.NODE_ENV === 'development' && (
+                      <>
+                        <Route path="/demo/error-boundary" element={<ErrorBoundaryDemo />} />
+                        <Route path="/demo/accessibility" element={<AccessibilityDemo />} />
+                        <Route path="/demo/network" element={<NetworkHandlingDemo />} />
+                        <Route path="/demo/loading" element={<LoadingStatesDemo />} />
+                      </>
+                    )}
                     
                     {/* ========== LEGACY REDIRECTS ========== */}
                     <Route path="/arhivare" element={<Navigate to="/" replace />} />
@@ -225,6 +237,9 @@ function App() {
                   
                   {/* Global accessibility settings panel */}
                   <AccessibilitySettings />
+                  
+                  {/* 🔴 FIXED: Theme debugger for development */}
+                  {process.env.NODE_ENV === 'development' && <ThemeDebugger />}
                   
                   {/* Network requests monitor (development only) */}
                   {process.env.NODE_ENV === 'development' && <NetworkRequestsMonitor />}
@@ -239,10 +254,10 @@ function App() {
 }
 
 // ========================================
-// HELPER COMPONENTS - Updated with Dark Mode support
+// HELPER COMPONENTS - FIXED with Dark Mode support
 // ========================================
 
-// Role-based redirect component with dark mode support
+// 🔴 FIXED: Role-based redirect component with dark mode support
 const RoleBasedRedirect: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -262,14 +277,14 @@ const RoleBasedRedirect: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
         <p className="text-gray-600 dark:text-gray-300 mt-4">Te redirectăm către dashboard-ul tău...</p>
       </div>
     </div>
   );
 };
 
-// 404 Handler with smart redirects - updated with dark mode
+// 🔴 FIXED: 404 Handler with smart redirects and dark mode
 const NotFoundRedirect: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
@@ -300,13 +315,13 @@ const NotFoundRedirect: React.FC = () => {
         <p className="text-gray-600 dark:text-gray-400 mb-6">
           Pagina pe care o cauți nu există. Te redirectăm către pagina principală.
         </p>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
       </div>
     </div>
   );
 };
 
-// Settings placeholder with dark mode
+// 🔴 FIXED: Settings placeholder with dark mode
 const SettingsPlaceholder: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -347,7 +362,7 @@ const SettingsPlaceholder: React.FC = () => {
           
           <button 
             onClick={handleNavigateDashboard}
-            className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+            className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 text-white rounded-lg transition-colors"
           >
             Înapoi la Dashboard
           </button>
@@ -363,7 +378,7 @@ const SettingsPlaceholder: React.FC = () => {
   );
 };
 
-// Reports placeholder with dark mode
+// 🔴 FIXED: Reports placeholder with dark mode
 const ReportsPlaceholder: React.FC = () => {
   const navigate = useNavigate();
 
@@ -396,7 +411,7 @@ const ReportsPlaceholder: React.FC = () => {
           
           <button 
             onClick={handleNavigateAdmin}
-            className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+            className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 text-white rounded-lg transition-colors"
           >
             Înapoi la Dashboard Admin
           </button>

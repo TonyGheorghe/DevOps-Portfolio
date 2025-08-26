@@ -1,4 +1,4 @@
-// src/components/ClientDashboard.tsx - Client-Specific Dashboard for Managing Own Fonds
+// src/components/ClientDashboard.tsx - COMPLETE DARK MODE VERSION
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -48,7 +48,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const ClientDashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const { currentTheme } = useDarkMode(); // Add dark mode hook 
+  const { currentTheme } = useDarkMode(); // 🔴 Add dark mode hook
   const navigate = useNavigate();
   
   // State management
@@ -278,26 +278,26 @@ const ClientDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-          <p className="text-gray-600 mt-4">Se încarcă fondurile tale...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 dark:border-green-400 mx-auto"></div>
+          <p className="text-gray-600 dark:text-gray-300 mt-4">Se încarcă fondurile tale...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-3">
-              <Target className="h-8 w-8 text-green-600" />
+              <Target className="h-8 w-8 text-green-600 dark:text-green-400" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Fondurile Mele</h1>
-                <p className="text-sm text-gray-600">Management fonduri assignate</p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Fondurile Mele</h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Management fonduri assignate</p>
               </div>
             </div>
             
@@ -306,27 +306,30 @@ const ClientDashboard: React.FC = () => {
               <nav className="hidden md:flex items-center space-x-2">
                 <button 
                   onClick={goToHomepage}
-                  className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
+                  className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors px-3 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   <Home className="h-4 w-4" />
                   <span>Căutare</span>
                 </button>
               </nav>
               
+              {/* 🔴 Dark Mode Toggle */}
+              <DarkModeToggle size="sm" showLabel={false} />
+              
               {/* User profile section */}
-              <div className="flex items-center space-x-3 bg-green-50 rounded-lg px-4 py-2">
+              <div className="flex items-center space-x-3 bg-green-50 dark:bg-green-900/20 rounded-lg px-4 py-2">
                 <div className="flex-shrink-0">
-                  <div className="h-8 w-8 bg-green-600 rounded-full flex items-center justify-center">
+                  <div className="h-8 w-8 bg-green-600 dark:bg-green-500 rounded-full flex items-center justify-center">
                     <User className="h-5 w-5 text-white" />
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{user?.username}</p>
-                  <p className="text-xs text-green-600 capitalize">Client</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user?.username}</p>
+                  <p className="text-xs text-green-600 dark:text-green-400 capitalize">Client</p>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="text-gray-400 hover:text-red-600 transition-colors p-1 rounded-md hover:bg-red-50"
+                  className="text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20"
                   title="Deconectare"
                 >
                   <LogOut className="h-5 w-5" />
@@ -340,13 +343,13 @@ const ClientDashboard: React.FC = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Success Message */}
         {successMessage && (
-          <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
             <div className="flex items-center">
-              <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-              <p className="text-green-800">{successMessage}</p>
+              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mr-3" />
+              <p className="text-green-800 dark:text-green-200">{successMessage}</p>
               <button
                 onClick={() => setSuccessMessage(null)}
-                className="ml-auto text-green-600 hover:text-green-800 p-1"
+                className="ml-auto text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 p-1"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -356,12 +359,12 @@ const ClientDashboard: React.FC = () => {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <div className="flex justify-between items-center">
-              <p className="text-red-800">{error}</p>
+              <p className="text-red-800 dark:text-red-200">{error}</p>
               <button
                 onClick={() => setError(null)}
-                className="text-red-600 hover:text-red-800 p-1"
+                className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 p-1"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -373,37 +376,37 @@ const ClientDashboard: React.FC = () => {
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div 
-              className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow cursor-pointer"
+              className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hover:shadow-md dark:hover:shadow-xl transition-shadow cursor-pointer border dark:border-gray-700"
               onClick={() => setShowForm(true)}
             >
               <div className="flex items-center">
-                <Plus className="h-8 w-8 text-green-600" />
+                <Plus className="h-8 w-8 text-green-600 dark:text-green-400" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Fonduri Totale</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.total_fonds}</p>
-                  <p className="text-xs text-green-600 mt-1">Click pentru adăugare</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Fonduri Totale</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total_fonds}</p>
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">Click pentru adăugare</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hover:shadow-md dark:hover:shadow-xl transition-shadow border dark:border-gray-700">
               <div className="flex items-center">
-                <Archive className="h-8 w-8 text-orange-600" />
+                <Archive className="h-8 w-8 text-orange-600 dark:text-orange-400" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Fonduri Inactive</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.inactive_fonds}</p>
-                  <p className="text-xs text-gray-500 mt-1">Nu sunt vizibile public</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Fonduri Inactive</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.inactive_fonds}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Nu sunt vizibile public</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hover:shadow-md dark:hover:shadow-xl transition-shadow border dark:border-gray-700">
               <div className="flex items-center">
-                <BarChart3 className="h-8 w-8 text-purple-600" />
+                <BarChart3 className="h-8 w-8 text-purple-600 dark:text-purple-400" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Completare Date</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.completion_rate}%</p>
-                  <p className="text-xs text-gray-500 mt-1">Rate de completare</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Completare Date</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.completion_rate}%</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Rate de completare</p>
                 </div>
               </div>
             </div>
@@ -411,18 +414,18 @@ const ClientDashboard: React.FC = () => {
         )}
 
         {/* Controls */}
-        <div className="bg-white rounded-lg shadow mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6 border dark:border-gray-700">
           <div className="p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
               <div className="flex-1 max-w-lg">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Caută în fondurile tale..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   />
                 </div>
               </div>
@@ -433,9 +436,9 @@ const ClientDashboard: React.FC = () => {
                     type="checkbox"
                     checked={showInactive}
                     onChange={(e) => setShowInactive(e.target.checked)}
-                    className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                    className="rounded border-gray-300 dark:border-gray-600 text-green-600 focus:ring-green-500 bg-white dark:bg-gray-700"
                   />
-                  <span className="text-sm text-gray-700">Arată inactive</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Arată inactive</span>
                 </label>
 
                 <button
@@ -443,7 +446,7 @@ const ClientDashboard: React.FC = () => {
                     setEditingFond(undefined);
                     setShowForm(true);
                   }}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center space-x-2 transition-colors"
+                  className="bg-green-600 dark:bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-700 dark:hover:bg-green-600 flex items-center space-x-2 transition-colors"
                 >
                   <Plus className="h-4 w-4" />
                   <span>Adaugă Fond</span>
@@ -454,63 +457,63 @@ const ClientDashboard: React.FC = () => {
         </div>
 
         {/* Client Info Card */}
-        <div className="bg-white rounded-lg shadow mb-6 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <User className="h-5 w-5 mr-2 text-green-600" />
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6 p-6 border dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+            <User className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
             Informații Client
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p className="text-sm font-medium text-gray-600">Nume utilizator</p>
-              <p className="text-lg text-gray-900">{user?.username}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Nume utilizator</p>
+              <p className="text-lg text-gray-900 dark:text-gray-100">{user?.username}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-600">Rol</p>
-              <p className="text-lg text-gray-900">{user?.role}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Rol</p>
+              <p className="text-lg text-gray-900 dark:text-gray-100">{user?.role}</p>
             </div>
           </div>
           {stats?.last_updated && (
-            <div className="mt-4 text-sm text-gray-600">
+            <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
               Ultima actualizare: {new Date(stats.last_updated).toLocaleString('ro-RO')}
             </div>
           )}
         </div>
 
         {/* Fonds Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-              <FileText className="h-5 w-5 mr-2 text-green-600" />
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden border dark:border-gray-700">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+              <FileText className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
               Fondurile Tale ({filteredFonds.length})
             </h2>
           </div>
           
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Companie
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Deținător Arhivă
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Contact
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Acțiuni
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredFonds.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                      <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                      <Building2 className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                       <p className="text-lg font-medium">
                         {fonds.length === 0 ? 'Nu ai încă fonduri assignate' : 'Niciun fond găsit'}
                       </p>
@@ -523,7 +526,7 @@ const ClientDashboard: React.FC = () => {
                       {fonds.length === 0 && (
                         <button
                           onClick={() => setShowForm(true)}
-                          className="inline-flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                          className="inline-flex items-center space-x-2 px-4 py-2 bg-green-600 dark:bg-green-500 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
                         >
                           <Plus className="h-4 w-4" />
                           <span>Adaugă primul fond</span>
@@ -533,14 +536,14 @@ const ClientDashboard: React.FC = () => {
                   </tr>
                 ) : (
                   filteredFonds.map((fond) => (
-                    <tr key={fond.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={fond.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                       <td className="px-6 py-4">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                             {fond.company_name}
                           </div>
                           {fond.address && (
-                            <div className="text-sm text-gray-500 flex items-center mt-1">
+                            <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center mt-1">
                               <MapPin className="h-3 w-3 mr-1" />
                               {fond.address}
                             </div>
@@ -549,9 +552,9 @@ const ClientDashboard: React.FC = () => {
                       </td>
 
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{fond.holder_name}</div>
+                        <div className="text-sm text-gray-900 dark:text-gray-100">{fond.holder_name}</div>
                         {fond.notes && (
-                          <div className="text-sm text-gray-500 mt-1 truncate max-w-xs">
+                          <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate max-w-xs">
                             {fond.notes}
                           </div>
                         )}
@@ -560,17 +563,17 @@ const ClientDashboard: React.FC = () => {
                       <td className="px-6 py-4">
                         <div className="space-y-1">
                           {fond.email && (
-                            <div className="flex items-center text-sm text-gray-600">
+                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                               <Mail className="h-3 w-3 mr-2" />
-                              <a href={`mailto:${fond.email}`} className="hover:text-green-600">
+                              <a href={`mailto:${fond.email}`} className="hover:text-green-600 dark:hover:text-green-400">
                                 {fond.email}
                               </a>
                             </div>
                           )}
                           {fond.phone && (
-                            <div className="flex items-center text-sm text-gray-600">
+                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                               <Phone className="h-3 w-3 mr-2" />
-                              <a href={`tel:${fond.phone}`} className="hover:text-green-600">
+                              <a href={`tel:${fond.phone}`} className="hover:text-green-600 dark:hover:text-green-400">
                                 {fond.phone}
                               </a>
                             </div>
@@ -582,13 +585,13 @@ const ClientDashboard: React.FC = () => {
                         <div className="space-y-1">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             fond.active 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-gray-100 text-gray-800'
+                              ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300' 
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                           }`}>
                             {fond.active ? 'Activ' : 'Inactiv'}
                           </span>
                           
-                          <div className="text-xs text-blue-600">
+                          <div className="text-xs text-blue-600 dark:text-blue-400">
                             ID: {fond.id}
                           </div>
                         </div>
@@ -600,14 +603,14 @@ const ClientDashboard: React.FC = () => {
                             setEditingFond(fond);
                             setShowForm(true);
                           }}
-                          className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors"
+                          className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 p-1 rounded hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
                           title="Editează"
                         >
                           <Edit2 className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteFond(fond)}
-                          className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
+                          className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                           title="Șterge"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -623,43 +626,43 @@ const ClientDashboard: React.FC = () => {
 
         {/* Summary and Help */}
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Acțiuni Disponibile</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border dark:border-gray-700">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Acțiuni Disponibile</h3>
             <div className="space-y-3">
               <div className="flex items-center text-sm">
-                <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                <span>Vizualizare și editare fonduri proprii</span>
+                <CheckCircle className="h-4 w-4 text-green-500 dark:text-green-400 mr-2" />
+                <span className="text-gray-900 dark:text-gray-100">Vizualizare și editare fonduri proprii</span>
               </div>
               <div className="flex items-center text-sm">
-                <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                <span>Adăugare fonduri noi</span>
+                <CheckCircle className="h-4 w-4 text-green-500 dark:text-green-400 mr-2" />
+                <span className="text-gray-900 dark:text-gray-100">Adăugare fonduri noi</span>
               </div>
               <div className="flex items-center text-sm">
-                <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                <span>Ștergere fonduri (proprii)</span>
+                <CheckCircle className="h-4 w-4 text-green-500 dark:text-green-400 mr-2" />
+                <span className="text-gray-900 dark:text-gray-100">Ștergere fonduri (proprii)</span>
               </div>
               <div className="flex items-center text-sm">
-                <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                <span>Căutare în fondurile publice</span>
+                <CheckCircle className="h-4 w-4 text-green-500 dark:text-green-400 mr-2" />
+                <span className="text-gray-900 dark:text-gray-100">Căutare în fondurile publice</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Sfaturi pentru Completare</h3>
-            <div className="space-y-2 text-sm text-gray-600">
-              <p>• <strong>Numele companiei:</strong> Folosește denumirea oficială</p>
-              <p>• <strong>Deținător arhivă:</strong> Instituția care păstrează documentele</p>
-              <p>• <strong>Contact:</strong> Adaugă email și telefon pentru ușurum în comunicare</p>
-              <p>• <strong>Adresa:</strong> Adresa completă ajută la localizare</p>
-              <p>• <strong>Note:</strong> Informații suplimentare despre fond</p>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border dark:border-gray-700">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Sfaturi pentru Completare</h3>
+            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+              <p>• <strong className="text-gray-900 dark:text-gray-100">Numele companiei:</strong> Folosește denumirea oficială</p>
+              <p>• <strong className="text-gray-900 dark:text-gray-100">Deținător arhivă:</strong> Instituția care păstrează documentele</p>
+              <p>• <strong className="text-gray-900 dark:text-gray-100">Contact:</strong> Adaugă email și telefon pentru ușurință în comunicare</p>
+              <p>• <strong className="text-gray-900 dark:text-gray-100">Adresa:</strong> Adresa completă ajută la localizare</p>
+              <p>• <strong className="text-gray-900 dark:text-gray-100">Note:</strong> Informații suplimentare despre fond</p>
             </div>
           </div>
         </div>
 
         {/* Pagination info */}
         {filteredFonds.length > 0 && (
-          <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
+          <div className="mt-4 flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
             <p>
               Afișând {filteredFonds.length} din {fonds.length} fonduri
             </p>
@@ -672,7 +675,7 @@ const ClientDashboard: React.FC = () => {
 
       {/* Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-black dark:bg-opacity-70 flex items-center justify-center p-4 z-50">
           <FondForm
             fond={editingFond}
             existingFonds={fonds}

@@ -1,4 +1,4 @@
-/* src/index.css - Additional CSS for Critical Systems */
+/* src/index.css - FIXED Dark Mode Implementation */
 
 @import 'tailwindcss/base';
 @import 'tailwindcss/components'; 
@@ -18,65 +18,81 @@
 }
 
 /* ===========================================
-   ACCESSIBILITY STYLES
+   🔴 FIXED DARK MODE SYSTEM
    =========================================== */
 
-/* High contrast mode */
-[data-contrast="high"] {
-  --bg-primary: #ffffff !important;
-  --bg-secondary: #f8f9fa !important;
-  --text-primary: #000000 !important;
-  --text-secondary: #212529 !important;
-  --border-color: #000000 !important;
-  --focus-color: #0066cc !important;
-}
-
-[data-contrast="dark"] {
-  --bg-primary: #1a1a1a !important;
-  --bg-secondary: #2d2d2d !important;
-  --text-primary: #ffffff !important;
-  --text-secondary: #e0e0e0 !important;
-  --border-color: #ffffff !important;
-  --focus-color: #66b3ff !important;
+/* CSS Custom Properties for Clean Theme Management */
+:root {
+  /* Light theme (default) */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #f1f3f4;
   
-  background-color: #1a1a1a !important;
-  color: #ffffff !important;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  
+  --border-primary: #e5e7eb;
+  --border-secondary: #d1d5db;
+  --border-focus: #3b82f6;
+  
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
 }
 
-[data-contrast="dark"] * {
-  background-color: inherit;
-  color: inherit;
-  border-color: var(--border-color);
+/* 🔴 DARK THEME - Only applied when .dark class is present */
+.dark {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  
+  --border-primary: #334155;
+  --border-secondary: #475569;
+  --border-focus: #60a5fa;
+  
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+  
+  color-scheme: dark;
 }
 
-[data-contrast="dark"] .bg-white {
-  background-color: var(--bg-primary) !important;
+/* 🔴 HIGH CONTRAST MODE */
+.high-contrast {
+  --bg-primary: #ffffff;
+  --text-primary: #000000;
+  --border-primary: #000000;
+  --border-focus: #0066cc;
 }
 
-[data-contrast="dark"] .bg-gray-50 {
-  background-color: var(--bg-secondary) !important;
+.dark.high-contrast {
+  --bg-primary: #000000;
+  --text-primary: #ffffff;
+  --border-primary: #ffffff;
+  --border-focus: #66b3ff;
 }
 
-[data-contrast="dark"] .text-gray-900 {
-  color: var(--text-primary) !important;
-}
+/* ===========================================
+   🔴 REMOVE CONFLICTING CSS
+   =========================================== */
 
-[data-contrast="dark"] .text-gray-600 {
-  color: var(--text-secondary) !important;
-}
+/* Remove the old CSS that was overriding Tailwind */
+/* These were causing the mixed dark/light mode appearance */
+
+/* ===========================================
+   ACCESSIBILITY STYLES (kept as-is)
+   =========================================== */
 
 /* Focus indicators */
 .focus-visible *:focus-visible {
-  outline: 2px solid var(--focus-color, #0066cc) !important;
+  outline: 2px solid var(--border-focus) !important;
   outline-offset: 2px !important;
-  box-shadow: 0 0 0 2px var(--focus-color, #0066cc) !important;
-}
-
-/* Enhanced focus for buttons */
-.focus-visible button:focus-visible,
-.focus-visible a:focus-visible {
-  outline: 3px solid var(--focus-color, #0066cc) !important;
-  outline-offset: 2px !important;
+  box-shadow: 0 0 0 2px var(--border-focus) !important;
 }
 
 /* Reduced motion support */
@@ -129,8 +145,14 @@
   top: 6px;
 }
 
+.dark .skip-link {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 2px solid var(--border-focus);
+}
+
 /* ===========================================
-   NETWORK STATUS ANIMATIONS
+   NETWORK STATUS ANIMATIONS (kept as-is)
    =========================================== */
 
 @keyframes slide-down {
@@ -162,32 +184,37 @@
 }
 
 /* ===========================================
-   CUSTOM COMPONENTS
+   🔴 CLEAN COMPONENT STYLES
    =========================================== */
 
 @layer components {
   .btn-primary {
-    @apply bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+    @apply bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors;
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
   }
   
   .btn-secondary {
-    @apply bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+    @apply bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors;
+    @apply focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
   }
   
   .btn-danger {
-    @apply bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
+    @apply bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors;
+    @apply focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
   }
   
   .card {
-    @apply bg-white rounded-lg shadow-md p-6 border border-gray-200;
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700;
   }
   
   .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors;
+    @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg;
+    @apply focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors;
+    @apply bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100;
   }
   
   .input-error {
-    @apply border-red-300 focus:ring-red-500;
+    @apply border-red-300 dark:border-red-600 focus:ring-red-500;
   }
   
   .modal-overlay {
@@ -195,18 +222,23 @@
   }
   
   .modal-content {
-    @apply bg-white rounded-lg shadow-xl w-full max-h-[90vh] overflow-y-auto;
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-h-[90vh] overflow-y-auto;
   }
 }
 
 /* ===========================================
-   LOADING STATES
+   🔴 CLEAN LOADING STATES
    =========================================== */
 
 .loading-skeleton {
   background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
   background-size: 200% 100%;
   animation: loading 1.5s infinite;
+}
+
+.dark .loading-skeleton {
+  background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+  background-size: 200% 100%;
 }
 
 @keyframes loading {
@@ -219,90 +251,7 @@
 }
 
 /* ===========================================
-   ERROR BOUNDARY STYLES
-   =========================================== */
-
-.error-boundary-fallback {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f9fafb;
-}
-
-.error-details {
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  max-height: 24rem;
-  overflow-y: auto;
-}
-
-/* ===========================================
-   UTILITY CLASSES
-   =========================================== */
-
-@layer utilities {
-  .text-shadow {
-    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  }
-  
-  .gradient-bg {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  }
-  
-  .backdrop-blur {
-    backdrop-filter: blur(8px);
-  }
-  
-  .safe-area-top {
-    padding-top: env(safe-area-inset-top);
-  }
-  
-  .safe-area-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-}
-
-/* ===========================================
-   PRINT STYLES
-   =========================================== */
-
-@media print {
-  .no-print {
-    display: none !important;
-  }
-  
-  .print-only {
-    display: block !important;
-  }
-  
-  * {
-    color: black !important;
-    background: white !important;
-    box-shadow: none !important;
-  }
-}
-
-/* ===========================================
-   RESPONSIVE UTILITIES
-   =========================================== */
-
-@media (max-width: 640px) {
-  .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-  
-  .modal-content {
-    margin: 1rem;
-    max-width: calc(100vw - 2rem);
-  }
-}
-
-/* ===========================================
-   CUSTOM SCROLLBAR
+   🔴 CLEAN SCROLLBAR STYLES
    =========================================== */
 
 .custom-scrollbar {
@@ -328,31 +277,64 @@
   background: #a0aec0;
 }
 
+/* Dark mode scrollbar */
+.dark .custom-scrollbar {
+  scrollbar-color: #475569 #1e293b;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
 /* ===========================================
-   HIGH CONTRAST IMPROVEMENTS
+   🔴 THEME TRANSITION UTILITIES
    =========================================== */
 
-[data-contrast="high"] .shadow,
-[data-contrast="high"] .shadow-sm,
-[data-contrast="high"] .shadow-md,
-[data-contrast="high"] .shadow-lg,
-[data-contrast="high"] .shadow-xl {
-  box-shadow: 0 0 0 2px var(--border-color, #000000) !important;
+.theme-transition {
+  transition: background-color 300ms ease-in-out, color 300ms ease-in-out, border-color 300ms ease-in-out;
 }
 
-[data-contrast="high"] .border {
-  border-width: 2px !important;
-  border-color: var(--border-color, #000000) !important;
-}
-
-[data-contrast="high"] .rounded,
-[data-contrast="high"] .rounded-lg,
-[data-contrast="high"] .rounded-md {
-  border-radius: 0 !important;
+/* Apply smooth transitions to all elements */
+* {
+  transition: color 150ms ease-in-out, background-color 150ms ease-in-out, border-color 150ms ease-in-out;
 }
 
 /* ===========================================
-   KEYBOARD NAVIGATION IMPROVEMENTS
+   🔴 UTILITY CLASSES
+   =========================================== */
+
+@layer utilities {
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .gradient-bg {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+  
+  .backdrop-blur {
+    backdrop-filter: blur(8px);
+  }
+  
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ===========================================
+   🔴 ENHANCED FOCUS INDICATORS
    =========================================== */
 
 /* Show focus indicators only when navigating with keyboard */
@@ -364,7 +346,7 @@
 .focus-visible [role="button"]:focus-visible,
 .focus-visible [role="tab"]:focus-visible,
 .focus-visible [role="menuitem"]:focus-visible {
-  outline: 3px solid var(--focus-color, #0066cc);
+  outline: 3px solid var(--border-focus);
   outline-offset: 2px;
   position: relative;
   z-index: 1;
@@ -372,12 +354,12 @@
 
 /* Focus within containers */
 .focus-visible :focus-within {
-  outline: 1px solid var(--focus-color, #0066cc);
+  outline: 1px solid var(--border-focus);
   outline-offset: 1px;
 }
 
 /* ===========================================
-   ANIMATION PREFERENCES
+   🔴 ANIMATION PREFERENCES
    =========================================== */
 
 /* Honor system animation preferences */
@@ -391,936 +373,157 @@
   .animate-on-preference {
     transition: none;
   }
-}
-
-/* Enhanced Dark Mode CSS - Add to src/index.css */
-
-/* ===========================================
-   CSS CUSTOM PROPERTIES FOR THEMING
-   =========================================== */
-
-:root {
-  /* Light theme colors */
-  --color-background: #ffffff;
-  --color-background-secondary: #f8f9fa;
-  --color-background-tertiary: #f1f3f4;
-  --color-surface: #ffffff;
-  --color-surface-hover: #f8f9fa;
   
-  --color-text-primary: #1f2937;
-  --color-text-secondary: #6b7280;
-  --color-text-tertiary: #9ca3af;
-  --color-text-inverse: #ffffff;
-  
-  --color-border-primary: #e5e7eb;
-  --color-border-secondary: #d1d5db;
-  --color-border-focus: #3b82f6;
-  
-  --color-accent-primary: #3b82f6;
-  --color-accent-secondary: #1d4ed8;
-  --color-accent-light: #dbeafe;
-  
-  --color-success: #10b981;
-  --color-success-light: #d1fae5;
-  --color-warning: #f59e0b;
-  --color-warning-light: #fef3c7;
-  --color-error: #ef4444;
-  --color-error-light: #fee2e2;
-  
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  
-  /* Transitions */
-  --transition-colors: color 150ms ease-in-out, background-color 150ms ease-in-out, border-color 150ms ease-in-out;
-  --transition-all: all 150ms ease-in-out;
-}
-
-/* ===========================================
-   DARK THEME COLORS
-   =========================================== */
-
-.dark {
-  --color-background: #0f172a;
-  --color-background-secondary: #1e293b;
-  --color-background-tertiary: #334155;
-  --color-surface: #1e293b;
-  --color-surface-hover: #334155;
-  
-  --color-text-primary: #f1f5f9;
-  --color-text-secondary: #cbd5e1;
-  --color-text-tertiary: #94a3b8;
-  --color-text-inverse: #0f172a;
-  
-  --color-border-primary: #334155;
-  --color-border-secondary: #475569;
-  --color-border-focus: #60a5fa;
-  
-  --color-accent-primary: #3b82f6;
-  --color-accent-secondary: #60a5fa;
-  --color-accent-light: #1e40af;
-  
-  --color-success: #22c55e;
-  --color-success-light: #166534;
-  --color-warning: #eab308;
-  --color-warning-light: #a16207;
-  --color-error: #f87171;
-  --color-error-light: #dc2626;
-  
-  /* Dark mode shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.3), 0 8px 10px -6px rgb(0 0 0 / 0.3);
-  
-  /* Glow effects for dark mode */
-  --glow-blue: 0 0 20px rgb(59 130 246 / 0.3);
-  --glow-green: 0 0 20px rgb(34 197 94 / 0.3);
-  --glow-purple: 0 0 20px rgb(147 51 234 / 0.3);
-}
-
-/* ===========================================
-   HIGH CONTRAST MODE
-   =========================================== */
-
-.high-contrast {
-  --color-background: #ffffff;
-  --color-background-secondary: #ffffff;
-  --color-background-tertiary: #ffffff;
-  --color-surface: #ffffff;
-  --color-surface-hover: #f0f0f0;
-  
-  --color-text-primary: #000000;
-  --color-text-secondary: #000000;
-  --color-text-tertiary: #333333;
-  --color-text-inverse: #ffffff;
-  
-  --color-border-primary: #000000;
-  --color-border-secondary: #000000;
-  --color-border-focus: #0066cc;
-  
-  --color-accent-primary: #0066cc;
-  --color-accent-secondary: #0052a3;
-  --color-accent-light: #cce6ff;
-}
-
-.dark.high-contrast {
-  --color-background: #000000;
-  --color-background-secondary: #000000;
-  --color-background-tertiary: #111111;
-  --color-surface: #000000;
-  --color-surface-hover: #111111;
-  
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #ffffff;
-  --color-text-tertiary: #cccccc;
-  --color-text-inverse: #000000;
-  
-  --color-border-primary: #ffffff;
-  --color-border-secondary: #ffffff;
-  --color-border-focus: #66b3ff;
-  
-  --color-accent-primary: #66b3ff;
-  --color-accent-secondary: #99ccff;
-  --color-accent-light: #003366;
-}
-
-/* ===========================================
-   BASE STYLES WITH CSS VARIABLES
-   =========================================== */
-
-html {
-  background-color: var(--color-background);
-  color: var(--color-text-primary);
-  transition: var(--transition-colors);
-}
-
-body {
-  background-color: var(--color-background);
-  color: var(--color-text-primary);
-  transition: var(--transition-colors);
-}
-
-/* ===========================================
-   COMPONENT STYLES USING CSS VARIABLES
-   =========================================== */
-
-/* Cards and surfaces */
-.bg-white {
-  background-color: var(--color-surface) !important;
-}
-
-.bg-gray-50 {
-  background-color: var(--color-background-secondary) !important;
-}
-
-.bg-gray-100 {
-  background-color: var(--color-background-tertiary) !important;
-}
-
-.hover\:bg-gray-50:hover {
-  background-color: var(--color-surface-hover) !important;
-}
-
-/* Text colors */
-.text-gray-900 {
-  color: var(--color-text-primary) !important;
-}
-
-.text-gray-600 {
-  color: var(--color-text-secondary) !important;
-}
-
-.text-gray-500 {
-  color: var(--color-text-tertiary) !important;
-}
-
-.text-gray-400 {
-  color: var(--color-text-tertiary) !important;
-}
-
-/* Borders */
-.border-gray-200 {
-  border-color: var(--color-border-primary) !important;
-}
-
-.border-gray-300 {
-  border-color: var(--color-border-secondary) !important;
-}
-
-/* Focus states */
-.focus\:ring-blue-500:focus {
-  --tw-ring-color: var(--color-border-focus) !important;
-}
-
-.focus\:border-blue-500:focus {
-  border-color: var(--color-border-focus) !important;
-}
-
-/* Buttons */
-.bg-blue-600 {
-  background-color: var(--color-accent-primary) !important;
-}
-
-.hover\:bg-blue-700:hover {
-  background-color: var(--color-accent-secondary) !important;
-}
-
-.bg-blue-50 {
-  background-color: var(--color-accent-light) !important;
-}
-
-/* Success states */
-.bg-green-50 {
-  background-color: var(--color-success-light) !important;
-}
-
-.text-green-600 {
-  color: var(--color-success) !important;
-}
-
-.border-green-200 {
-  border-color: var(--color-success) !important;
-}
-
-/* Warning states */
-.bg-yellow-50 {
-  background-color: var(--color-warning-light) !important;
-}
-
-.text-yellow-600 {
-  color: var(--color-warning) !important;
-}
-
-.border-yellow-200 {
-  border-color: var(--color-warning) !important;
-}
-
-/* Error states */
-.bg-red-50 {
-  background-color: var(--color-error-light) !important;
-}
-
-.text-red-600 {
-  color: var(--color-error) !important;
-}
-
-.border-red-200 {
-  border-color: var(--color-error) !important;
-}
-
-/* Shadows */
-.shadow-sm {
-  box-shadow: var(--shadow-sm) !important;
-}
-
-.shadow {
-  box-shadow: var(--shadow-md) !important;
-}
-
-.shadow-md {
-  box-shadow: var(--shadow-md) !important;
-}
-
-.shadow-lg {
-  box-shadow: var(--shadow-lg) !important;
-}
-
-.shadow-xl {
-  box-shadow: var(--shadow-xl) !important;
-}
-
-/* ===========================================
-   DARK MODE SPECIFIC ENHANCEMENTS
-   =========================================== */
-
-/* Dark mode specific improvements */
-.dark {
-  /* Improved scrollbar for dark mode */
-  scrollbar-color: #475569 #1e293b;
-}
-
-.dark ::-webkit-scrollbar-track {
-  background: #1e293b;
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: #475569;
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
-}
-
-/* Enhanced focus indicators for dark mode */
-.dark *:focus-visible {
-  outline-color: var(--color-border-focus) !important;
-  box-shadow: 0 0 0 2px var(--color-border-focus) !important;
-}
-
-/* Dark mode form elements */
-.dark input,
-.dark select,
-.dark textarea {
-  background-color: var(--color-surface);
-  color: var(--color-text-primary);
-  border-color: var(--color-border-primary);
-}
-
-.dark input:focus,
-.dark select:focus,
-.dark textarea:focus {
-  border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 1px var(--color-border-focus);
-}
-
-/* Dark mode modals */
-.dark .modal-overlay {
-  background-color: rgba(0, 0, 0, 0.7);
-}
-
-/* Dark mode loading states */
-.dark .loading-skeleton {
-  background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
-  background-size: 200% 100%;
-}
-
-/* ===========================================
-   DARK MODE ANIMATIONS & TRANSITIONS
-   =========================================== */
-
-/* Smooth theme transitions */
-* {
-  transition: var(--transition-colors);
-}
-
-/* Special transitions for theme switching */
-.theme-transition {
-  transition: background-color 300ms ease-in-out, color 300ms ease-in-out, border-color 300ms ease-in-out;
-}
-
-/* Glow effects for dark mode interactive elements */
-.dark .btn-primary:hover {
-  box-shadow: var(--glow-blue);
-}
-
-.dark .bg-green-600:hover {
-  box-shadow: var(--glow-green);
-}
-
-.dark .bg-purple-600:hover {
-  box-shadow: var(--glow-purple);
-}
-
-/* ===========================================
-   DARK MODE COMPONENT OVERRIDES
-   =========================================== */
-
-/* Navigation and headers in dark mode */
-.dark .bg-white.shadow-sm {
-  background-color: var(--color-surface) !important;
-  border-color: var(--color-border-primary) !important;
-}
-
-/* Table styles for dark mode */
-.dark .divide-y.divide-gray-200 > * {
-  border-color: var(--color-border-primary) !important;
-}
-
-.dark .bg-gray-50 {
-  background-color: var(--color-surface) !important;
-}
-
-/* Card hover states in dark mode */
-.dark .hover\:shadow-md:hover {
-  box-shadow: var(--shadow-lg) !important;
-  background-color: var(--color-surface-hover) !important;
-}
-
-/* Dashboard specific dark mode styles */
-.dark .dashboard-card {
-  background: linear-gradient(135deg, var(--color-surface) 0%, var(--color-surface-hover) 100%);
-  border: 1px solid var(--color-border-primary);
-}
-
-.dark .dashboard-stat {
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-}
-
-/* ===========================================
-   RESPONSIVE DARK MODE ADJUSTMENTS
-   =========================================== */
-
-@media (max-width: 768px) {
-  .dark .mobile-header {
-    background: linear-gradient(180deg, var(--color-surface) 0%, transparent 100%);
+  /* Disable all theme transitions for motion sensitivity */
+  .theme-transition {
+    transition: none !important;
   }
   
-  .dark .mobile-menu {
-    background-color: var(--color-background);
-    border-color: var(--color-border-primary);
-    box-shadow: var(--shadow-xl);
+  * {
+    transition: none !important;
   }
 }
 
 /* ===========================================
-   DARK MODE STATUS INDICATORS
+   🔴 RESPONSIVE UTILITIES
    =========================================== */
 
-/* Theme status indicator */
-.theme-indicator {
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .modal-content {
+    margin: 1rem;
+    max-width: calc(100vw - 2rem);
+  }
+}
+
+/* ===========================================
+   🔴 PRINT STYLES
+   =========================================== */
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+  }
+  
+  /* Force light mode for printing */
+  * {
+    color: black !important;
+    background: white !important;
+    box-shadow: none !important;
+  }
+  
+  .dark * {
+    color: black !important;
+    background: white !important;
+  }
+}
+
+/* ===========================================
+   🔴 DEBUG UTILITIES (Development Only)
+   =========================================== */
+
+/* Theme debug info - only visible in development */
+.theme-debug {
   position: fixed;
   bottom: 80px;
   right: 20px;
   z-index: 1000;
-  background: var(--color-surface);
-  color: var(--color-text-primary);
+  background: var(--bg-primary);
+  color: var(--text-primary);
   padding: 8px 12px;
   border-radius: 8px;
   box-shadow: var(--shadow-lg);
-  border: 1px solid var(--color-border-primary);
+  border: 1px solid var(--border-primary);
   font-size: 12px;
   opacity: 0.9;
-  transition: var(--transition-all);
+  transition: opacity 0.3s ease;
 }
 
-.theme-indicator:hover {
+.theme-debug:hover {
   opacity: 1;
-  transform: translateY(-2px);
 }
 
 /* ===========================================
-   PRINT STYLES FOR DARK MODE
+   🔴 ERROR BOUNDARY STYLES
    =========================================== */
 
-@media print {
-  .dark * {
-    background: white !important;
-    color: black !important;
-    border-color: black !important;
-  }
-  
-  .dark .bg-blue-600,
-  .dark .bg-green-600,
-  .dark .bg-purple-600,
-  .dark .bg-red-600 {
-    background: white !important;
-    color: black !important;
-    border: 2px solid black !important;
-  }
+.error-boundary-fallback {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f9fafb;
+}
+
+.dark .error-boundary-fallback {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.error-details {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  max-height: 24rem;
+  overflow-y: auto;
+}
+
+.dark .error-details {
+  background-color: #7f1d1d;
+  border-color: #dc2626;
+  color: #fecaca;
 }
 
 /* ===========================================
-   ACCESSIBILITY IMPROVEMENTS FOR DARK MODE
+   🔴 FINAL CLEANUP - Remove any remaining conflicts
    =========================================== */
 
-/* Enhanced focus indicators for dark mode */
-.dark .focus-visible *:focus-visible {
-  outline: 3px solid var(--color-border-focus) !important;
-  outline-offset: 2px !important;
-  box-shadow: 0 0 0 2px var(--color-background), 0 0 0 5px var(--color-border-focus) !important;
-}
-
-/* High contrast adjustments */
-.dark.high-contrast .shadow-sm,
-.dark.high-contrast .shadow,
-.dark.high-contrast .shadow-md,
-.dark.high-contrast .shadow-lg,
-.dark.high-contrast .shadow-xl {
-  box-shadow: 0 0 0 2px var(--color-border-primary) !important;
-}
-
-/* Skip link for dark mode */
-.dark .skip-link {
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-  border: 2px solid var(--color-border-focus);
-}
-
-.dark .skip-link:focus {
-  box-shadow: var(--glow-blue);
-}
-
-/* ===========================================
-   ANIMATION PREFERENCES FOR DARK MODE
-   =========================================== */
-
-/* Respect user's animation preferences */
-@media (prefers-reduced-motion: reduce) {
-  .dark * {
-    transition: none !important;
-    animation: none !important;
-  }
-  
-  .dark .theme-transition {
-    transition: none !important;
-  }
-}
-
-/* Enhanced animations for dark mode when allowed */
-@media (prefers-reduced-motion: no-preference) {
-  .dark .animate-glow {
-    animation: glow 2s ease-in-out infinite alternate;
-  }
-  
-  @keyframes glow {
-    from {
-      box-shadow: 0 0 5px var(--color-accent-primary);
-    }
-    to {
-      box-shadow: 0 0 20px var(--color-accent-primary), 0 0 30px var(--color-accent-primary);
-    }
-  }
-}
-
-/* ===========================================
-   CUSTOM UTILITY CLASSES FOR DARK MODE
-   =========================================== */
-
-.dark-surface {
-  background-color: var(--color-surface);
-  color: var(--color-text-primary);
-  border-color: var(--color-border-primary);
-}
-
-.dark-hover:hover {
-  background-color: var(--color-surface-hover);
-}
-
-.dark-text-primary {
-  color: var(--color-text-primary);
-}
-
-.dark-text-secondary {
-  color: var(--color-text-secondary);
-}
-
-.dark-border {
-  border-color: var(--color-border-primary);
-}
-
-.dark-focus:focus {
-  outline-color: var(--color-border-focus);
-  border-color: var(--color-border-focus);
-}
-
-.dark-shadow {
-  box-shadow: var(--shadow-md);
-}
-
-/* ===========================================
-   SPECIFIC COMPONENT DARK MODE STYLES
-   =========================================== */
-
-/* Dropdown menus */
-.dark .dropdown-menu {
-  background-color: var(--color-surface);
-  border-color: var(--color-border-primary);
-  box-shadow: var(--shadow-xl);
-}
-
-.dark .dropdown-item:hover {
-  background-color: var(--color-surface-hover);
-}
-
-/* Tooltips */
-.dark .tooltip {
-  background-color: var(--color-background-tertiary);
-  color: var(--color-text-primary);
-  border-color: var(--color-border-secondary);
-}
-
-/* Progress bars */
-.dark .progress-bar {
-  background-color: var(--color-background-tertiary);
-}
-
-.dark .progress-fill {
-  background-color: var(--color-accent-primary);
-  box-shadow: var(--glow-blue);
-}
-
-/* Badges and tags */
-.dark .badge {
-  background-color: var(--color-surface-hover);
-  color: var(--color-text-primary);
-  border-color: var(--color-border-primary);
-}
-
-/* Code blocks */
-.dark pre,
-.dark code {
-  background-color: var(--color-background-tertiary);
-  color: var(--color-text-primary);
-  border-color: var(--color-border-primary);
-}
-
-/* ===========================================
-   DARK MODE LOADING STATES
-   =========================================== */
-
-.dark .spinner {
-  border-color: var(--color-border-primary);
-  border-top-color: var(--color-accent-primary);
-}
-
-.dark .skeleton {
-  background: linear-gradient(90deg, var(--color-surface) 25%, var(--color-surface-hover) 50%, var(--color-surface) 75%);
-  background-size: 200% 100%;
-}
-
-/* ===========================================
-   DARK MODE FORM STATES
-   =========================================== */
-
-.dark input:disabled,
-.dark select:disabled,
-.dark textarea:disabled {
-  background-color: var(--color-background-secondary);
-  color: var(--color-text-tertiary);
-  opacity: 0.6;
-}
-
-.dark input:invalid {
-  border-color: var(--color-error);
-  box-shadow: 0 0 0 1px var(--color-error);
-}
-
-.dark input:valid {
-  border-color: var(--color-success);
-  box-shadow: 0 0 0 1px var(--color-success);
-}
-
-/* Add this to the END of your src/index.css file */
-
-/* ===========================================
-   DARK MODE CUSTOM PROPERTIES
-   =========================================== */
-
-:root {
-  /* Light theme colors */
-  --color-background: #ffffff;
-  --color-background-secondary: #f8f9fa;
-  --color-background-tertiary: #f1f3f4;
-  --color-surface: #ffffff;
-  --color-surface-hover: #f8f9fa;
-  
-  --color-text-primary: #1f2937;
-  --color-text-secondary: #6b7280;
-  --color-text-tertiary: #9ca3af;
-  --color-text-inverse: #ffffff;
-  
-  --color-border-primary: #e5e7eb;
-  --color-border-secondary: #d1d5db;
-  --color-border-focus: #3b82f6;
-  
-  --color-accent-primary: #3b82f6;
-  --color-accent-secondary: #1d4ed8;
-  --color-accent-light: #dbeafe;
-  
-  --color-success: #10b981;
-  --color-success-light: #d1fae5;
-  --color-warning: #f59e0b;
-  --color-warning-light: #fef3c7;
-  --color-error: #ef4444;
-  --color-error-light: #fee2e2;
-  
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  
-  /* Transitions */
-  --transition-colors: color 150ms ease-in-out, background-color 150ms ease-in-out, border-color 150ms ease-in-out;
-  --transition-all: all 150ms ease-in-out;
-}
-
-/* ===========================================
-   DARK THEME COLORS
-   =========================================== */
-
-.dark {
-  --color-background: #0f172a;
-  --color-background-secondary: #1e293b;
-  --color-background-tertiary: #334155;
-  --color-surface: #1e293b;
-  --color-surface-hover: #334155;
-  
-  --color-text-primary: #f1f5f9;
-  --color-text-secondary: #cbd5e1;
-  --color-text-tertiary: #94a3b8;
-  --color-text-inverse: #0f172a;
-  
-  --color-border-primary: #334155;
-  --color-border-secondary: #475569;
-  --color-border-focus: #60a5fa;
-  
-  --color-accent-primary: #3b82f6;
-  --color-accent-secondary: #60a5fa;
-  --color-accent-light: #1e40af;
-  
-  --color-success: #22c55e;
-  --color-success-light: #166534;
-  --color-warning: #eab308;
-  --color-warning-light: #a16207;
-  --color-error: #f87171;
-  --color-error-light: #dc2626;
-  
-  /* Dark mode shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.3), 0 8px 10px -6px rgb(0 0 0 / 0.3);
-  
-  /* Glow effects for dark mode */
-  --glow-blue: 0 0 20px rgb(59 130 246 / 0.3);
-  --glow-green: 0 0 20px rgb(34 197 94 / 0.3);
-  --glow-purple: 0 0 20px rgb(147 51 234 / 0.3);
-}
-
-/* ===========================================
-   HIGH CONTRAST MODE
-   =========================================== */
-
-.high-contrast {
-  --color-background: #ffffff;
-  --color-surface: #ffffff;
-  --color-text-primary: #000000;
-  --color-text-secondary: #000000;
-  --color-border-primary: #000000;
-  --color-border-secondary: #000000;
-  --color-border-focus: #0066cc;
-  --color-accent-primary: #0066cc;
-}
-
-.dark.high-contrast {
-  --color-background: #000000;
-  --color-surface: #000000;
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #ffffff;
-  --color-border-primary: #ffffff;
-  --color-border-secondary: #ffffff;
-  --color-border-focus: #66b3ff;
-  --color-accent-primary: #66b3ff;
-}
-
-/* ===========================================
-   THEME TRANSITIONS
-   =========================================== */
-
-.theme-transition {
-  transition: background-color 300ms ease-in-out, color 300ms ease-in-out, border-color 300ms ease-in-out;
-}
-
+/* Ensure Tailwind's dark mode classes work properly */
 html {
-  background-color: var(--color-background);
-  color: var(--color-text-primary);
-  transition: var(--transition-colors);
+  background-color: rgb(255 255 255);
+  color: rgb(31 41 55);
+}
+
+html.dark {
+  background-color: rgb(15 23 42);
+  color: rgb(241 245 249);
 }
 
 body {
-  background-color: var(--color-background);
-  color: var(--color-text-primary);
-  transition: var(--transition-colors);
+  background-color: inherit;
+  color: inherit;
 }
 
-/* ===========================================
-   ENHANCED DARK MODE STYLES
-   =========================================== */
-
-/* Improved scrollbar for dark mode */
-.dark {
-  scrollbar-color: #475569 #1e293b;
+/* Remove any conflicting styles that might interfere with Tailwind's dark mode */
+.dark .bg-white {
+  background-color: rgb(30 41 59) !important;
 }
 
-.dark ::-webkit-scrollbar-track {
-  background: #1e293b;
+.dark .bg-gray-50 {
+  background-color: rgb(51 65 85) !important;
 }
 
-.dark ::-webkit-scrollbar-thumb {
-  background: #475569;
+.dark .text-gray-900 {
+  color: rgb(241 245 249) !important;
 }
 
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+.dark .text-gray-600 {
+  color: rgb(203 213 225) !important;
 }
 
-/* Enhanced focus indicators for dark mode */
-.dark *:focus-visible {
-  outline-color: var(--color-border-focus) !important;
-  box-shadow: 0 0 0 2px var(--color-border-focus) !important;
+.dark .border-gray-200 {
+  border-color: rgb(51 65 85) !important;
 }
 
-/* Dark mode form elements */
-.dark input,
-.dark select,
-.dark textarea {
-  background-color: var(--color-surface);
-  color: var(--color-text-primary);
-  border-color: var(--color-border-primary);
-}
-
-.dark input:focus,
-.dark select:focus,
-.dark textarea:focus {
-  border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 1px var(--color-border-focus);
-}
-
-/* Dark mode loading states */
-.dark .loading-skeleton {
-  background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
-  background-size: 200% 100%;
-}
-
-/* Dark mode specific improvements for cards */
-.dark .hover\:shadow-md:hover {
-  box-shadow: var(--shadow-lg) !important;
-  background-color: var(--color-surface-hover) !important;
-}
-
-/* Dark mode table styles */
-.dark .divide-y.divide-gray-200 > * {
-  border-color: var(--color-border-primary) !important;
-}
-
-/* Dark mode dropdown menus */
-.dark .dropdown-menu {
-  background-color: var(--color-surface);
-  border-color: var(--color-border-primary);
-  box-shadow: var(--shadow-xl);
-}
-
-.dark .dropdown-item:hover {
-  background-color: var(--color-surface-hover);
-}
-
-/* ===========================================
-   RESPONSIVE DARK MODE ADJUSTMENTS
-   =========================================== */
-
-@media (max-width: 768px) {
-  .dark .mobile-header {
-    background: linear-gradient(180deg, var(--color-surface) 0%, transparent 100%);
-  }
-  
-  .dark .mobile-menu {
-    background-color: var(--color-background);
-    border-color: var(--color-border-primary);
-    box-shadow: var(--shadow-xl);
-  }
-}
-
-/* ===========================================
-   PRINT STYLES FOR DARK MODE
-   =========================================== */
-
-@media print {
-  .dark * {
-    background: white !important;
-    color: black !important;
-    border-color: black !important;
-  }
-  
-  .dark .bg-blue-600,
-  .dark .bg-green-600,
-  .dark .bg-purple-600,
-  .dark .bg-red-600 {
-    background: white !important;
-    color: black !important;
-    border: 2px solid black !important;
-  }
-}
-
-/* ===========================================
-   ANIMATION PREFERENCES FOR DARK MODE
-   =========================================== */
-
-/* Respect user's animation preferences */
-@media (prefers-reduced-motion: reduce) {
-  .dark * {
-    transition: none !important;
-    animation: none !important;
-  }
-  
-  .dark .theme-transition {
-    transition: none !important;
-  }
-}
-
-/* Enhanced animations for dark mode when allowed */
-@media (prefers-reduced-motion: no-preference) {
-  .dark .animate-glow {
-    animation: glow 2s ease-in-out infinite alternate;
-  }
-  
-  @keyframes glow {
-    from {
-      box-shadow: 0 0 5px var(--color-accent-primary);
-    }
-    to {
-      box-shadow: 0 0 20px var(--color-accent-primary), 0 0 30px var(--color-accent-primary);
-    }
-  }
-}
-
-/* ===========================================
-   DARK MODE BUTTON AND GLOW EFFECTS
-   =========================================== */
-
-/* Glow effects for dark mode interactive elements */
-.dark .bg-blue-600:hover {
-  box-shadow: var(--glow-blue);
-}
-
-.dark .bg-green-600:hover {
-  box-shadow: var(--glow-green);
-}
-
-.dark .bg-purple-600:hover {
-  box-shadow: var(--glow-purple);
+.dark .border-gray-300 {
+  border-color: rgb(71 85 105) !important;
 }
