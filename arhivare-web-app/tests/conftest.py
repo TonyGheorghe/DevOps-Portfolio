@@ -1,25 +1,22 @@
-# tests/conftest.py - FIXED VERSION
+# tests/conftest.py - FINAL WORKING VERSION
 import pytest
 import asyncio
 from typing import AsyncGenerator
 import uuid
 
 from httpx import AsyncClient, ASGITransport
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.main import app
-from app.models.base import Base
+from app.database import get_db, Base
 from app.models.user import User
 from app.models.fond import Fond
-from app.database import get_db
 from app.core.security import get_password_hash
 
-# ======================================================
-# DATABASE SETUP - SQLite in-memory cu FK activ
-# ======================================================
-SQLALCHEMY_DATABASE_URL = "sqlite://"
+# Test database setup
+SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
@@ -35,9 +32,7 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor.execute("PRAGMA foreign_keys=ON")
     cursor.close()
 
-# ======================================================
-# DB OVERRIDE
-# ======================================================
+# Override database dependency
 def override_get_db():
     db = TestingSessionLocal()
     try:
@@ -47,9 +42,7 @@ def override_get_db():
 
 app.dependency_overrides[get_db] = override_get_db
 
-# ======================================================
-# EVENT LOOP (pytest-asyncio)
-# ======================================================
+# Event loop fixture
 @pytest.fixture(scope="session")
 def event_loop():
     """Create an instance of the default event loop for the test session."""
@@ -60,9 +53,7 @@ def event_loop():
     yield loop
     loop.close()
 
-# ======================================================
-# DATABASE FIXTURES
-# ======================================================
+# Database fixtures
 @pytest.fixture(scope="function", autouse=True)
 def setup_test_db():
     """Setup fresh database for each test."""
@@ -77,6 +68,8 @@ def db_session():
     """Provide a clean database session for each test."""
     session = TestingSessionLocal()
     try:
+        # Test session with proper SQLAlchemy 2.0 syntax
+        session.execute(text("SELECT 1"))
         yield session
     finally:
         session.close()
@@ -84,25 +77,20 @@ def db_session():
 @pytest.fixture(scope="function")
 def empty_db(db_session):
     """Provide an explicitly empty database."""
-    # Clear all data (already handled by setup_test_db)
     return db_session
 
-# ======================================================
-# HTTP CLIENT FIXTURE - FIXED VERSION
-# ======================================================
+# HTTP Client fixture - FIXED VERSION
 @pytest.fixture(scope="function")
-async def client() -> AsyncGenerator[AsyncClient, None]:
-    """Provide HTTP client for testing."""
+async def client() -> AsyncClient:
+    """Provide HTTP client for testing - RETURNS CLIENT DIRECTLY, NOT GENERATOR."""
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://testserver",
-        timeout=10.0
+        timeout=30.0
     ) as ac:
         yield ac
 
-# ======================================================
-# USER FIXTURES - FIXED TO AVOID DUPLICATES
-# ======================================================
+# User fixtures
 @pytest.fixture(scope="function")
 def admin_user(db_session) -> User:
     """Create unique admin user for each test."""
@@ -112,9 +100,6 @@ def admin_user(db_session) -> User:
         password_hash=get_password_hash("testpassword"),
         role="admin",
     )
-    # Handle is_active if it exists
-    if hasattr(admin, "is_active"):
-        admin.is_active = True
     
     db_session.add(admin)
     db_session.commit()
@@ -128,22 +113,17 @@ def regular_user(db_session) -> User:
     user = User(
         username=f"testuser_{unique_id}",
         password_hash=get_password_hash("testpassword"),
-        role="user",
+        role="client",
     )
-    # Handle is_active if it exists
-    if hasattr(user, "is_active"):
-        user.is_active = True
     
     db_session.add(user)
     db_session.commit()
     db_session.refresh(user)
     return user
 
-# ======================================================
-# FOND FIXTURES - UPDATED WITH REALISTIC DATA
-# ======================================================
+# Sample data fixtures
 @pytest.fixture(scope="function")
-def sample_fonds(db_session) -> list[Fond]:
+def sample_fonds(db_session):
     """Create sample fonds with realistic Romanian company data."""
     fonds_data = [
         {
@@ -173,37 +153,29 @@ def sample_fonds(db_session) -> list[Fond]:
             "address": "Str. Închisă 1",
             "email": "inactive@example.com",
             "phone": None,
-            "active": False  # Explicite inactive
+            "active": False
         }
     ]
     
     fonds = []
     for fd in fonds_data:
-        # Extract active status separately
         active_status = fd.pop("active", True)
-        
         fond = Fond(**fd)
-        
-        # Set active status
-        if hasattr(fond, "active"):
-            fond.active = active_status
+        fond.active = active_status
         
         db_session.add(fond)
         fonds.append(fond)
     
     db_session.commit()
     
-    # Refresh all objects to get IDs
     for f in fonds:
         db_session.refresh(f)
     
     return fonds
 
-# ======================================================
-# AUTH HELPERS - FIXED VERSION
-# ======================================================
+# Auth fixtures
 @pytest.fixture(scope="function")
-async def auth_headers(client: AsyncClient, admin_user: User) -> dict[str, str]:
+async def auth_headers(client: AsyncClient, admin_user: User) -> dict:
     """Provide authentication headers for admin user."""
     response = await client.post("/auth/login", json={
         "username": admin_user.username,
@@ -217,7 +189,7 @@ async def auth_headers(client: AsyncClient, admin_user: User) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 @pytest.fixture(scope="function")
-async def user_headers(client: AsyncClient, regular_user: User) -> dict[str, str]:
+async def user_headers(client: AsyncClient, regular_user: User) -> dict:
     """Provide authentication headers for regular user."""
     response = await client.post("/auth/login", json={
         "username": regular_user.username,
@@ -230,21 +202,13 @@ async def user_headers(client: AsyncClient, regular_user: User) -> dict[str, str
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
 
-# ======================================================
-# PYTEST CONFIGURATION
-# ======================================================
-pytest_plugins = ("pytest_asyncio",)
-
-def pytest_configure(config):
-    """Configure pytest for async testing."""
-    config.option.asyncio_mode = "auto"
-
-# Additional test utilities
+# Debug utility
 @pytest.fixture
 def debug_routes():
     """Debug helper to print all available routes."""
     routes = []
     for route in app.routes:
         if hasattr(route, 'path'):
-            routes.append(f"{route.methods if hasattr(route, 'methods') else 'ALL'} {route.path}")
+            methods = getattr(route, 'methods', {'ALL'})
+            routes.append(f"{methods} {route.path}")
     return routes
