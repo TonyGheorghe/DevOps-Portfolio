@@ -16,6 +16,9 @@ import ClientDashboard from './components/ClientDashboard';
 import UsersPage from './components/pages/UsersPage';
 import UserProfile from './components/pages/UserProfile';
 
+// Language Imports
+import { LanguageProvider } from './components/common/LanguageSystem';
+
 // Critical Systems
 import { 
   RouteErrorBoundary, 
@@ -54,6 +57,7 @@ function App() {
     <DarkModeProvider>
       <NetworkProvider>
         <AccessibilityProvider>
+         <LanguageProvider defaultLanguage="ro">
           <AuthProvider>
             <Router>
               <RouteErrorBoundary>
@@ -247,6 +251,7 @@ function App() {
               </RouteErrorBoundary>
             </Router>
           </AuthProvider>
+         </LanguageProvider>
         </AccessibilityProvider>
       </NetworkProvider>
     </DarkModeProvider>

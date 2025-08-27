@@ -1,4 +1,4 @@
-// src/components/AdminDashboard.tsx - COMPLETE DARK MODE VERSION
+// src/components/AdminDashboard.tsx - COMPLETE i18n VERSION
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -11,6 +11,7 @@ import { useAuth } from './AuthSystem';
 import FondForm from './forms/FondForm';
 import ReassignmentModal from './ReassignmentModal';
 import { DarkModeToggle, useDarkMode } from './common/DarkModeSystem';
+import { LanguageToggle, useLanguage } from './common/LanguageSystem';
 
 // Types (same as before)
 interface Fond {
@@ -80,7 +81,8 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const AdminDashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const { currentTheme } = useDarkMode(); // 🔴 Add dark mode hook
+  const { currentTheme } = useDarkMode();
+  const { t } = useLanguage(); // 🌍 ADD TRANSLATION HOOK
   const navigate = useNavigate();
   
   // All existing state variables...
@@ -190,28 +192,28 @@ const AdminDashboard: React.FC = () => {
           navigate('/login', { replace: true });
           return;
         }
-        throw new Error(`Error loading fonds: ${response.status}`);
+        throw new Error(`${t('admin.error.loading_fonds')}: ${response.status}`);
       }
 
       const data = await response.json();
       setFonds(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error loading fonds');
+      setError(err instanceof Error ? err.message : t('admin.error.loading_fonds_generic'));
       console.error('Error loading fonds:', err);
     } finally {
       setLoading(false);
     }
-  }, [showInactive, logout, navigate]);
+  }, [showInactive, logout, navigate, t]);
 
   useEffect(() => {
     loadFonds();
     loadUsers();
   }, [loadFonds, loadUsers]);
 
-  // All existing CRUD functions remain the same...
+  // All existing CRUD functions remain the same but with translated messages...
   const handleCreateFond = async (fondData: FondFormData) => {
     if (!canEdit) {
-      setError('Nu ai permisiuni pentru a crea fonduri');
+      setError(t('admin.error.no_create_permission'));
       return;
     }
 
@@ -237,7 +239,7 @@ const AdminDashboard: React.FC = () => {
           return;
         }
         const errorData = await response.json();
-        throw new Error(errorData.detail || `Error creating fond: ${response.status}`);
+        throw new Error(errorData.detail || `${t('admin.error.creating_fond')}: ${response.status}`);
       }
 
       const newFond = await response.json();
@@ -246,27 +248,26 @@ const AdminDashboard: React.FC = () => {
       setEditingFond(undefined);
       await loadFonds();
       
-      let message = `Fondul "${newFond.company_name}" a fost creat cu succes!`;
+      let message = `${t('admin.success.fond_created')} "${newFond.company_name}"!`;
       if (newFond.owner_id) {
         const owner = availableUsers.find(u => u.id === newFond.owner_id);
         if (owner) {
-          message += ` Assignat către ${owner.username}.`;
+          message += ` ${t('admin.success.assigned_to')} ${owner.username}.`;
         }
       }
       
       setSuccessMessage(message);
       
     } catch (err) {
-      throw new Error(err instanceof Error ? err.message : 'Error creating fond');
+      throw new Error(err instanceof Error ? err.message : t('admin.error.creating_fond_generic'));
     } finally {
       setFormLoading(false);
     }
   };
 
-  // Other existing functions... (handleUpdateFond, handleDeleteFond, etc.)
   const handleUpdateFond = async (fondData: FondFormData) => {
     if (!canEdit) {
-      setError('Nu ai permisiuni pentru a modifica fonduri');
+      setError(t('admin.error.no_edit_permission'));
       return;
     }
 
@@ -297,7 +298,7 @@ const AdminDashboard: React.FC = () => {
           return;
         }
         const errorData = await response.json();
-        throw new Error(errorData.detail || `Error updating fond: ${response.status}`);
+        throw new Error(errorData.detail || `${t('admin.error.updating_fond')}: ${response.status}`);
       }
 
       const responseData = await response.json();
@@ -315,24 +316,24 @@ const AdminDashboard: React.FC = () => {
       setEditingFond(undefined);
       await loadFonds();
       
-      let message = `Fondul "${responseData.fond.company_name}" a fost actualizat cu succes!`;
+      let message = `${t('admin.success.fond_updated')} "${responseData.fond.company_name}"!`;
       if (responseData.auto_reassignment_applied) {
-        message += ' (Reassignment automat aplicat)';
+        message += ` (${t('admin.success.auto_reassignment_applied')})`;
       } else if (fondData.owner_id !== editingFond.owner_id) {
         if (fondData.owner_id) {
           const newOwner = availableUsers.find(u => u.id === fondData.owner_id);
           if (newOwner) {
-            message += ` Assignat către ${newOwner.username}.`;
+            message += ` ${t('admin.success.assigned_to')} ${newOwner.username}.`;
           }
         } else {
-          message += ' Assignment eliminat.';
+          message += ` ${t('admin.success.assignment_removed')}.`;
         }
       }
       
       setSuccessMessage(message);
       
     } catch (err) {
-      throw new Error(err instanceof Error ? err.message : 'Error updating fond');
+      throw new Error(err instanceof Error ? err.message : t('admin.error.updating_fond_generic'));
     } finally {
       if (!reassignmentData) {
         setFormLoading(false);
@@ -342,11 +343,11 @@ const AdminDashboard: React.FC = () => {
 
   const handleDeleteFond = async (fond: Fond) => {
     if (!canEdit) {
-      setError('Nu ai permisiuni pentru a șterge fonduri');
+      setError(t('admin.error.no_delete_permission'));
       return;
     }
 
-    if (!window.confirm(`Ești sigur că vrei să ștergi fondul "${fond.company_name}"?`)) {
+    if (!window.confirm(`${t('admin.confirm.delete_fond')} "${fond.company_name}"?`)) {
       return;
     }
 
@@ -362,13 +363,13 @@ const AdminDashboard: React.FC = () => {
           navigate('/login', { replace: true });
           return;
         }
-        throw new Error(`Error deleting fond: ${response.status}`);
+        throw new Error(`${t('admin.error.deleting_fond')}: ${response.status}`);
       }
 
       await loadFonds();
-      setSuccessMessage(`Fondul "${fond.company_name}" a fost șters cu succes!`);
+      setSuccessMessage(`${t('admin.success.fond_deleted')} "${fond.company_name}"!`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error deleting fond');
+      setError(err instanceof Error ? err.message : t('admin.error.deleting_fond_generic'));
     }
   };
 
@@ -389,7 +390,7 @@ const AdminDashboard: React.FC = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Error confirming reassignment');
+        throw new Error(errorData.detail || t('admin.error.confirming_reassignment'));
       }
 
       const result = await response.json();
@@ -404,7 +405,7 @@ const AdminDashboard: React.FC = () => {
       setSuccessMessage(result.message);
       
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error confirming reassignment');
+      setError(err instanceof Error ? err.message : t('admin.error.confirming_reassignment_generic'));
     } finally {
       setReassignmentLoading(false);
       setFormLoading(false);
@@ -433,7 +434,7 @@ const AdminDashboard: React.FC = () => {
 
   const handleQuickAssignment = async (fondId: number, newOwnerId: number | null) => {
     if (!canEdit) {
-      setError('Nu ai permisiuni pentru a modifica assignment-urile');
+      setError(t('admin.error.no_assignment_permission'));
       return;
     }
 
@@ -446,20 +447,20 @@ const AdminDashboard: React.FC = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Error updating assignment');
+        throw new Error(errorData.detail || t('admin.error.updating_assignment'));
       }
 
       await loadFonds();
       
       const owner = availableUsers.find(u => u.id === newOwnerId);
       const message = newOwnerId 
-        ? `Fond assignat către ${owner?.username || 'utilizator necunoscut'}`
-        : 'Assignment eliminat';
+        ? `${t('admin.success.fond_assigned_to')} ${owner?.username || t('admin.unknown_user')}`
+        : t('admin.success.assignment_removed');
       
       setSuccessMessage(message);
       
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error updating assignment');
+      setError(err instanceof Error ? err.message : t('admin.error.updating_assignment_generic'));
     }
   };
 
@@ -476,7 +477,7 @@ const AdminDashboard: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Error checking bulk reassignments');
+        throw new Error(t('admin.error.bulk_check_reassignments'));
       }
 
       const result = await response.json();
@@ -484,23 +485,23 @@ const AdminDashboard: React.FC = () => {
       const candidatesCount = result.manual_reassignment_candidates;
       const autoCount = result.automatic_reassignments_applied;
       
-      let message = `Verificare completă: ${candidatesCount} fonduri au nevoie de reassignment manual`;
+      let message = `${t('admin.success.bulk_check_complete')}: ${candidatesCount} ${t('admin.success.fonds_need_manual_reassignment')}`;
       if (autoCount > 0) {
-        message += `, ${autoCount} reassignment-uri automate aplicate`;
+        message += `, ${autoCount} ${t('admin.success.automatic_reassignments_applied')}`;
       }
       
       setSuccessMessage(message);
       await loadFonds();
       
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error checking reassignments');
+      setError(err instanceof Error ? err.message : t('admin.error.bulk_check_reassignments_generic'));
     } finally {
       setLoading(false);
     }
   };
 
   const handleViewOnlyClick = (action: string) => {
-    setError(`Nu ai permisiuni pentru a ${action}. Contul tău are acces doar în modul vizualizare.`);
+    setError(`${t('admin.error.no_permission_prefix')} ${action}. ${t('admin.error.read_only_access')}.`);
   };
 
   // Enhanced filter fonds based on search and owner
@@ -540,15 +541,15 @@ const AdminDashboard: React.FC = () => {
 
   // Get dashboard title and description
   const getDashboardTitle = () => {
-    if (isAdmin) return 'Dashboard Admin';
-    if (isAudit) return 'Dashboard Audit';
-    return 'Dashboard';
+    if (isAdmin) return t('nav.admin.dashboard');
+    if (isAudit) return t('nav.audit.dashboard');
+    return t('nav.dashboard');
   };
 
   const getDashboardDescription = () => {
-    if (isAdmin) return 'Management fonduri arhivistice cu assignment manual și auto-reassignment';
-    if (isAudit) return 'Vizualizare și monitorizare (read-only)';
-    return 'Vizualizare fonduri';
+    if (isAdmin) return t('nav.admin.dashboard.description');
+    if (isAudit) return t('nav.audit.dashboard.description');
+    return t('nav.dashboard.description');
   };
 
   if (loading && !reassignmentData) {
@@ -556,7 +557,7 @@ const AdminDashboard: React.FC = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
-          <p className="text-gray-600 dark:text-gray-300 mt-4">Se încarcă dashboard-ul...</p>
+          <p className="text-gray-600 dark:text-gray-300 mt-4">{t('admin.loading.dashboard')}</p>
         </div>
       </div>
     );
@@ -586,7 +587,7 @@ const AdminDashboard: React.FC = () => {
                   className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors px-3 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   <Home className="h-4 w-4" />
-                  <span>Căutare</span>
+                  <span>{t('nav.search')}</span>
                 </button>
                 
                 {(isAdmin || isAudit) && (
@@ -595,7 +596,7 @@ const AdminDashboard: React.FC = () => {
                     className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors px-3 py-2 rounded-md hover:bg-purple-50 dark:hover:bg-purple-900/20"
                   >
                     <Users className="h-4 w-4" />
-                    <span>Utilizatori</span>
+                    <span>{t('nav.users')}</span>
                   </button>
                 )}
 
@@ -604,11 +605,12 @@ const AdminDashboard: React.FC = () => {
                   className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors px-3 py-2 rounded-md hover:bg-green-50 dark:hover:bg-green-900/20"
                 >
                   <User className="h-4 w-4" />
-                  <span>Profil</span>
+                  <span>{t('nav.profile')}</span>
                 </button>
               </nav>
               
-              {/* 🔴 Dark Mode Toggle */}
+              {/* 🌍 Language & Dark Mode Toggles */}
+              <LanguageToggle size="sm" />
               <DarkModeToggle size="sm" showLabel={false} />
               
               {/* User profile section */}
@@ -636,13 +638,13 @@ const AdminDashboard: React.FC = () => {
                     'text-green-600 dark:text-green-400'
                   }`}>
                     {user?.role}
-                    {isAudit && ' (Read-Only)'}
+                    {isAudit && ` (${t('common.read_only')})`}
                   </p>
                 </div>
                 <button
                   onClick={handleLogout}
                   className="text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20"
-                  title="Deconectare"
+                  title={t('auth.logout')}
                 >
                   <LogOut className="h-5 w-5" />
                 </button>
@@ -659,9 +661,9 @@ const AdminDashboard: React.FC = () => {
             <div className="flex items-center">
               <Eye className="h-5 w-5 text-purple-600 dark:text-purple-400 mr-3" />
               <div>
-                <h4 className="text-sm font-medium text-purple-800 dark:text-purple-200">Acces Audit (Read-Only)</h4>
+                <h4 className="text-sm font-medium text-purple-800 dark:text-purple-200">{t('admin.notice.audit_access_title')}</h4>
                 <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
-                  Poți vizualiza toate fondurile și exporta date, dar nu poți face modificări.
+                  {t('admin.notice.audit_access_description')}
                 </p>
               </div>
             </div>
@@ -675,9 +677,9 @@ const AdminDashboard: React.FC = () => {
               <div className="flex items-center">
                 <Target className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3" />
                 <div>
-                  <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200">Owner Assignment & Auto-Reassignment</h4>
+                  <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200">{t('admin.notice.assignment_title')}</h4>
                   <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                    Poți assigna manual fonduri către clienți și sistemul detectează automat necesitatea de reassignment.
+                    {t('admin.notice.assignment_description')}
                   </p>
                 </div>
               </div>
@@ -689,7 +691,7 @@ const AdminDashboard: React.FC = () => {
                     onChange={(e) => setAutoReassignEnabled(e.target.checked)}
                     className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-gray-700"
                   />
-                  <span className="text-sm text-blue-700 dark:text-blue-300">Auto-assignment pentru match-uri exacte</span>
+                  <span className="text-sm text-blue-700 dark:text-blue-300">{t('admin.auto_assignment_exact_matches')}</span>
                 </label>
                 <button
                   onClick={handleBulkCheckReassignments}
@@ -697,7 +699,7 @@ const AdminDashboard: React.FC = () => {
                   className="flex items-center space-x-2 px-3 py-1 bg-blue-600 dark:bg-blue-500 text-white rounded text-sm hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50"
                 >
                   <Zap className="h-4 w-4" />
-                  <span>Verifică Toate</span>
+                  <span>{t('admin.check_all')}</span>
                 </button>
               </div>
             </div>
@@ -716,9 +718,9 @@ const AdminDashboard: React.FC = () => {
             <div className="flex items-center">
               <Archive className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Fonduri</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('admin.stats.total_fonds')}</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total}</p>
-                {canEdit && <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Click pentru adăugare</p>}
+                {canEdit && <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">{t('admin.stats.click_to_add')}</p>}
               </div>
             </div>
           </div>
@@ -728,9 +730,9 @@ const AdminDashboard: React.FC = () => {
             <div className="flex items-center">
               <Building2 className="h-8 w-8 text-green-600 dark:text-green-400" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Fonduri Active</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('admin.stats.active_fonds')}</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.active}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Vizibile public</p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{t('admin.stats.visible_public')}</p>
               </div>
             </div>
           </div>
@@ -740,9 +742,9 @@ const AdminDashboard: React.FC = () => {
             <div className="flex items-center">
               <UserCheck className="h-8 w-8 text-purple-600 dark:text-purple-400" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Assignate</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('admin.stats.assigned')}</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.assigned}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Au owner</p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{t('admin.stats.have_owner')}</p>
               </div>
             </div>
           </div>
@@ -752,9 +754,9 @@ const AdminDashboard: React.FC = () => {
             <div className="flex items-center">
               <AlertTriangle className="h-8 w-8 text-orange-600 dark:text-orange-400" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Neasignate</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('admin.stats.unassigned')}</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.unassigned}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Fără owner</p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{t('admin.stats.no_owner')}</p>
               </div>
             </div>
           </div>
@@ -768,12 +770,12 @@ const AdminDashboard: React.FC = () => {
               <div className="flex items-center">
                 <Users className="h-8 w-8 text-purple-600 dark:text-purple-400" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Utilizatori</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('nav.users')}</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    <span className="text-lg">Gestionează</span>
+                    <span className="text-lg">{t('admin.stats.manage')}</span>
                   </p>
                   <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
-                    {isAdmin ? 'Click pentru management' : 'Click pentru vizualizare'}
+                    {isAdmin ? t('admin.stats.click_to_manage') : t('admin.stats.click_to_view')}
                   </p>
                 </div>
               </div>
@@ -825,7 +827,7 @@ const AdminDashboard: React.FC = () => {
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Caută fonduri..."
+                      placeholder={t('admin.search.placeholder')}
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                     />
                   </div>
@@ -841,12 +843,12 @@ const AdminDashboard: React.FC = () => {
                       className="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 flex items-center space-x-2 transition-colors"
                     >
                       <Plus className="h-4 w-4" />
-                      <span>Adaugă Fond</span>
+                      <span>{t('admin.actions.add_fond')}</span>
                     </button>
                   ) : (
                     <div className="flex items-center space-x-2 text-gray-500 dark:text-gray-400 text-sm">
                       <Eye className="h-4 w-4" />
-                      <span>Doar vizualizare</span>
+                      <span>{t('common.view_only')}</span>
                     </div>
                   )}
                 </div>
@@ -861,20 +863,20 @@ const AdminDashboard: React.FC = () => {
                     onChange={(e) => setShowInactive(e.target.checked)}
                     className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-gray-700"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Arată inactive</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{t('admin.filters.show_inactive')}</span>
                 </label>
 
                 {/* Owner filter */}
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Owner:</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{t('admin.filters.owner')}:</span>
                   <select
                     value={ownerFilter}
                     onChange={(e) => setOwnerFilter(e.target.value)}
                     className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   >
-                    <option value="all">Toate</option>
-                    <option value="assigned">Assignate</option>
-                    <option value="unassigned">Neasignate</option>
+                    <option value="all">{t('admin.filters.all')}</option>
+                    <option value="assigned">{t('admin.filters.assigned')}</option>
+                    <option value="unassigned">{t('admin.filters.unassigned')}</option>
                     {availableUsers.map((user) => (
                       <option key={user.id} value={user.id.toString()}>
                         {user.username} {user.company_name ? `(${user.company_name})` : ''}
@@ -885,7 +887,7 @@ const AdminDashboard: React.FC = () => {
 
                 {/* Results count */}
                 <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {filteredFonds.length} din {fonds.length} fonduri
+                  {filteredFonds.length} {t('admin.filters.of')} {fonds.length} {t('admin.filters.fonds')}
                 </div>
               </div>
             </div>
@@ -899,19 +901,19 @@ const AdminDashboard: React.FC = () => {
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Companie
+                    {t('admin.table.company')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Deținător Arhivă
+                    {t('admin.table.archive_holder')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Contact
+                    {t('admin.table.contact')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Status / Owner
+                    {t('admin.table.status_owner')}
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Acțiuni
+                    {t('admin.table.actions')}
                   </th>
                 </tr>
               </thead>
@@ -920,9 +922,9 @@ const AdminDashboard: React.FC = () => {
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                       <Building2 className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                      <p className="text-lg font-medium">Niciun fond găsit</p>
+                      <p className="text-lg font-medium">{t('admin.table.no_fonds_found')}</p>
                       <p className="text-sm">
-                        {searchQuery || ownerFilter !== 'all' ? 'Încearcă să modifici filtrele' : 'Fondurile se încarcă...'}
+                        {searchQuery || ownerFilter !== 'all' ? t('admin.table.try_modify_filters') : t('admin.table.loading_fonds')}
                       </p>
                     </td>
                   </tr>
@@ -981,7 +983,7 @@ const AdminDashboard: React.FC = () => {
                               ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300' 
                               : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                           }`}>
-                            {fond.active ? 'Activ' : 'Inactiv'}
+                            {fond.active ? t('common.active') : t('common.inactive')}
                           </span>
                           
                           {/* Enhanced ownership status with quick assignment */}
@@ -1006,7 +1008,7 @@ const AdminDashboard: React.FC = () => {
                                   className="w-full text-xs border border-gray-300 dark:border-gray-600 rounded px-1 py-0.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  <option value="">-- Neasignat --</option>
+                                  <option value="">{t('admin.table.unassigned_option')}</option>
                                   {availableUsers.map((user) => (
                                     <option key={user.id} value={user.id}>
                                       {user.username} {user.company_name ? `(${user.company_name})` : ''}
@@ -1018,7 +1020,7 @@ const AdminDashboard: React.FC = () => {
                           ) : (
                             <div className="space-y-1">
                               <div className="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded">
-                                Neasignat
+                                {t('admin.table.unassigned')}
                               </div>
                               {/* Quick assignment for admins */}
                               {canEdit && (
@@ -1033,7 +1035,7 @@ const AdminDashboard: React.FC = () => {
                                   className="w-full text-xs border border-gray-300 dark:border-gray-600 rounded px-1 py-0.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  <option value="">-- Assignează către --</option>
+                                  <option value="">{t('admin.table.assign_to')}</option>
                                   {availableUsers.map((user) => (
                                     <option key={user.id} value={user.id}>
                                       {user.username} {user.company_name ? `(${user.company_name})` : ''}
@@ -1055,23 +1057,23 @@ const AdminDashboard: React.FC = () => {
                                 setShowForm(true);
                               }}
                               className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                              title="Editează"
+                              title={t('admin.actions.edit')}
                             >
                               <Edit2 className="h-4 w-4" />
                             </button>
                             <button
                              onClick={() => handleDeleteFond(fond)}
                              className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                              title="Șterge"
+                              title={t('admin.actions.delete')}
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
                           </>
                         ) : (
                           <button
-                            onClick={() => handleViewOnlyClick('Editeaza fondul')}
+                            onClick={() => handleViewOnlyClick(t('admin.actions.edit_fond'))}
                             className="text-gray-400 dark:text-gray-500 p-1 rounded cursor-not-allowed opacity-50"
-                            title="Doar vizualizare"
+                            title={t('common.view_only')}
                             disabled
                           >
                             <Eye className="h-4 w-4" />
@@ -1090,16 +1092,16 @@ const AdminDashboard: React.FC = () => {
         {filteredFonds.length > 0 && (
           <div className="mt-4 flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
             <p>
-              Afișând {filteredFonds.length} din {fonds.length} fonduri
+              {t('admin.pagination.showing')} {filteredFonds.length} {t('admin.pagination.of')} {fonds.length} {t('admin.pagination.fonds')}
             </p>
             <div className="flex items-center space-x-4">
-              {searchQuery && <span>Filtrate după: "{searchQuery}"</span>}
+              {searchQuery && <span>{t('admin.pagination.filtered_by')}: "{searchQuery}"</span>}
               {ownerFilter !== 'all' && (
                 <span>
-               Owner: {
-                    ownerFilter === 'assigned' ? 'Assignate' :
-                    ownerFilter === 'unassigned' ? 'Neasignate' :
-                    availableUsers.find(u => u.id.toString() === ownerFilter)?.username || 'Necunoscut'
+               {t('admin.pagination.owner')}: {
+                    ownerFilter === 'assigned' ? t('admin.filters.assigned') :
+                    ownerFilter === 'unassigned' ? t('admin.filters.unassigned') :
+                    availableUsers.find(u => u.id.toString() === ownerFilter)?.username || t('admin.pagination.unknown')
                   }
                 </span>
               )}
