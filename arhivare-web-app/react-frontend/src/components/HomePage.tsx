@@ -1,4 +1,4 @@
-// src/components/HomePage.tsx - ENHANCED with Dark Mode Toggle
+// src/components/HomePage.tsx - ENHANCED with i18n Support
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from './AuthSystem';
 
-// 🔴 ADD DARK MODE IMPORTS
+// 🔴 ADD DARK MODE & LANGUAGE IMPORTS
 import { DarkModeToggle } from './common/DarkModeSystem';
 import { LanguageToggle, useLanguage } from './common/LanguageSystem';
 
@@ -25,7 +25,7 @@ interface Fond {
   updated_at: string;
 }
 
-// UserDropdownMenu component - ENHANCED with Dark Mode
+// UserDropdownMenu component - ENHANCED with i18n
 interface UserDropdownMenuProps {
   user: any;
   isAdmin: boolean;
@@ -52,7 +52,8 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
   onLogout
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const { t } = useLanguage(); 
+  const { t } = useLanguage(); // 🌍 ADD TRANSLATION HOOK
+
   const toggleDropdown = () => setIsOpen(!isOpen);
   const closeDropdown = () => setIsOpen(false);
 
@@ -100,9 +101,9 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
     <div className="relative dropdown-container">
       {/* User info and dropdown button */}
       <div className="flex items-center space-x-3">
-        {/*    Language Toggle */}
+        {/* 🌍 ADD LANGUAGE TOGGLE */}
         <LanguageToggle size="sm" />
-	{/* 🔴 ADD DARK MODE TOGGLE HERE */}
+        {/* 🔴 ADD DARK MODE TOGGLE HERE */}
         <DarkModeToggle size="sm" />
         
         <div className="text-right">
@@ -128,7 +129,7 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
         </button>
       </div>
 
-      {/* Dropdown menu - ENHANCED with Dark Mode */}
+      {/* Dropdown menu - ENHANCED with i18n */}
       {isOpen && (
         <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 py-2 z-50">
           <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-600">
@@ -145,8 +146,8 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
               >
                 <Archive className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 <div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Dashboard Admin</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Management fonduri arhivistice</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('nav.admin.dashboard')}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{t('nav.admin.dashboard.description')}</div>
                 </div>
               </button>
 
@@ -156,8 +157,8 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
               >
                 <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 <div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Management Utilizatori</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Gestionează conturile utilizatorilor</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('nav.users.management')}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{t('nav.users.management.description')}</div>
                 </div>
               </button>
 
@@ -167,8 +168,8 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
               >
                 <User className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                 <div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Profil</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Setări cont și parolă</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('nav.profile')}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{t('nav.profile.description')}</div>
                 </div>
               </button>
             </>
@@ -183,8 +184,8 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
               >
                 <BarChart3 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 <div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Dashboard Audit</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Monitorizare și rapoarte (read-only)</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('nav.audit.dashboard')}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{t('nav.audit.dashboard.description')}</div>
                 </div>
               </button>
 
@@ -194,8 +195,8 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
               >
                 <Eye className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                 <div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Vizualizare Utilizatori</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Vezi lista utilizatorilor (read-only)</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('nav.users.view')}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{t('nav.users.view.description')}</div>
                 </div>
               </button>
 
@@ -205,8 +206,8 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
               >
                 <User className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                 <div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Profil</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Setări cont și parolă</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('nav.profile')}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{t('nav.profile.description')}</div>
                 </div>
               </button>
             </>
@@ -221,8 +222,8 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
               >
                 <Building2 className="h-5 w-5 text-green-600 dark:text-green-400" />
                 <div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Fondurile Mele</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Gestionează fondurile tale arhivistice</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('nav.client.my-fonds')}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{t('nav.client.my-fonds.description')}</div>
                 </div>
               </button>
 
@@ -232,8 +233,8 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
               >
                 <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 <div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Profilul Meu</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Actualizează datele companiei și parola</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('nav.my.profile')}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{t('nav.my.profile.description')}</div>
                 </div>
               </button>
             </>
@@ -247,8 +248,8 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
             >
               <LogIn className="h-5 w-5 text-red-600 dark:text-red-400" />
               <div>
-                <div className="text-sm font-medium text-red-600 dark:text-red-400">Deconectare</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">Închide sesiunea</div>
+                <div className="text-sm font-medium text-red-600 dark:text-red-400">{t('auth.logout')}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">{t('auth.logout.description')}</div>
               </div>
             </button>
           </div>
@@ -264,8 +265,8 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuth();
-  const { t } = useLanguage();   
-
+  const { t } = useLanguage(); // 🌍 ADD TRANSLATION HOOK
+  
   // State management pentru search
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Fond[]>([]);
@@ -286,7 +287,7 @@ const HomePage: React.FC = () => {
   // Search function
   const performSearch = async (searchQuery: string, page: number = 1) => {
     if (searchQuery.length < 2) {
-      setError('Căutarea trebuie să conțină cel puțin 2 caractere');
+      setError(t('error.search.min_length'));
       return;
     }
 
@@ -303,7 +304,7 @@ const HomePage: React.FC = () => {
       ]);
 
       if (!resultsResponse.ok) {
-        throw new Error(`Eroare de căutare: ${resultsResponse.status}`);
+        throw new Error(`${t('error.search.failed')} ${resultsResponse.status}`);
       }
 
       const resultsData = await resultsResponse.json();
@@ -315,7 +316,7 @@ const HomePage: React.FC = () => {
       setHasSearched(true);
       
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'A apărut o eroare la căutare');
+      setError(err instanceof Error ? err.message : t('error.search.generic'));
       setResults([]);
       setTotalResults(0);
     } finally {
@@ -372,19 +373,19 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Header - ENHANCED with Dark Mode */}
+      {/* Header - ENHANCED with i18n */}
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Archive className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Arhivare Web App</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Căutare fonduri arhivistice româneşti</p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('app.title')}</h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{t('app.subtitle')}</p>
               </div>
             </div>
             
-            {/* Auth section - ENHANCED with Dark Mode */}
+            {/* Auth section - ENHANCED with i18n */}
             <div className="flex items-center space-x-4">
               {isAuthenticated ? (
                 <UserDropdownMenu 
@@ -401,10 +402,11 @@ const HomePage: React.FC = () => {
                 />
               ) : (
                 <div className="flex items-center space-x-3">
+                  {/* 🌍 ADD LANGUAGE TOGGLE FOR NON-AUTHENTICATED USERS */}
+                  <LanguageToggle size="sm" />
                   {/* 🔴 ADD DARK MODE TOGGLE FOR NON-AUTHENTICATED USERS */}
                   <DarkModeToggle size="sm" />
-                  <LanguageToggle size="sm" />
-
+                  
                   <button 
                     onClick={handleLogin}
                     className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm font-medium flex items-center space-x-2"
@@ -419,19 +421,18 @@ const HomePage: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Content - ENHANCED with Dark Mode */}
+      {/* Main Content - ENHANCED with i18n */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search Section - ENHANCED with Dark Mode */}
+        {/* Search Section - ENHANCED with i18n */}
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-            Găsește arhiva companiei tale
+            {t('homepage.title')}
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-            Căută în baza noastră de date pentru a găsi informațiile de contact ale instituției responsabile
-            care deține arhiva unei companii româneşti.
+            {t('homepage.subtitle')}
           </p>
 
-          {/* Search Form - ENHANCED with Dark Mode */}
+          {/* Search Form - ENHANCED with i18n */}
           <div className="max-w-xl mx-auto">
             <form onSubmit={handleSearch} className="flex gap-2">
               <div className="flex-1 relative">
@@ -441,7 +442,7 @@ const HomePage: React.FC = () => {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
-                  placeholder="Ex: Tractorul Brașov, Steagul Roșu..."
+                  placeholder={t('search.placeholder')}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 />
               </div>
@@ -451,14 +452,14 @@ const HomePage: React.FC = () => {
                 disabled={loading || query.length < 2}
                 className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {loading ? 'Caută...' : 'Caută'}
+                {loading ? t('search.button.loading') : t('search.button')}
               </button>
             </form>
           </div>
 
-          {/* Quick suggestions - ENHANCED with Dark Mode */}
+          {/* Quick suggestions - ENHANCED with i18n */}
           <div className="mt-4 flex flex-wrap justify-center gap-2">
-            <span className="text-sm text-gray-500 dark:text-gray-400">Sugestii:</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">{t('search.suggestions')}</span>
             {['Tractorul', 'Steagul Roșu', 'Brașov', 'Cluj'].map((suggestion) => (
               <button
                 key={suggestion}
@@ -474,7 +475,7 @@ const HomePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Error Message - ENHANCED with Dark Mode */}
+        {/* Error Message - ENHANCED with i18n */}
         {error && (
           <div className="max-w-4xl mx-auto mb-6">
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
@@ -483,45 +484,45 @@ const HomePage: React.FC = () => {
           </div>
         )}
 
-        {/* Loading State - ENHANCED with Dark Mode */}
+        {/* Loading State - ENHANCED with i18n */}
         {loading && (
           <div className="max-w-4xl mx-auto text-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="text-gray-600 dark:text-gray-400 mt-4">Se caută în baza de date...</p>
+            <p className="text-gray-600 dark:text-gray-400 mt-4">{t('results.searching')}</p>
           </div>
         )}
 
-        {/* Results Section - ENHANCED with Dark Mode */}
+        {/* Results Section - ENHANCED with i18n */}
         {hasSearched && !loading && (
           <div className="max-w-4xl mx-auto">
             {/* Results Header */}
             {totalResults > 0 && (
               <div className="mb-6 flex justify-between items-center">
                 <p className="text-gray-600 dark:text-gray-400">
-                  Afișând rezultatele {startResult}-{endResult} din {totalResults} pentru "{query}"
+                  {t('results.showing')} {startResult}-{endResult} {t('results.of')} {totalResults} {t('results.for')} "{query}"
                 </p>
                 <div className="text-sm text-gray-500 dark:text-gray-500">
-                  {totalResults === 1 ? '1 rezultat găsit' : `${totalResults} rezultate găsite`}
+                  {totalResults === 1 ? t('results.found.singular') : `${totalResults} ${t('results.found.plural')}`}
                 </div>
               </div>
             )}
 
-            {/* Results List - ENHANCED with Dark Mode */}
+            {/* Results List - ENHANCED with i18n */}
             {results.length === 0 ? (
               <div className="text-center py-12">
                 <Building2 className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                 <h3 className="text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">
-                  Niciun rezultat găsit
+                  {t('results.none.title')}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Nu am găsit nicio companie care să corespundă cu căutarea "{query}".
+                  {t('results.none.message')} "{query}".
                 </p>
                 <div className="text-sm text-gray-500 dark:text-gray-500">
-                  <p>Sugestii:</p>
+                  <p>{t('results.none.suggestions')}</p>
                   <ul className="mt-2 space-y-1">
-                    <li>• Verifică ortografia</li>
-                    <li>• Încearcă termeni mai generali</li>
-                    <li>• Caută doar numele companiei</li>
+                    <li>• {t('results.none.suggestions.list').split('\n')[0].substring(2)}</li>
+                    <li>• {t('results.none.suggestions.list').split('\n')[1].substring(2)}</li>
+                    <li>• {t('results.none.suggestions.list').split('\n')[2].substring(2)}</li>
                   </ul>
                 </div>
               </div>
@@ -543,7 +544,7 @@ const HomePage: React.FC = () => {
                             <Archive className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                             <div>
                               <p className="font-medium text-gray-900 dark:text-gray-100">{fond.holder_name}</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">Deținător arhivă</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">{t('results.holder')}</p>
                             </div>
                           </div>
 
@@ -593,7 +594,7 @@ const HomePage: React.FC = () => {
               </div>
             )}
 
-            {/* Pagination - ENHANCED with Dark Mode */}
+            {/* Pagination - ENHANCED with i18n */}
             {totalPages > 1 && (
               <div className="mt-8 flex justify-center">
                 <nav className="flex items-center space-x-1">
@@ -602,7 +603,7 @@ const HomePage: React.FC = () => {
                     disabled={currentPage === 1}
                     className="px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Anterior
+                    {t('pagination.previous')}
                   </button>
 
                   {/* Page numbers */}
@@ -633,7 +634,7 @@ const HomePage: React.FC = () => {
                     disabled={currentPage === totalPages}
                     className="px-3 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Următor
+                    {t('pagination.next')}
                   </button>
                 </nav>
               </div>
@@ -642,13 +643,13 @@ const HomePage: React.FC = () => {
         )}
       </main>
 
-      {/* Footer - ENHANCED with Dark Mode */}
+      {/* Footer - ENHANCED with i18n */}
       <footer className="bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-gray-600 dark:text-gray-400">
-            <p className="mb-2">© 2025 Arhivare Web App - Tony Gheorghe</p>
+            <p className="mb-2">{t('footer.copyright')}</p>
             <p className="text-sm">
-              Aplicație pentru căutarea fondurilor arhivistice româneşti
+              {t('footer.description')}
             </p>
           </div>
         </div>
