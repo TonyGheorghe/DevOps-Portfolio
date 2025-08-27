@@ -9,6 +9,7 @@ import { useAuth } from './AuthSystem';
 
 // 🔴 ADD DARK MODE IMPORTS
 import { DarkModeToggle } from './common/DarkModeSystem';
+import { LanguageToggle, useLanguage } from './common/LanguageSystem';
 
 // Type definitions bazate pe schema din backend
 interface Fond {
@@ -51,7 +52,7 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
   onLogout
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-
+  const { t } = useLanguage(); 
   const toggleDropdown = () => setIsOpen(!isOpen);
   const closeDropdown = () => setIsOpen(false);
 
@@ -75,10 +76,10 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
   };
 
   const getDropdownTitle = () => {
-    if (isAdmin) return 'Dashboard Admin';
-    if (isAudit) return 'Dashboard Audit';
-    if (isClient) return 'Zona Client';
-    return 'Meniu';
+    if (isAdmin) return t('nav.admin.dashboard');
+    if (isAudit) return t('nav.audit.dashboard');
+    if (isClient) return t('nav.client.dashboard');
+    return t('nav.menu');
   };
 
   React.useEffect(() => {
@@ -99,12 +100,14 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
     <div className="relative dropdown-container">
       {/* User info and dropdown button */}
       <div className="flex items-center space-x-3">
-        {/* 🔴 ADD DARK MODE TOGGLE HERE */}
+        {/*    Language Toggle */}
+        <LanguageToggle size="sm" />
+	{/* 🔴 ADD DARK MODE TOGGLE HERE */}
         <DarkModeToggle size="sm" />
         
         <div className="text-right">
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Bună, <span className="font-medium">{user?.username}</span>!
+            {t('nav.hello')}, <span className="font-medium">{user?.username}</span>!
           </p>
           <p className={`text-xs capitalize ${
             isAdmin ? 'text-blue-600 dark:text-blue-400' : 
@@ -261,7 +264,8 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuth();
-  
+  const { t } = useLanguage();   
+
   // State management pentru search
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Fond[]>([]);
@@ -399,13 +403,14 @@ const HomePage: React.FC = () => {
                 <div className="flex items-center space-x-3">
                   {/* 🔴 ADD DARK MODE TOGGLE FOR NON-AUTHENTICATED USERS */}
                   <DarkModeToggle size="sm" />
-                  
+                  <LanguageToggle size="sm" />
+
                   <button 
                     onClick={handleLogin}
                     className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-sm font-medium flex items-center space-x-2"
                   >
                     <LogIn className="h-4 w-4" />
-                    <span>Conectare</span>
+                    <span>{t('auth.login')}</span>
                   </button>
                 </div>
               )}
