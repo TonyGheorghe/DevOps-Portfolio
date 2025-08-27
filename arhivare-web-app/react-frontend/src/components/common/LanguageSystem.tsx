@@ -326,7 +326,160 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'admin.confirm.delete_fond': 'Ești sigur că vrei să ștergi fondul',
 
     // Misc
-    'admin.unknown_user': 'utilizator necunoscut'
+    'admin.unknown_user': 'utilizator necunoscut',
+
+    // Audit Dashboard
+    'audit.loading.dashboard': 'Se încarcă dashboard-ul audit...',
+    'audit.role_display': 'Audit (Read-Only)',
+    'audit.role_name': 'Audit',
+    'audit.actions.refresh': 'Refresh',
+    'audit.actions.export': 'Export',
+    'audit.actions.export_data': 'Export Date',
+    'audit.actions.refresh_data': 'Refresh Date',
+    
+    // Audit Stats
+    'audit.stats.total_fonds': 'Total Fonduri',
+    'audit.stats.assigned_fonds': 'Fonduri Assignate',
+    'audit.stats.unassigned_fonds': 'Fonduri Neasignate',
+    'audit.stats.active_clients': 'Clienți Activi',
+    'audit.stats.of_total': 'din total',
+    'audit.stats.available_for_assignment': 'Disponibile pentru assignment',
+    'audit.stats.with_assigned_fonds': 'Cu fonduri assignate',
+    
+    // Recent Assignments
+    'audit.recent_assignments.title': 'Assignment-uri Recente',
+    'audit.recent_assignments.none': 'Nu există assignment-uri recente',
+    'audit.period.last_day': 'Ultima zi',
+    'audit.period.last_week': 'Ultima săptămână',
+    'audit.period.last_month': 'Ultima lună',
+    
+    // Client Distribution
+    'audit.client_distribution.title': 'Distribuția pe Clienți',
+    'audit.client_distribution.none': 'Nu există clienți cu fonduri assignate',
+    'audit.client_distribution.fond': 'fond',
+    'audit.client_distribution.fonds': 'fonduri',
+    
+    // Table
+    'audit.table.all_fonds': 'Toate Fondurile',
+    'audit.table.company': 'Companie',
+    'audit.table.archive_holder': 'Deținător Arhivă',
+    'audit.table.status_owner': 'Status / Owner',
+    'audit.table.contact': 'Contact',
+    'audit.table.last_update': 'Ultima Actualizare',
+    'audit.table.actions': 'Acțiuni',
+    'audit.table.no_fonds_found': 'Niciun fond găsit',
+    'audit.table.try_modify_search': 'Încearcă să modifici căutarea',
+    'audit.table.loading_fonds': 'Fondurile se încarcă...',
+    'audit.table.assigned': 'Assignat',
+    'audit.table.unassigned': 'Neasignat',
+    'audit.table.view_read_only': 'Vizualizează (Read-Only)',
+    
+    // Search & Filters
+    'audit.search.placeholder': 'Caută fonduri...',
+    'audit.filters.show_inactive': 'Arată inactive',
+    
+    // Summary
+    'audit.summary.audit_access': 'Acces Audit',
+    'audit.summary.quick_actions': 'Acțiuni Rapide',
+    'audit.summary.system_info': 'Informații Sistem',
+    'audit.summary.view_all_fonds': 'Vizualizare toate fondurile',
+    'audit.summary.export_data_stats': 'Export date și statistici',
+    'audit.summary.reports_analytics': 'Rapoarte și analize',
+    'audit.summary.no_modifications': 'Fără modificări (Read-Only)',
+    'audit.summary.role': 'Rol',
+    'audit.summary.user': 'Utilizator',
+    'audit.summary.visible_fonds': 'Fonduri vizibile',
+    'audit.summary.last_update': 'Ultima actualizare',
+    
+    // Error Messages
+    'audit.error.failed_to_load_data': 'Eșec la încărcarea datelor',
+    'audit.error.loading_data': 'Eroare la încărcarea datelor',
+    'audit.error.export_failed': 'Export eșuat',
+    'audit.error.failed_to_export_data': 'Eșec la exportarea datelor',
+
+    // Client Dashboard
+    'client.loading.fonds': 'Se încarcă fondurile tale...',
+    'client.role_name': 'Client',
+    'client.header.description': 'Management fonduri assignate',
+    
+    // Client Stats
+    'client.stats.total_fonds': 'Fonduri Totale',
+    'client.stats.inactive_fonds': 'Fonduri Inactive',
+    'client.stats.data_completion': 'Completare Date',
+    'client.stats.click_to_add': 'Click pentru adăugare',
+    'client.stats.not_public_visible': 'Nu sunt vizibile public',
+    'client.stats.completion_rate': 'Rate de completare',
+    
+    // Client Info
+    'client.info.title': 'Informații Client',
+    'client.info.username': 'Nume utilizator',
+    'client.info.role': 'Rol',
+    'client.info.last_update': 'Ultima actualizare',
+    
+    // Client Actions
+    'client.actions.add_fond': 'Adaugă Fond',
+    'client.actions.edit': 'Editează',
+    'client.actions.delete': 'Șterge',
+    
+    // Client Search & Filters
+    'client.search.placeholder': 'Caută în fondurile tale...',
+    'client.filters.show_inactive': 'Arată inactive',
+    
+    // Client Table
+    'client.table.your_fonds': 'Fondurile Tale',
+    'client.table.company': 'Companie',
+    'client.table.archive_holder': 'Deținător Arhivă',
+    'client.table.contact': 'Contact',
+    'client.table.status': 'Status',
+    'client.table.actions': 'Acțiuni',
+    'client.table.no_fonds_assigned': 'Nu ai încă fonduri assignate',
+    'client.table.no_fonds_found': 'Niciun fond găsit',
+    'client.table.contact_admin_or_add': 'Contactează administratorul pentru a-ți fi assignate fonduri sau adaugă unul nou.',
+    'client.table.try_modify_search': 'Încearcă să modifici căutarea',
+    'client.table.loading_fonds': 'Fondurile se încarcă...',
+    'client.table.add_first_fond': 'Adaugă primul fond',
+    
+    // Client Help
+    'client.help.available_actions': 'Acțiuni Disponibile',
+    'client.help.completion_tips': 'Sfaturi pentru Completare',
+    'client.help.view_edit_own_fonds': 'Vizualizare și editare fonduri proprii',
+    'client.help.add_new_fonds': 'Adăugare fonduri noi',
+    'client.help.delete_own_fonds': 'Ștergere fonduri (proprii)',
+    'client.help.search_public_fonds': 'Căutare în fondurile publice',
+    'client.help.company_name': 'Numele companiei',
+    'client.help.company_name_tip': 'Folosește denumirea oficială',
+    'client.help.archive_holder': 'Deținător arhivă',
+    'client.help.archive_holder_tip': 'Instituția care păstrează documentele',
+    'client.help.contact': 'Contact',
+    'client.help.contact_tip': 'Adaugă email și telefon pentru ușurință în comunicare',
+    'client.help.address': 'Adresa',
+    'client.help.address_tip': 'Adresa completă ajută la localizare',
+    'client.help.notes': 'Note',
+    'client.help.notes_tip': 'Informații suplimentare despre fond',
+    
+    // Client Pagination
+    'client.pagination.showing': 'Afișând',
+    'client.pagination.of': 'din',
+    'client.pagination.fonds': 'fonduri',
+    'client.pagination.filtered_by': 'Filtrate după',
+    
+    // Client Error Messages
+    'client.error.failed_to_load_data': 'Eșec la încărcarea datelor',
+    'client.error.loading_fonds': 'Eroare la încărcarea fondurilor',
+    'client.error.creating_fond': 'Eroare la crearea fondului',
+    'client.error.creating_fond_generic': 'Eroare la crearea fondului',
+    'client.error.updating_fond': 'Eroare la actualizarea fondului',
+    'client.error.updating_fond_generic': 'Eroare la actualizarea fondului',
+    'client.error.deleting_fond': 'Eroare la ștergerea fondului',
+    'client.error.deleting_fond_generic': 'Eroare la ștergerea fondului',
+    
+    // Client Success Messages
+    'client.success.fond_created': 'Fondul a fost creat cu succes',
+    'client.success.fond_updated': 'Fondul a fost actualizat cu succes',
+    'client.success.fond_deleted': 'Fondul a fost șters cu succes',
+    
+    // Client Confirmations
+    'client.confirm.delete_fond': 'Ești sigur că vrei să ștergi fondul'
   },
   
   en: {
@@ -517,7 +670,160 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'admin.confirm.delete_fond': 'Are you sure you want to delete the fund',
 
     // Misc
-    'admin.unknown_user': 'unknown user'
+    'admin.unknown_user': 'unknown user',
+
+    // Audit Dashboard
+    'audit.loading.dashboard': 'Loading audit dashboard...',
+    'audit.role_display': 'Audit (Read-Only)',
+    'audit.role_name': 'Audit',
+    'audit.actions.refresh': 'Refresh',
+    'audit.actions.export': 'Export',
+    'audit.actions.export_data': 'Export Data',
+    'audit.actions.refresh_data': 'Refresh Data',
+    
+    // Audit Stats
+    'audit.stats.total_fonds': 'Total Funds',
+    'audit.stats.assigned_fonds': 'Assigned Funds',
+    'audit.stats.unassigned_fonds': 'Unassigned Funds',
+    'audit.stats.active_clients': 'Active Clients',
+    'audit.stats.of_total': 'of total',
+    'audit.stats.available_for_assignment': 'Available for assignment',
+    'audit.stats.with_assigned_fonds': 'With assigned funds',
+    
+    // Recent Assignments
+    'audit.recent_assignments.title': 'Recent Assignments',
+    'audit.recent_assignments.none': 'No recent assignments',
+    'audit.period.last_day': 'Last day',
+    'audit.period.last_week': 'Last week',
+    'audit.period.last_month': 'Last month',
+    
+    // Client Distribution
+    'audit.client_distribution.title': 'Client Distribution',
+    'audit.client_distribution.none': 'No clients with assigned funds',
+    'audit.client_distribution.fond': 'fund',
+    'audit.client_distribution.fonds': 'funds',
+    
+    // Table
+    'audit.table.all_fonds': 'All Funds',
+    'audit.table.company': 'Company',
+    'audit.table.archive_holder': 'Archive Holder',
+    'audit.table.status_owner': 'Status / Owner',
+    'audit.table.contact': 'Contact',
+    'audit.table.last_update': 'Last Update',
+    'audit.table.actions': 'Actions',
+    'audit.table.no_fonds_found': 'No funds found',
+    'audit.table.try_modify_search': 'Try modifying the search',
+    'audit.table.loading_fonds': 'Loading funds...',
+    'audit.table.assigned': 'Assigned',
+    'audit.table.unassigned': 'Unassigned',
+    'audit.table.view_read_only': 'View (Read-Only)',
+    
+    // Search & Filters
+    'audit.search.placeholder': 'Search funds...',
+    'audit.filters.show_inactive': 'Show inactive',
+    
+    // Summary
+    'audit.summary.audit_access': 'Audit Access',
+    'audit.summary.quick_actions': 'Quick Actions',
+    'audit.summary.system_info': 'System Information',
+    'audit.summary.view_all_fonds': 'View all funds',
+    'audit.summary.export_data_stats': 'Export data and statistics',
+    'audit.summary.reports_analytics': 'Reports and analytics',
+    'audit.summary.no_modifications': 'No modifications (Read-Only)',
+    'audit.summary.role': 'Role',
+    'audit.summary.user': 'User',
+    'audit.summary.visible_fonds': 'Visible funds',
+    'audit.summary.last_update': 'Last update',
+    
+    // Error Messages
+    'audit.error.failed_to_load_data': 'Failed to load data',
+    'audit.error.loading_data': 'Error loading data',
+    'audit.error.export_failed': 'Export failed',
+    'audit.error.failed_to_export_data': 'Failed to export data',
+
+    // Client Dashboard
+    'client.loading.fonds': 'Loading your funds...',
+    'client.role_name': 'Client',
+    'client.header.description': 'Assigned funds management',
+    
+    // Client Stats
+    'client.stats.total_fonds': 'Total Funds',
+    'client.stats.inactive_fonds': 'Inactive Funds',
+    'client.stats.data_completion': 'Data Completion',
+    'client.stats.click_to_add': 'Click to add',
+    'client.stats.not_public_visible': 'Not publicly visible',
+    'client.stats.completion_rate': 'Completion rate',
+    
+    // Client Info
+    'client.info.title': 'Client Information',
+    'client.info.username': 'Username',
+    'client.info.role': 'Role',
+    'client.info.last_update': 'Last update',
+    
+    // Client Actions
+    'client.actions.add_fond': 'Add Fund',
+    'client.actions.edit': 'Edit',
+    'client.actions.delete': 'Delete',
+    
+    // Client Search & Filters
+    'client.search.placeholder': 'Search in your funds...',
+    'client.filters.show_inactive': 'Show inactive',
+    
+    // Client Table
+    'client.table.your_fonds': 'Your Funds',
+    'client.table.company': 'Company',
+    'client.table.archive_holder': 'Archive Holder',
+    'client.table.contact': 'Contact',
+    'client.table.status': 'Status',
+    'client.table.actions': 'Actions',
+    'client.table.no_fonds_assigned': 'You don\'t have any assigned funds yet',
+    'client.table.no_fonds_found': 'No funds found',
+    'client.table.contact_admin_or_add': 'Contact administrator to get assigned funds or add a new one.',
+    'client.table.try_modify_search': 'Try modifying the search',
+    'client.table.loading_fonds': 'Loading funds...',
+    'client.table.add_first_fond': 'Add first fund',
+    
+    // Client Help
+    'client.help.available_actions': 'Available Actions',
+    'client.help.completion_tips': 'Completion Tips',
+    'client.help.view_edit_own_fonds': 'View and edit own funds',
+    'client.help.add_new_fonds': 'Add new funds',
+    'client.help.delete_own_fonds': 'Delete funds (own)',
+    'client.help.search_public_fonds': 'Search public funds',
+    'client.help.company_name': 'Company name',
+    'client.help.company_name_tip': 'Use official denomination',
+    'client.help.archive_holder': 'Archive holder',
+    'client.help.archive_holder_tip': 'Institution that keeps the documents',
+    'client.help.contact': 'Contact',
+    'client.help.contact_tip': 'Add email and phone for easy communication',
+    'client.help.address': 'Address',
+    'client.help.address_tip': 'Complete address helps with location',
+    'client.help.notes': 'Notes',
+    'client.help.notes_tip': 'Additional information about fund',
+    
+    // Client Pagination
+    'client.pagination.showing': 'Showing',
+    'client.pagination.of': 'of',
+    'client.pagination.fonds': 'funds',
+    'client.pagination.filtered_by': 'Filtered by',
+    
+    // Client Error Messages
+    'client.error.failed_to_load_data': 'Failed to load data',
+    'client.error.loading_fonds': 'Error loading funds',
+    'client.error.creating_fond': 'Error creating fund',
+    'client.error.creating_fond_generic': 'Error creating fund',
+    'client.error.updating_fond': 'Error updating fund',
+    'client.error.updating_fond_generic': 'Error updating fund',
+    'client.error.deleting_fond': 'Error deleting fund',
+    'client.error.deleting_fond_generic': 'Error deleting fund',
+    
+    // Client Success Messages
+    'client.success.fond_created': 'Fund created successfully',
+    'client.success.fond_updated': 'Fund updated successfully',
+    'client.success.fond_deleted': 'Fund deleted successfully',
+    
+    // Client Confirmations
+    'client.confirm.delete_fond': 'Are you sure you want to delete the fund'
   }
 };
 
