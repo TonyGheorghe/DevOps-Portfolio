@@ -180,9 +180,127 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
      // Header & Navigation
     'app.title': 'Arhivare Web App',
     'app.subtitle': 'Căutare fonduri arhivistice româneşti',
-    'auth.login': 'Conectare',
+
+        // ========== NEW TRANSLATIONS FOR USER PROFILE ==========
+    'profile.title': 'Profilul Meu',
+    'profile.subtitle': 'Gestionează contul și securitatea',
+    'profile.loading': 'Se încarcă profilul...',
+    'profile.error.load_failed': 'Nu s-au putut încărca datele profilului',
+    'profile.success.updated': 'Profilul a fost actualizat cu succes!',
+    'profile.error.update_failed': 'A apărut o eroare la actualizarea profilului',
+    'profile.back_to_dashboard': 'Înapoi la Dashboard',
+    
+    // Profile Information
+    'profile.info.title': 'Informații Profil',
+    'profile.company': 'Companie',
+    'profile.registered': 'Înregistrat',
+    'profile.date_locale': 'ro-RO',
+    'profile.permissions': 'Permisiuni',
+    'profile.permissions.public_search': 'Căutare fonduri publice',
+    'profile.permissions.fund_management': 'Management fonduri',
+    'profile.permissions.user_management': 'Management utilizatori',
+    'profile.permissions.view_all_funds': 'Vizualizare toate fondurile',
+    'profile.permissions.export_reports': 'Export și rapoarte',
+    'profile.permissions.own_funds': 'Management fonduri proprii',
+    'profile.permissions.add_new_funds': 'Adăugare fonduri noi',
+    
+    // Profile Update
+    'profile.update_profile': 'Actualizează Profilul',
+    'profile.updating': 'Se actualizează...',
+    
+    // Password Change
+    'profile.change_password': 'Schimbă Parola',
+    'profile.changing_password': 'Se schimbă...',
+    'profile.password_strength': 'Puterea parolei',
+    
+    // Security Information
+    'profile.security_info': 'Informații Securitate',
+    'profile.last_activity': 'Ultima Activitate',
+    'profile.active_session': 'Sesiune activă',
+    'profile.authentication': 'Autentificare',
+    'profile.jwt_active': 'Token JWT activ',
+
+    // ========== NEW TRANSLATIONS FOR USERS PAGE ==========
+    'users.title.management': 'Management Utilizatori',
+    'users.title.view': 'Vizualizare Utilizatori',
+    'users.subtitle.management': 'Administrează conturile utilizatorilor',
+    'users.subtitle.view': 'Vezi lista utilizatorilor (doar citire)',
+    'users.loading': 'Se încarcă utilizatorii...',
+    
+    // Read-only access
+    'users.readonly.title': 'Acces în modul vizualizare',
+    'users.readonly.description': 'Poți vedea lista utilizatorilor dar nu poți face modificări. Pentru acces complet, contactează un administrator.',
+    
+    // Statistics
+    'users.stats.total': 'Total Utilizatori',
+    'users.stats.admins': 'Administratori',
+    'users.stats.audit': 'Audit',
+    'users.stats.clients': 'Clienți',
+    
+    // Search and filters
+    'users.search.placeholder': 'Caută utilizatori...',
+    'users.filters.all_roles': 'Toate rolurile',
+    'users.filters.administrators': 'Administratori',
+    'users.filters.audit': 'Audit',
+    'users.filters.clients': 'Clienți',
+    
+    // Table headers
+    'users.table.user': 'Utilizator',
+    'users.table.role': 'Rol',
+    'users.table.company': 'Companie',
+    'users.table.created': 'Creat la',
+    'users.table.actions': 'Acțiuni',
+    'users.table.you': '(tu)',
+    'users.table.no_users_found': 'Niciun utilizator găsit',
+    'users.table.modify_search': 'Încearcă să modifici căutarea',
+    'users.table.client_company': 'Companie client',
+    
+    // Actions
+    'users.actions.add_user': 'Adaugă Utilizator',
+    'users.actions.readonly': 'Doar citire',
+    'users.actions.edit': 'Editează',
+    'users.actions.delete': 'Șterge',
+    'users.actions.view_readonly': 'Doar citire - Nu ai permisiuni de editare',
+    'users.actions.delete_readonly': 'Doar citire - Nu ai permisiuni de ștergere',
+    
+    // Results info
+    'users.results.showing': 'Afișând',
+    'users.results.of': 'din',
+    'users.results.users': 'utilizatori',
+    'users.results.filtered_by': 'Filtrate după',
+    'users.results.role': 'Rol',
+    
+    // Error messages
+    'users.error.no_permission_view': 'Nu ai permisiuni pentru a vedea lista utilizatorilor',
+    'users.error.readonly_access': 'Nu ai permisiuni pentru a {{action}}. Contul tău are acces doar în modul vizualizare.',
+    
+    // Confirmations
+    'users.confirm.delete': 'Ești sigur că vrei să ștergi utilizatorul "{{username}}"?\n\nAceastă acțiune este ireversibilă!',
+
+    // ========== UPDATED AUTH SYSTEM TRANSLATIONS ==========
+    'auth.title': 'Autentificare',
+    'auth.subtitle': 'Conectează-te pentru a accesa aplicația',
+    'auth.redirect.info': 'Vei fi redirecționat către:',
+    'auth.back.search': 'Înapoi la căutare',
+    'auth.username': 'Nume utilizator',
+    'auth.username.placeholder': 'Introdu numele utilizatorului',
+    'auth.password': 'Parolă',
+    'auth.password.placeholder': 'Introdu parola',
+    'auth.login.button': 'Conectează-te',
+    'auth.login.loading': 'Se conectează...',
     'auth.logout': 'Deconectare',
+    'auth.success.connected': 'Conectat cu succes',
+    'auth.success.redirecting': 'Se redirecționează...',
+    'auth.error.required': 'Toate câmpurile sunt obligatorii',
+    'auth.error.invalid': 'Nume utilizator sau parolă incorectă',
+    'auth.error.connection': 'Eroare de conexiune',
+    'auth.demo.accounts': 'Conturi demo disponibile:',
+    'auth.login': 'Conectare',
     'auth.logout.description': 'Închide sesiunea',
+    'auth.description': 'Introdu datele de autentificare pentru a accesa zona de administrare',
+    'auth.demo.admin': 'Admin (full access) (admin/admin123)',
+    'auth.demo.audit': 'Audit (read-only) (audit/audit123)',
+    'auth.demo.client': 'Client (manage own funds) (client_brasov/Client123$',
     'nav.hello': 'Bună',
     'nav.admin.dashboard': 'Dashboard Admin',
     'nav.admin.dashboard.description': 'Management fonduri arhivistice cu assignment manual și auto-reassignment',
@@ -553,10 +671,6 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'nav.logout': 'Deconectare',
     
     // ========== AUTHENTICATION ==========
-    'auth.username': 'Nume utilizator',
-    'auth.password': 'Parolă',
-    'auth.login.button': 'Conectează-te',
-    'auth.login.loading': 'Se conectează...',
     'auth.login.failed': 'Conectarea a eșuat',
     'auth.login.invalid': 'Nume utilizator sau parolă incorectă',
     'auth.required': 'Trebuie să te autentifici pentru a accesa această pagină',
@@ -781,9 +895,125 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
      // Header & Navigation
     'app.title': 'Archive Web App',
     'app.subtitle': 'Search Romanian archival funds',
-    'auth.login': 'Login',
+    'profile.title': 'My Profile',
+    'profile.subtitle': 'Manage account and security',
+    'profile.loading': 'Loading profile...',
+    'profile.error.load_failed': 'Failed to load profile data',
+    'profile.success.updated': 'Profile updated successfully!',
+    'profile.error.update_failed': 'An error occurred while updating profile',
+    'profile.back_to_dashboard': 'Back to Dashboard',
+    
+    // Profile Information
+    'profile.info.title': 'Profile Information',
+    'profile.company': 'Company',
+    'profile.registered': 'Registered',
+    'profile.date_locale': 'en-US',
+    'profile.permissions': 'Permissions',
+    'profile.permissions.public_search': 'Search public funds',
+    'profile.permissions.fund_management': 'Fund management',
+    'profile.permissions.user_management': 'User management',
+    'profile.permissions.view_all_funds': 'View all funds',
+    'profile.permissions.export_reports': 'Export and reports',
+    'profile.permissions.own_funds': 'Manage own funds',
+    'profile.permissions.add_new_funds': 'Add new funds',
+    
+    // Profile Update
+    'profile.update_profile': 'Update Profile',
+    'profile.updating': 'Updating...',
+    
+    // Password Change
+    'profile.change_password': 'Change Password',
+    'profile.changing_password': 'Changing...',
+    'profile.password_strength': 'Password strength',
+    
+    // Security Information
+    'profile.security_info': 'Security Information',
+    'profile.last_activity': 'Last Activity',
+    'profile.active_session': 'Active session',
+    'profile.authentication': 'Authentication',
+    'profile.jwt_active': 'JWT token active',
+
+    // ========== NEW TRANSLATIONS FOR USERS PAGE ==========
+    'users.title.management': 'User Management',
+    'users.title.view': 'View Users',
+    'users.subtitle.management': 'Manage user accounts',
+    'users.subtitle.view': 'View users list (read-only)',
+    'users.loading': 'Loading users...',
+    
+    // Read-only access
+    'users.readonly.title': 'View mode access',
+    'users.readonly.description': 'You can view the users list but cannot make changes. For full access, contact an administrator.',
+    
+    // Statistics
+    'users.stats.total': 'Total Users',
+    'users.stats.admins': 'Administrators',
+    'users.stats.audit': 'Audit',
+    'users.stats.clients': 'Clients',
+    
+    // Search and filters
+    'users.search.placeholder': 'Search users...',
+    'users.filters.all_roles': 'All roles',
+    'users.filters.administrators': 'Administrators',
+    'users.filters.audit': 'Audit',
+    'users.filters.clients': 'Clients',
+    
+    // Table headers
+    'users.table.user': 'User',
+    'users.table.role': 'Role',
+    'users.table.company': 'Company',
+    'users.table.created': 'Created',
+    'users.table.actions': 'Actions',
+    'users.table.you': '(you)',
+    'users.table.no_users_found': 'No users found',
+    'users.table.modify_search': 'Try modifying the search',
+    'users.table.client_company': 'Client company',
+    
+    // Actions
+    'users.actions.add_user': 'Add User',
+    'users.actions.readonly': 'Read only',
+    'users.actions.edit': 'Edit',
+    'users.actions.delete': 'Delete',
+    'users.actions.view_readonly': 'Read only - No edit permissions',
+    'users.actions.delete_readonly': 'Read only - No delete permissions',
+    
+    // Results info
+    'users.results.showing': 'Showing',
+    'users.results.of': 'of',
+    'users.results.users': 'users',
+    'users.results.filtered_by': 'Filtered by',
+    'users.results.role': 'Role',
+    
+    // Error messages
+    'users.error.no_permission_view': 'You don\'t have permission to view the users list',
+    'users.error.readonly_access': 'You don\'t have permission to {{action}}. Your account has read-only access.',
+    
+    // Confirmations
+    'users.confirm.delete': 'Are you sure you want to delete user "{{username}}"?\n\nThis action is irreversible!',
+
+    // ========== UPDATED AUTH SYSTEM TRANSLATIONS ==========
+    'auth.title': 'Authentication',
+    'auth.subtitle': 'Sign in to access the application',
+    'auth.redirect.info': 'You will be redirected to:',
+    'auth.back.search': 'Back to search',
+    'auth.username': 'Username',
+    'auth.username.placeholder': 'Enter username',
+    'auth.password': 'Password',
+    'auth.password.placeholder': 'Enter password',
+    'auth.login.button': 'Sign In',
+    'auth.login.loading': 'Signing in...',
     'auth.logout': 'Logout',
+    'auth.success.connected': 'Successfully connected',
+    'auth.success.redirecting': 'Redirecting...',
+    'auth.error.required': 'All fields are required',
+    'auth.error.invalid': 'Invalid username or password',
+    'auth.error.connection': 'Connection error',
+    'auth.demo.accounts': 'Demo accounts available:',
+    'auth.login': 'Login',
     'auth.logout.description': 'End session',
+    'auth.description': 'Enter your credentials to access the account area', 
+    'auth.demo.admin': 'Admin (full access) (admin/admin123)',
+    'auth.demo.audit': 'Audit (read-only) (audit/audit123)',
+    'auth.demo.client': 'Client (manage own funds) (client_brasov/client123$)',
     'nav.hello': 'Hello',
     'nav.admin.dashboard': 'Admin Dashboard',
     'nav.admin.dashboard.description': 'Archival funds management with manual assignment and auto-reassignment',
@@ -1062,10 +1292,6 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'nav.logout': 'Logout',
 
     // ========== AUTHENTICATION ==========
-    'auth.username': 'Username',
-    'auth.password': 'Password',
-    'auth.login.button': 'Sign In',
-    'auth.login.loading': 'Signing in...',
     'auth.login.failed': 'Login failed',
     'auth.login.invalid': 'Invalid username or password',
     'auth.required': 'You must be authenticated to access this page',

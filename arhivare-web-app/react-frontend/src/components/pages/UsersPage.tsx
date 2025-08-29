@@ -1,4 +1,4 @@
-// src/components/pages/UsersPage.tsx - FIXED Dark Mode Support
+// src/components/pages/UsersPage.tsx - UPDATED with i18n Integration
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -7,9 +7,12 @@ import {
   AlertCircle, Key, User, Lock, Info, Building2
 } from 'lucide-react';
 import { useAuth } from '../AuthSystem';
+import { useLanguage } from '../common/LanguageSystem'; // ADD i18n import
+import { LanguageToggle } from '../common/LanguageSystem';
+import { DarkModeToggle } from '../common/DarkModeSystem';
 import UserForm from '../forms/UserForm';
 
-// Types
+// Types (unchanged)
 interface UserData {
   id: number;
   username: string;
@@ -37,6 +40,7 @@ const VALID_ROLES = ['admin', 'audit', 'client'];
 
 const UsersPage: React.FC = () => {
   const { user: currentUser, logout } = useAuth();
+  const { t } = useLanguage(); // ADD i18n hook
   const navigate = useNavigate();
   
   // Check user permissions
@@ -106,7 +110,7 @@ const UsersPage: React.FC = () => {
           return;
         }
         if (response.status === 403) {
-          setError('Nu ai permisiuni pentru a vedea lista utilizatorilor');
+          setError(t('users.error.no_permission_view'));
           return;
         }
         throw new Error(`Error loading users: ${response.status}`);
@@ -115,12 +119,12 @@ const UsersPage: React.FC = () => {
       const data = await response.json();
       setUsers(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error loading users');
+      setError(err instanceof Error ? err.message : t('user.error.load'));
       console.error('Error loading users:', err);
     } finally {
       setLoading(false);
     }
-  }, [logout, navigate]);
+  }, [logout, navigate, t]);
 
   useEffect(() => {
     loadUsers();
@@ -129,7 +133,7 @@ const UsersPage: React.FC = () => {
   // CREATE user (Admin only)
   const handleCreateUser = async (userData: UserFormData) => {
     if (!isAdmin) {
-      setError('Nu ai permisiuni pentru a crea utilizatori');
+      setError(t('user.error.no.permission.create'));
       return;
     }
 
@@ -159,10 +163,10 @@ const UsersPage: React.FC = () => {
       setEditingUser(undefined);
       await loadUsers();
       
-      setSuccessMessage(`Utilizatorul "${newUser.username}" (${newUser.role}) a fost creat cu succes!`);
+      setSuccessMessage(t('user.success.created', { username: newUser.username, role: newUser.role }));
       
     } catch (err) {
-      throw new Error(err instanceof Error ? err.message : 'Error creating user');
+      throw new Error(err instanceof Error ? err.message : t('user.error.create'));
     } finally {
       setFormLoading(false);
     }
@@ -171,7 +175,7 @@ const UsersPage: React.FC = () => {
   // UPDATE user (Admin only)
   const handleUpdateUser = async (userData: UserFormData) => {
     if (!isAdmin) {
-      setError('Nu ai permisiuni pentru a modifica utilizatori');
+      setError(t('user.error.no.permission.edit'));
       return;
     }
 
@@ -216,10 +220,10 @@ const UsersPage: React.FC = () => {
       setEditingUser(undefined);
       await loadUsers();
       
-      setSuccessMessage(`Utilizatorul "${updatedUser.username}" a fost actualizat cu succes!`);
+      setSuccessMessage(t('user.success.updated', { username: updatedUser.username }));
       
     } catch (err) {
-      throw new Error(err instanceof Error ? err.message : 'Error updating user');
+      throw new Error(err instanceof Error ? err.message : t('user.error.update'));
     } finally {
       setFormLoading(false);
     }
@@ -243,17 +247,17 @@ const UsersPage: React.FC = () => {
   // DELETE user (Admin only)
   const handleDeleteUser = async (user: UserData) => {
     if (!isAdmin) {
-      setError('Nu ai permisiuni pentru a șterge utilizatori');
+      setError(t('user.error.no.permission.delete'));
       return;
     }
 
     // Prevent deleting self
     if (user.id === currentUser?.id) {
-      setError('Nu te poți șterge pe tine însuți!');
+      setError(t('user.error.cannot.delete.self'));
       return;
     }
 
-    if (!window.confirm(`Ești sigur că vrei să ștergi utilizatorul "${user.username}"?\n\nAceastă acțiune este ireversibilă!`)) {
+    if (!window.confirm(t('users.confirm.delete', { username: user.username }))) {
       return;
     }
 
@@ -274,15 +278,15 @@ const UsersPage: React.FC = () => {
       }
 
       await loadUsers();
-      setSuccessMessage(`Utilizatorul "${user.username}" a fost șters cu succes!`);
+      setSuccessMessage(t('user.success.deleted', { username: user.username }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error deleting user');
+      setError(err instanceof Error ? err.message : t('user.error.delete'));
     }
   };
 
   // Handle view-only click for non-admin users
   const handleViewOnlyClick = (action: string) => {
-    setError(`Nu ai permisiuni pentru a ${action}. Contul tău are acces doar în modul vizualizare.`);
+    setError(t('users.error.readonly_access', { action }));
   };
 
   // Filter users
@@ -304,15 +308,15 @@ const UsersPage: React.FC = () => {
     clients: users.filter(u => u.role === 'client').length,
   };
 
-  // Get role display info
+  // UPDATED: Get role display info with i18n
   const getRoleDisplay = (role: string) => {
     switch (role) {
       case 'admin':
-        return { label: 'Administrator', color: 'purple', icon: Shield };
+        return { label: t('user.role.admin'), color: 'purple', icon: Shield };
       case 'audit':
-        return { label: 'Audit', color: 'orange', icon: Eye };
+        return { label: t('user.role.audit'), color: 'orange', icon: Eye };
       case 'client':
-        return { label: 'Client', color: 'green', icon: Building2 };
+        return { label: t('user.role.client'), color: 'green', icon: Building2 };
       default:
         return { label: role, color: 'gray', icon: User };
     }
@@ -323,7 +327,7 @@ const UsersPage: React.FC = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
-          <p className="text-gray-600 dark:text-gray-300 mt-4">Se încarcă utilizatorii...</p>
+          <p className="text-gray-600 dark:text-gray-300 mt-4">{t('users.loading')}</p>
         </div>
       </div>
     );
@@ -331,7 +335,7 @@ const UsersPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header - FIXED Dark Mode */}
+      {/* UPDATED Header with i18n */}
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
@@ -339,25 +343,29 @@ const UsersPage: React.FC = () => {
               <Users className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {isAdmin ? 'Management Utilizatori' : 'Vizualizare Utilizatori'}
+                  {isAdmin ? t('users.title.management') : t('users.title.view')}
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {isAdmin ? 'Administrează conturile utilizatorilor' : 'Vezi lista utilizatorilor (doar citire)'}
+                  {isAdmin ? t('users.subtitle.management') : t('users.subtitle.view')}
                 </p>
               </div>
             </div>
             
             <div className="flex items-center space-x-4">
+              {/* ADD Language and Dark Mode toggles */}
+              <LanguageToggle size="sm" />
+              <DarkModeToggle size="sm" />
+              
               {/* Navigation buttons */}
               <button 
                 onClick={() => navigate(isAdmin ? '/admin' : '/')}
                 className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors px-3 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 <Home className="h-4 w-4" />
-                <span>{isAdmin ? 'Dashboard' : 'Căutare'}</span>
+                <span>{isAdmin ? t('nav.dashboard') : t('nav.search')}</span>
               </button>
               
-              {/* User profile section - FIXED Dark Mode */}
+              {/* User profile section */}
               <div className="flex items-center space-x-3 bg-gray-50 dark:bg-gray-700 rounded-lg px-4 py-2">
                 <div className="flex-shrink-0">
                   <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
@@ -368,12 +376,16 @@ const UsersPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{currentUser?.username}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{currentUser?.role}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                    {currentUser?.role === 'admin' ? t('user.role.admin') : 
+                     currentUser?.role === 'audit' ? t('user.role.audit') : 
+                     t('user.role.client')}
+                  </p>
                 </div>
                 <button
                   onClick={handleLogout}
                   className="text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20"
-                  title="Deconectare"
+                  title={t('auth.logout')}
                 >
                   <LogOut className="h-5 w-5" />
                 </button>
@@ -384,22 +396,22 @@ const UsersPage: React.FC = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Read-Only Notice for Non-Admin Users - FIXED Dark Mode */}
+        {/* UPDATED Read-Only Notice for Non-Admin Users with i18n */}
         {isReadOnly && (
           <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <div className="flex items-center">
               <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3" />
               <div>
-                <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200">Acces în modul vizualizare</h4>
+                <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200">{t('users.readonly.title')}</h4>
                 <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                  Poți vedea lista utilizatorilor dar nu poți face modificări. Pentru acces complet, contactează un administrator.
+                  {t('users.readonly.description')}
                 </p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Success Message - FIXED Dark Mode */}
+        {/* UPDATED Success Message with i18n */}
         {successMessage && (
           <div className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
             <div className="flex items-center">
@@ -415,7 +427,7 @@ const UsersPage: React.FC = () => {
           </div>
         )}
 
-        {/* Error Message - FIXED Dark Mode */}
+        {/* UPDATED Error Message with i18n */}
         {error && (
           <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <div className="flex justify-between items-center">
@@ -433,13 +445,13 @@ const UsersPage: React.FC = () => {
           </div>
         )}
 
-        {/* Statistics Cards - FIXED Dark Mode */}
+        {/* UPDATED Statistics Cards with i18n */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hover:shadow-md dark:hover:shadow-xl transition-shadow border dark:border-gray-700">
             <div className="flex items-center">
               <Users className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Utilizatori</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('users.stats.total')}</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total}</p>
               </div>
             </div>
@@ -449,7 +461,7 @@ const UsersPage: React.FC = () => {
             <div className="flex items-center">
               <Shield className="h-8 w-8 text-purple-600 dark:text-purple-400" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Administratori</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('users.stats.admins')}</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.admins}</p>
               </div>
             </div>
@@ -459,7 +471,7 @@ const UsersPage: React.FC = () => {
             <div className="flex items-center">
               <Eye className="h-8 w-8 text-orange-600 dark:text-orange-400" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Audit</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('users.stats.audit')}</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.audit}</p>
               </div>
             </div>
@@ -469,14 +481,14 @@ const UsersPage: React.FC = () => {
             <div className="flex items-center">
               <Building2 className="h-8 w-8 text-green-600 dark:text-green-400" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Clienți</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('users.stats.clients')}</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.clients}</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Controls - FIXED Dark Mode */}
+        {/* UPDATED Controls with i18n */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6 border dark:border-gray-700">
           <div className="p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
@@ -487,23 +499,23 @@ const UsersPage: React.FC = () => {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Caută utilizatori..."
+                    placeholder={t('users.search.placeholder')}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   />
                 </div>
               </div>
 
               <div className="flex items-center space-x-4">
-                {/* Role filter - FIXED Dark Mode */}
+                {/* UPDATED Role filter with i18n */}
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
                   className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 >
-                  <option value="all">Toate rolurile</option>
-                  <option value="admin">Administratori</option>
-                  <option value="audit">Audit</option>
-                  <option value="client">Clienți</option>
+                  <option value="all">{t('users.filters.all_roles')}</option>
+                  <option value="admin">{t('users.filters.administrators')}</option>
+                  <option value="audit">{t('users.filters.audit')}</option>
+                  <option value="client">{t('users.filters.clients')}</option>
                 </select>
 
                 {/* Add User Button - Only for Admins */}
@@ -516,7 +528,7 @@ const UsersPage: React.FC = () => {
                     className="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 flex items-center space-x-2 transition-colors"
                   >
                     <Plus className="h-4 w-4" />
-                    <span>Adaugă Utilizator</span>
+                    <span>{t('users.actions.add_user')}</span>
                   </button>
                 ) : (
                   <button
@@ -525,7 +537,7 @@ const UsersPage: React.FC = () => {
                     disabled
                   >
                     <Lock className="h-4 w-4" />
-                    <span>Doar citire</span>
+                    <span>{t('users.actions.readonly')}</span>
                   </button>
                 )}
               </div>
@@ -533,26 +545,26 @@ const UsersPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Users Table - FIXED Dark Mode */}
+        {/* UPDATED Users Table with i18n */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden border dark:border-gray-700">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Utilizator
+                    {t('users.table.user')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Rol
+                    {t('users.table.role')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Companie
+                    {t('users.table.company')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Creat la
+                    {t('users.table.created')}
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Acțiuni
+                    {t('users.table.actions')}
                   </th>
                 </tr>
               </thead>
@@ -561,9 +573,9 @@ const UsersPage: React.FC = () => {
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                       <Users className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                      <p className="text-lg font-medium">Niciun utilizator găsit</p>
+                      <p className="text-lg font-medium">{t('users.table.no_users_found')}</p>
                       <p className="text-sm">
-                        {searchQuery ? 'Încearcă să modifici căutarea' : 'Utilizatorii se încarcă...'}
+                        {searchQuery ? t('users.table.modify_search') : t('users.loading')}
                       </p>
                     </td>
                   </tr>
@@ -583,7 +595,7 @@ const UsersPage: React.FC = () => {
                               <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                 {user.username}
                                 {user.id === currentUser?.id && (
-                                  <span className="ml-2 text-xs text-blue-600 dark:text-blue-400">(tu)</span>
+                                  <span className="ml-2 text-xs text-blue-600 dark:text-blue-400">{t('users.table.you')}</span>
                                 )}
                               </div>
                               {user.contact_email && (
@@ -603,7 +615,7 @@ const UsersPage: React.FC = () => {
                           {user.company_name ? (
                             <div>
                               <div className="font-medium text-gray-900 dark:text-gray-100">{user.company_name}</div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">Companie client</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">{t('users.table.client_company')}</div>
                             </div>
                           ) : (
                             <span className="text-gray-400 dark:text-gray-500">-</span>
@@ -611,7 +623,7 @@ const UsersPage: React.FC = () => {
                         </td>
 
                         <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                          {new Date(user.created_at).toLocaleDateString('ro-RO', {
+                          {new Date(user.created_at).toLocaleDateString(t('profile.date_locale'), {
                             year: 'numeric',
                             month: 'short',
                             day: 'numeric'
@@ -627,7 +639,7 @@ const UsersPage: React.FC = () => {
                                   setShowForm(true);
                                 }}
                                 className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                                title="Editează"
+                                title={t('users.actions.edit')}
                               >
                                 <Edit2 className="h-4 w-4" />
                               </button>
@@ -636,7 +648,7 @@ const UsersPage: React.FC = () => {
                                 <button
                                   onClick={() => handleDeleteUser(user)}
                                   className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                  title="Șterge"
+                                  title={t('users.actions.delete')}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </button>
@@ -647,7 +659,7 @@ const UsersPage: React.FC = () => {
                               <button
                                 onClick={() => handleViewOnlyClick('edita utilizatori')}
                                 className="text-gray-400 dark:text-gray-500 p-1 rounded cursor-not-allowed opacity-50"
-                                title="Doar citire - Nu ai permisiuni de editare"
+                                title={t('users.actions.view_readonly')}
                                 disabled
                               >
                                 <Eye className="h-4 w-4" />
@@ -657,7 +669,7 @@ const UsersPage: React.FC = () => {
                                 <button
                                   onClick={() => handleViewOnlyClick('șterge utilizatori')}
                                   className="text-gray-400 dark:text-gray-500 p-1 rounded cursor-not-allowed opacity-50"
-                                  title="Doar citire - Nu ai permisiuni de ștergere"
+                                  title={t('users.actions.delete_readonly')}
                                   disabled
                                 >
                                   <Lock className="h-4 w-4" />
@@ -675,15 +687,15 @@ const UsersPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Results info - FIXED Dark Mode */}
+        {/* UPDATED Results info with i18n */}
         {filteredUsers.length > 0 && (
           <div className="mt-4 flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
             <p>
-              Afișând {filteredUsers.length} din {users.length} utilizatori
+              {t('users.results.showing')} {filteredUsers.length} {t('users.results.of')} {users.length} {t('users.results.users')}
             </p>
             <p>
-              {searchQuery && `Filtrate după: "${searchQuery}"`}
-              {roleFilter !== 'all' && ` | Rol: ${roleFilter}`}
+              {searchQuery && `${t('users.results.filtered_by')}: "${searchQuery}"`}
+              {roleFilter !== 'all' && ` | ${t('users.results.role')}: ${roleFilter}`}
             </p>
           </div>
         )}
