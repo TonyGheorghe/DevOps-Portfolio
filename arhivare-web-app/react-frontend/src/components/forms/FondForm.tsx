@@ -1,4 +1,4 @@
-// src/components/forms/FondForm.tsx - FINAL FIX for All TypeScript Errors
+// src/components/forms/FondForm.tsx - UPDATED WITH i18n INTEGRATION
 import React, { useState, useEffect, useMemo } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -7,9 +7,9 @@ import {
   Building2, User, MapPin, Mail, Phone, FileText, 
   Link, Save, X, AlertCircle, AlertTriangle, Lightbulb, Users
 } from 'lucide-react';
-import { DarkModeToggle } from '../common/DarkModeSystem';
+import { useLanguage } from '../common/LanguageSystem';
 
-// Types
+// Types (unchanged)
 interface Fond {
   id: number;
   company_name: string;
@@ -25,7 +25,6 @@ interface Fond {
   owner_id?: number;
 }
 
-// NEW: User type for dropdown
 interface UserOption {
   id: number;
   username: string;
@@ -33,7 +32,6 @@ interface UserOption {
   company_name?: string;
 }
 
-// FIXED: Form data type that matches exactly with AdminDashboard expectations
 interface FondFormData {
   company_name: string;
   holder_name: string;
@@ -43,7 +41,7 @@ interface FondFormData {
   notes: string;
   source_url: string;
   active: boolean;
-  owner_id?: number; // FIXED: only number or undefined, no null
+  owner_id?: number;
 }
 
 interface FondFormProps {
@@ -56,10 +54,9 @@ interface FondFormProps {
   isLoading?: boolean;
 }
 
-// API Configuration
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
-// Utility function pentru normalizarea numelor companiilor
+// Utility functions (unchanged)
 const normalizeCompanyName = (name: string): string => {
   return name
     .toLowerCase()
@@ -71,7 +68,6 @@ const normalizeCompanyName = (name: string): string => {
     .trim();
 };
 
-// Funcție pentru calcularea similarității între două string-uri
 const calculateSimilarity = (str1: string, str2: string): number => {
   const norm1 = normalizeCompanyName(str1);
   const norm2 = normalizeCompanyName(str2);
@@ -92,15 +88,19 @@ const calculateSimilarity = (str1: string, str2: string): number => {
   return commonWords / Math.max(words1.length, words2.length);
 };
 
-// FIXED: Enhanced validation schema with proper typing
-const createFondSchema = (existingFonds: Fond[] = [], currentFondId?: number) => 
+// UPDATED: Validation schema with i18n
+const createFondSchema = (
+      existingFonds: Fond[] = [],
+      t: (key: string, options?: Record<string, any>) => string, 
+      currentFondId?: number 
+    ) => 
   yup.object().shape({
     company_name: yup
       .string()
-      .required('Numele companiei este obligatoriu')
-      .min(2, 'Numele trebuie să aibă cel puțin 2 caractere')
-      .max(255, 'Numele poate avea maxim 255 caractere')
-      .test('duplicate-check', 'Această companie poate să existe deja în baza de date', function(value) {
+      .required(t('fond.validation.company.required'))
+      .min(2, t('fond.validation.company.min'))
+      .max(255, t('fond.validation.company.max'))
+      .test('duplicate-check', t('fond.validation.company.duplicate'), function(value) {
         if (!value) return true;
         
         const duplicates = existingFonds.filter(fond => {
@@ -111,7 +111,9 @@ const createFondSchema = (existingFonds: Fond[] = [], currentFondId?: number) =>
         
         if (duplicates.length > 0) {
           return this.createError({
-            message: `Companii similare găsite: ${duplicates.map(f => f.company_name).join(', ')}`
+            message: t('fond.duplicate.suggestions', { 
+              companies: duplicates.map(f => f.company_name).join(', ') 
+            })
           });
         }
         
@@ -120,16 +122,16 @@ const createFondSchema = (existingFonds: Fond[] = [], currentFondId?: number) =>
     
     holder_name: yup
       .string()
-      .required('Deținătorul arhivei este obligatoriu')
-      .min(2, 'Numele deținătorului trebuie să aibă cel puțin 2 caractere')
-      .max(255, 'Numele poate avea maxim 255 caractere'),
+      .required(t('fond.validation.holder.required'))
+      .min(2, t('fond.validation.holder.min'))
+      .max(255, t('fond.validation.holder.max')),
     
     address: yup.string().default('').max(500, 'Adresa poate avea maxim 500 caractere'),
     
     email: yup
       .string()
       .default('')
-      .test('email', 'Adresa de email nu este validă', function(value) {
+      .test('email', t('fond.validation.email.invalid'), function(value) {
         if (!value || value === '') return true;
         return yup.string().email().isValidSync(value);
       })
@@ -138,9 +140,8 @@ const createFondSchema = (existingFonds: Fond[] = [], currentFondId?: number) =>
     phone: yup
       .string()
       .default('')
-      .test('phone', 'Numărul de telefon conține caractere invalide', function(value) {
+      .test('phone', t('fond.validation.phone.invalid'), function(value) {
         if (!value || value === '') return true;
-        // FIXED: Removed unnecessary escape characters
         return /^[+]?[\d\s\-()]+$/.test(value);
       })
       .max(20, 'Numărul poate avea maxim 20 caractere'),
@@ -150,7 +151,7 @@ const createFondSchema = (existingFonds: Fond[] = [], currentFondId?: number) =>
     source_url: yup
       .string()
       .default('')
-      .test('url', 'URL-ul nu este valid', function(value) {
+      .test('url', t('fond.validation.url.invalid'), function(value) {
         if (!value || value === '') return true;
         return yup.string().url().isValidSync(value);
       })
@@ -158,7 +159,6 @@ const createFondSchema = (existingFonds: Fond[] = [], currentFondId?: number) =>
     
     active: yup.boolean().default(true).required(),
     
-    // FIXED: Owner assignment validation - matches interface exactly
     owner_id: yup
       .number()
       .transform((value, originalValue) => {
@@ -180,20 +180,21 @@ export const FondForm: React.FC<FondFormProps> = ({
   onCancel,
   isLoading = false
 }) => {
+  // ADDED: i18n hook
+  const { t } = useLanguage();
+  
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [users, setUsers] = useState<UserOption[]>(availableUsers);
   
-  // Determină modul formularului
+  // Determine form mode with i18n
   const isEditMode = !!fond;
-  const formTitle = isEditMode ? 'Editare Fond' : 'Fond Nou';
-  const submitButtonText = isEditMode ? 'Actualizează' : 'Creează';
+  const formTitle = isEditMode ? t('fond.form.edit') : t('fond.form.create');
+  const submitButtonText = isEditMode ? t('fond.form.update.button') : t('fond.form.create.button');
   
-  // Check if current user is admin (only admins can assign owners)
   const canAssignOwner = currentUserRole === 'admin';
 
-  // Get auth headers
   const getAuthHeaders = () => {
     const token = localStorage.getItem('auth_token');
     return {
@@ -215,7 +216,6 @@ export const FondForm: React.FC<FondFormProps> = ({
         
         if (response.ok) {
           const usersData = await response.json();
-          // Filter only client users for assignment
           const clientUsers = usersData.filter((user: UserOption) => user.role === 'client');
           setUsers(clientUsers);
         }
@@ -229,13 +229,13 @@ export const FondForm: React.FC<FondFormProps> = ({
     loadUsers();
   }, [canAssignOwner, availableUsers.length]);
 
-  // FIXED: Creează schema dinamică
+  // UPDATED: Create schema with i18n
   const fondSchema = useMemo(() => 
-    createFondSchema(existingFonds, fond?.id), 
-    [existingFonds, fond?.id]
+    createFondSchema(existingFonds,t, fond?.id), 
+    [existingFonds,t , fond?.id]
   );
 
-  // FIXED: Configurare React Hook Form cu rezolvarea corectă a tipurilor
+  // Form setup with validation
   const {
     register,
     handleSubmit,
@@ -244,7 +244,7 @@ export const FondForm: React.FC<FondFormProps> = ({
     watch,
     setValue
   } = useForm<FondFormData>({
-    resolver: yupResolver(fondSchema) as any, // FIXED: Type assertion to resolve conflict
+    resolver: yupResolver(fondSchema) as any,
     defaultValues: {
       company_name: fond?.company_name || '',
       holder_name: fond?.holder_name || '',
@@ -254,15 +254,14 @@ export const FondForm: React.FC<FondFormProps> = ({
       notes: fond?.notes || '',
       source_url: fond?.source_url || '',
       active: fond?.active ?? true,
-      owner_id: fond?.owner_id // FIXED: use undefined instead of null
+      owner_id: fond?.owner_id
     }
   });
 
-  // Watch pentru company_name pentru detectarea duplicatelor în timp real
   const watchedCompanyName = watch('company_name');
   const watchedOwnerId = watch('owner_id');
 
-  // Detectarea duplicatelor în timp real
+  // Duplicate detection
   const potentialDuplicates = useMemo(() => {
     if (!watchedCompanyName || watchedCompanyName.length < 3) return [];
     
@@ -280,12 +279,11 @@ export const FondForm: React.FC<FondFormProps> = ({
       .slice(0, 3);
   }, [watchedCompanyName, existingFonds, isEditMode, fond?.id]);
 
-  // Efect pentru afișarea warning-ului
   useEffect(() => {
     setShowDuplicateWarning(potentialDuplicates.length > 0);
   }, [potentialDuplicates]);
 
-  // FIXED: Handler pentru submit cu type safety corect
+  // Form submission
   const onSubmit: SubmitHandler<FondFormData> = async (data) => {
     try {
       setSubmitError(null);
@@ -298,12 +296,12 @@ export const FondForm: React.FC<FondFormProps> = ({
       setSubmitError(
         error instanceof Error 
           ? error.message 
-          : 'A apărut o eroare la salvarea fondului'
+          : t('fond.error.create')
       );
     }
   };
 
-  // Handler pentru selectarea unui duplicat sugerat
+  // Handle suggestion selection
   const handleSelectSuggestion = (suggestion: Fond) => {
     setValue('company_name', suggestion.company_name);
     setValue('holder_name', suggestion.holder_name);
@@ -313,24 +311,22 @@ export const FondForm: React.FC<FondFormProps> = ({
     setShowDuplicateWarning(false);
   };
 
-  // Get currently selected user for display
   const selectedUser = users.find(user => user.id === watchedOwnerId);
-
-  // Loading state pentru tot formularul
   const formDisabled = isLoading || isSubmitting;
 
   return (
-    <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
       {/* Header */}
-      <div className="flex justify-between items-center p-6 border-b border-gray-200">
+      <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-3">
-          <Building2 className="h-6 w-6 text-blue-600" />
-          <h3 className="text-lg font-semibold text-gray-900">{formTitle}</h3>
+          <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{formTitle}</h3>
         </div>
         <button
           onClick={onCancel}
           disabled={formDisabled}
-          className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100 transition-colors disabled:opacity-50"
+          className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+          title={t('common.close')}
         >
           <X className="h-6 w-6" />
         </button>
@@ -338,28 +334,28 @@ export const FondForm: React.FC<FondFormProps> = ({
 
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
-        {/* Error message general */}
+        {/* Error message */}
         {submitError && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
-            <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start space-x-3">
+            <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
             <div>
-              <h4 className="text-sm font-medium text-red-800">Eroare la salvare</h4>
-              <p className="text-sm text-red-700 mt-1">{submitError}</p>
+              <h4 className="text-sm font-medium text-red-800 dark:text-red-200">{t('error.generic')}</h4>
+              <p className="text-sm text-red-700 dark:text-red-300 mt-1">{submitError}</p>
             </div>
           </div>
         )}
 
         {/* Duplicate Warning */}
         {showDuplicateWarning && potentialDuplicates.length > 0 && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
             <div className="flex items-start space-x-3">
-              <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+              <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
               <div className="flex-1">
-                <h4 className="text-sm font-medium text-yellow-800">
-                  Companii similare detectate
+                <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                  {t('fond.duplicate.warning')}
                 </h4>
-                <p className="text-sm text-yellow-700 mt-1">
-                  Am găsit companii cu nume similar. Vrei să selectezi una existentă?
+                <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                  {t('fond.duplicate.message')}
                 </p>
                 <div className="mt-3 space-y-2">
                   {potentialDuplicates.map((duplicate) => (
@@ -367,89 +363,89 @@ export const FondForm: React.FC<FondFormProps> = ({
                       key={duplicate.id}
                       type="button"
                       onClick={() => handleSelectSuggestion(duplicate)}
-                      className="block w-full text-left p-2 text-sm bg-yellow-100 hover:bg-yellow-200 rounded border transition-colors"
+                      className="block w-full text-left p-2 text-sm bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-200 dark:hover:bg-yellow-900/50 rounded border transition-colors"
                     >
-                      <div className="font-medium text-yellow-900">
+                      <div className="font-medium text-yellow-900 dark:text-yellow-100">
                         {duplicate.company_name}
                       </div>
-                      <div className="text-yellow-700">
-                        Deținător: {duplicate.holder_name}
+                      <div className="text-yellow-700 dark:text-yellow-300">
+                        {t('fond.holder.name')}: {duplicate.holder_name}
                       </div>
                     </button>
                   ))}
                 </div>
-                <div className="mt-2 flex items-center text-xs text-yellow-600">
+                <div className="mt-2 flex items-center text-xs text-yellow-600 dark:text-yellow-400">
                   <Lightbulb className="h-3 w-3 mr-1" />
-                  Click pe o sugestie pentru a o selecta
+                  <span>{t('fond.duplicate.select.tip')}</span>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Nume companie - Required cu detectarea duplicatelor */}
+        {/* Company Name Field */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             <Building2 className="h-4 w-4 inline mr-1" />
-            Numele companiei *
+            {t('fond.company.name')} *
           </label>
           <input
             {...register('company_name')}
             type="text"
-            placeholder="ex: Tractorul Brașov SA"
+            placeholder={t('fond.company.name.placeholder')}
             disabled={formDisabled}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 ${
-              errors.company_name ? 'border-red-300' : 
-              showDuplicateWarning ? 'border-yellow-300' : 'border-gray-300'
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${
+              errors.company_name ? 'border-red-300 dark:border-red-600' : 
+              showDuplicateWarning ? 'border-yellow-300 dark:border-yellow-600' : 'border-gray-300 dark:border-gray-600'
             }`}
           />
           {errors.company_name && (
-            <p className="text-red-600 text-sm mt-1">{errors.company_name.message}</p>
+            <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.company_name.message}</p>
           )}
         </div>
 
-        {/* Deținător arhivă - Required */}
+        {/* Archive Holder Field */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             <User className="h-4 w-4 inline mr-1" />
-            Deținător arhivă *
+            {t('fond.holder.name')} *
           </label>
           <input
             {...register('holder_name')}
             type="text"
-            placeholder="ex: Arhiva Națională Brașov"
+            placeholder={t('fond.holder.name.placeholder')}
             disabled={formDisabled}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 ${
-              errors.holder_name ? 'border-red-300' : 'border-gray-300'
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${
+              errors.holder_name ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
             }`}
           />
           {errors.holder_name && (
-            <p className="text-red-600 text-sm mt-1">{errors.holder_name.message}</p>
+            <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.holder_name.message}</p>
           )}
         </div>
 
-        {/* NEW: Owner Assignment Section - Only for Admins */}
+        {/* Owner Assignment Section - Only for Admins */}
         {canAssignOwner && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <div className="flex items-center space-x-3 mb-3">
-              <Users className="h-5 w-5 text-blue-600" />
-              <h4 className="font-medium text-blue-900">Assignment Proprietar</h4>
+              <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <h4 className="font-medium text-blue-900 dark:text-blue-100">{t('fond.owner.assignment')}</h4>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Assignează către client
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {t('fond.owner.assign.to')}
               </label>
               <select
                 {...register('owner_id')}
                 disabled={formDisabled || loadingUsers}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 ${
-                  errors.owner_id ? 'border-red-300' : 'border-gray-300'
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${
+                  errors.owner_id ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
                 }`}
               >
-                <option value="">-- Neasignat --</option>
+                <option value="">{t('fond.owner.unassigned')}</option>
                 {loadingUsers ? (
-                  <option disabled>Se încarcă utilizatorii...</option>
+                  <option disabled>{t('common.loading')}</option>
                 ) : (
                   users.map((user) => (
                     <option key={user.id} value={user.id}>
@@ -460,161 +456,160 @@ export const FondForm: React.FC<FondFormProps> = ({
               </select>
               
               {errors.owner_id && (
-                <p className="text-red-600 text-sm mt-1">{errors.owner_id.message}</p>
+                <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.owner_id.message}</p>
               )}
               
-              {/* Display selected user info */}
               {selectedUser && (
-                <div className="mt-2 p-2 bg-blue-100 rounded text-sm text-blue-800">
-                  <strong>Selectat:</strong> {selectedUser.username}
+                <div className="mt-2 p-2 bg-blue-100 dark:bg-blue-900/30 rounded text-sm text-blue-800 dark:text-blue-200">
+                  <strong>{t('fond.owner.selected', { username: selectedUser.username })}</strong>
                   {selectedUser.company_name && ` - ${selectedUser.company_name}`}
                 </div>
               )}
               
-              <p className="text-xs text-gray-500 mt-1">
-                Fondul va fi vizibil și editabil doar de utilizatorul selectat
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {t('fond.owner.info')}
               </p>
             </div>
           </div>
         )}
 
-        {/* Adresă */}
+        {/* Address Field */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             <MapPin className="h-4 w-4 inline mr-1" />
-            Adresă
+            {t('fond.address')}
           </label>
           <input
             {...register('address')}
             type="text"
-            placeholder="ex: Str. Industriei 15, Brașov, 500269"
+            placeholder={t('fond.address.placeholder')}
             disabled={formDisabled}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 ${
-              errors.address ? 'border-red-300' : 'border-gray-300'
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${
+              errors.address ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
             }`}
           />
           {errors.address && (
-            <p className="text-red-600 text-sm mt-1">{errors.address.message}</p>
+            <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.address.message}</p>
           )}
         </div>
 
-        {/* Contact info - row cu 2 coloane */}
+        {/* Contact Info - Grid with 2 columns */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Email */}
+          {/* Email Field */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <Mail className="h-4 w-4 inline mr-1" />
-              Email
+              {t('fond.email')}
             </label>
             <input
               {...register('email')}
               type="email"
-              placeholder="contact@arhiva.ro"
+              placeholder={t('fond.email.placeholder')}
               disabled={formDisabled}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 ${
-                errors.email ? 'border-red-300' : 'border-gray-300'
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${
+                errors.email ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
               }`}
             />
             {errors.email && (
-              <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>
+              <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.email.message}</p>
             )}
           </div>
 
-          {/* Telefon */}
+          {/* Phone Field */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <Phone className="h-4 w-4 inline mr-1" />
-              Telefon
+              {t('fond.phone')}
             </label>
             <input
               {...register('phone')}
               type="tel"
-              placeholder="+40 268 123 456"
+              placeholder={t('fond.phone.placeholder')}
               disabled={formDisabled}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 ${
-                errors.phone ? 'border-red-300' : 'border-gray-300'
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${
+                errors.phone ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
               }`}
             />
             {errors.phone && (
-              <p className="text-red-600 text-sm mt-1">{errors.phone.message}</p>
+              <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.phone.message}</p>
             )}
           </div>
         </div>
 
-        {/* URL sursă */}
+        {/* Source URL Field */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             <Link className="h-4 w-4 inline mr-1" />
-            URL sursă
+            {t('fond.source.url')}
           </label>
           <input
             {...register('source_url')}
             type="url"
-            placeholder="https://arhiva.ro/fonduri/tractorul"
+            placeholder={t('fond.source.url.placeholder')}
             disabled={formDisabled}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 ${
-              errors.source_url ? 'border-red-300' : 'border-gray-300'
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${
+              errors.source_url ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
             }`}
           />
           {errors.source_url && (
-            <p className="text-red-600 text-sm mt-1">{errors.source_url.message}</p>
+            <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.source_url.message}</p>
           )}
         </div>
 
-        {/* Note */}
+        {/* Notes Field */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             <FileText className="h-4 w-4 inline mr-1" />
-            Note
+            {t('fond.notes')}
           </label>
           <textarea
             {...register('notes')}
             rows={3}
-            placeholder="Informații suplimentare despre fond..."
+            placeholder={t('fond.notes.placeholder')}
             disabled={formDisabled}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 resize-none ${
-              errors.notes ? 'border-red-300' : 'border-gray-300'
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors disabled:bg-gray-50 disabled:opacity-60 resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 ${
+              errors.notes ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
             }`}
           />
           {errors.notes && (
-            <p className="text-red-600 text-sm mt-1">{errors.notes.message}</p>
+            <p className="text-red-600 dark:text-red-400 text-sm mt-1">{errors.notes.message}</p>
           )}
         </div>
 
-        {/* Status activ - pentru toate modurile */}
+        {/* Active Status Checkbox */}
         <div>
           <label className="flex items-center space-x-2">
             <input
               {...register('active')}
               type="checkbox"
               disabled={formDisabled}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-60"
+              className="rounded border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400 focus:ring-blue-500 disabled:opacity-60 dark:bg-gray-700"
             />
-            <span className="text-sm font-medium text-gray-700">
-              Fond activ (vizibil în căutarea publică)
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('fond.status.active')}
             </span>
           </label>
         </div>
 
-        {/* Buttons */}
-        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+        {/* Action Buttons */}
+        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <button
             type="button"
             onClick={onCancel}
             disabled={formDisabled}
-            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Anulează
+            {t('common.cancel')}
           </button>
           <button
             type="submit"
             disabled={formDisabled}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
           >
             {isSubmitting ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>Se salvează...</span>
+                <span>{t('fond.form.saving')}</span>
               </>
             ) : (
               <>
