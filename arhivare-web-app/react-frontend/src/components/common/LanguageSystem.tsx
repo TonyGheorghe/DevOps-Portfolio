@@ -1,24 +1,36 @@
-// src/components/common/LanguageSystem.tsx
+// src/components/common/LanguageSystem.tsx - COMPLETE i18n IMPLEMENTATION
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Globe } from 'lucide-react';
 
-// Supported languages
+// ===========================================
+// TYPES & INTERFACES
+// ===========================================
+
 export type SupportedLanguage = 'ro' | 'en';
 
 interface LanguageContextType {
   currentLanguage: SupportedLanguage;
   changeLanguage: (language: SupportedLanguage) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, string>) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-// Language toggle component
+// ===========================================
+// LANGUAGE TOGGLE COMPONENT - ENHANCED
+// ===========================================
+
 interface LanguageToggleProps {
   size?: 'sm' | 'md' | 'lg';
+  className?: string;
+  showLabel?: boolean;
 }
 
-export const LanguageToggle: React.FC<LanguageToggleProps> = ({ size = 'md' }) => {
+export const LanguageToggle: React.FC<LanguageToggleProps> = ({ 
+  size = 'md', 
+  className = '',
+  showLabel = false 
+}) => {
   const { currentLanguage, changeLanguage } = useLanguage();
   
   const sizeClasses = {
@@ -37,34 +49,49 @@ export const LanguageToggle: React.FC<LanguageToggleProps> = ({ size = 'md' }) =
     changeLanguage(currentLanguage === 'ro' ? 'en' : 'ro');
   };
 
+  const getLanguageLabel = () => {
+    return currentLanguage === 'ro' ? 'Română' : 'English';
+  };
+
   return (
-    <button
-      onClick={handleToggle}
-      className={`
-        ${sizeClasses[size]}
-        flex items-center justify-center
-        bg-white dark:bg-gray-800 
-        border-2 border-gray-200 dark:border-gray-600
-        rounded-lg 
-        hover:bg-gray-50 dark:hover:bg-gray-700 
-        hover:border-blue-300 dark:hover:border-blue-500
-        transition-all duration-200
-        group
-        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900
-      `}
-      title={currentLanguage === 'ro' ? 'Switch to English' : 'Comută la română'}
-    >
-      <div className="flex items-center space-x-1">
-        <Globe className={`${iconSizes[size]} text-gray-600 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400`} />
-        <span className="font-semibold text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 uppercase">
-          {currentLanguage === 'ro' ? 'EN' : 'RO'}
+    <div className={`flex items-center space-x-2 ${className}`}>
+      <button
+        onClick={handleToggle}
+        className={`
+          ${sizeClasses[size]}
+          flex items-center justify-center
+          bg-white dark:bg-gray-800 
+          border-2 border-gray-200 dark:border-gray-600
+          rounded-lg 
+          hover:bg-gray-50 dark:hover:bg-gray-700 
+          hover:border-blue-300 dark:hover:border-blue-500
+          transition-all duration-200
+          group
+          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900
+        `}
+        title={currentLanguage === 'ro' ? 'Switch to English' : 'Comută la română'}
+      >
+        <div className="flex items-center space-x-1">
+          <Globe className={`${iconSizes[size]} text-gray-600 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400`} />
+          <span className="font-semibold text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 uppercase">
+            {currentLanguage === 'ro' ? 'EN' : 'RO'}
+          </span>
+        </div>
+      </button>
+      
+      {showLabel && (
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          {getLanguageLabel()}
         </span>
-      </div>
-    </button>
+      )}
+    </div>
   );
 };
 
-// Language provider component
+// ===========================================
+// LANGUAGE PROVIDER COMPONENT - ENHANCED
+// ===========================================
+
 interface LanguageProviderProps {
   children: React.ReactNode;
   defaultLanguage?: SupportedLanguage;
@@ -105,8 +132,18 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
     }
   };
 
-  const t = (key: string): string => {
-    return translations[currentLanguage][key] || key;
+  // Translation function with parameter support
+  const t = (key: string, params?: Record<string, string>): string => {
+    let translation = translations[currentLanguage][key] || key;
+    
+    // Replace parameters if provided
+    if (params) {
+      Object.entries(params).forEach(([paramKey, paramValue]) => {
+        translation = translation.replace(`{{${paramKey}}}`, paramValue);
+      });
+    }
+    
+    return translation;
   };
 
   // Set initial document language
@@ -136,10 +173,11 @@ export const useLanguage = (): LanguageContextType => {
   return context;
 };
 
-// Translations object
+//Translations object
 const translations: Record<SupportedLanguage, Record<string, string>> = {
   ro: {
-    // Header & Navigation
+
+     // Header & Navigation
     'app.title': 'Arhivare Web App',
     'app.subtitle': 'Căutare fonduri arhivistice româneşti',
     'auth.login': 'Conectare',
@@ -479,11 +517,268 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'client.success.fond_deleted': 'Fondul a fost șters cu succes',
     
     // Client Confirmations
-    'client.confirm.delete_fond': 'Ești sigur că vrei să ștergi fondul'
+    'client.confirm.delete_fond': 'Ești sigur că vrei să ștergi fondul',
+
+    // ========== COMMON TERMS ==========
+    'common.loading': 'Se încarcă...',
+    'common.error': 'Eroare',
+    'common.success': 'Succes',
+    'common.cancel': 'Anulează',
+    'common.save': 'Salvează',
+    'common.edit': 'Editează',
+    'common.delete': 'Șterge',
+    'common.add': 'Adaugă',
+    'common.create': 'Creează',
+    'common.update': 'Actualizează',
+    'common.close': 'Închide',
+    'common.back': 'Înapoi',
+    'common.continue': 'Continuă',
+    'common.confirm': 'Confirmă',
+    'common.retry': 'Încearcă din nou',
+    'common.yes': 'Da',
+    'common.no': 'Nu',
+    'common.optional': 'Opțional',
+    'common.required': 'Obligatoriu',
+    'common.search': 'Caută',
+    'common.filter': 'Filtrează',
+    'common.sort': 'Sortează',
+    'common.export': 'Export',
+    'common.import': 'Import',
+    'common.refresh': 'Reîmprospătează',
+
+    // ========== APP HEADER & NAVIGATION ==========
+    'nav.home': 'Acasă',
+    'nav.settings': 'Setări',
+    'nav.help': 'Ajutor',
+    'nav.logout': 'Deconectare',
+    
+    // ========== AUTHENTICATION ==========
+    'auth.username': 'Nume utilizator',
+    'auth.password': 'Parolă',
+    'auth.login.button': 'Conectează-te',
+    'auth.login.loading': 'Se conectează...',
+    'auth.login.failed': 'Conectarea a eșuat',
+    'auth.login.invalid': 'Nume utilizator sau parolă incorectă',
+    'auth.required': 'Trebuie să te autentifici pentru a accesa această pagină',
+    'auth.session.expired': 'Sesiunea a expirat. Te rugăm să te reconectezi.',
+    
+    // ========== HOMEPAGE & SEARCH ==========
+    'search.min.length': 'Căutarea trebuie să conțină cel puțin 2 caractere',
+    'search.no.results': 'Niciun rezultat găsit',
+    'search.results.count': '{{count}} rezultate găsite',
+    'search.error': 'Eroare la căutare: {{error}}',
+    
+    // ========== FOND MANAGEMENT ==========
+    'fond.title': 'Fond Arhivistic',
+    'fond.company.name': 'Numele companiei',
+    'fond.company.name.placeholder': 'ex: Tractorul Brașov SA',
+    'fond.holder.name': 'Deținător arhivă',
+    'fond.holder.name.placeholder': 'ex: Arhiva Națională Brașov',
+    'fond.address': 'Adresă',
+    'fond.address.placeholder': 'ex: Str. Industriei 15, Brașov, 500269',
+    'fond.email': 'Email',
+    'fond.email.placeholder': 'contact@arhiva.ro',
+    'fond.phone': 'Telefon',
+    'fond.phone.placeholder': '+40 268 123 456',
+    'fond.notes': 'Note',
+    'fond.notes.placeholder': 'Informații suplimentare despre fond...',
+    'fond.source.url': 'URL sursă',
+    'fond.source.url.placeholder': 'https://arhiva.ro/fonduri/tractorul',
+    'fond.status.active': 'Fond activ (vizibil în căutarea publică)',
+    'fond.owner.assignment': 'Assignment Proprietar',
+    'fond.owner.assign.to': 'Assignează către client',
+    'fond.owner.unassigned': '-- Neasignat --',
+    'fond.owner.selected': 'Selectat: {{username}}',
+    'fond.owner.info': 'Fondul va fi vizibil și editabil doar de utilizatorul selectat',
+
+    // Form modes
+    'fond.form.create': 'Fond Nou',
+    'fond.form.edit': 'Editare Fond',
+    'fond.form.create.button': 'Creează',
+    'fond.form.update.button': 'Actualizează',
+    'fond.form.saving': 'Se salvează...',
+
+    // Validation messages
+    'fond.validation.company.required': 'Numele companiei este obligatoriu',
+    'fond.validation.company.min': 'Numele trebuie să aibă cel puțin 2 caractere',
+    'fond.validation.company.max': 'Numele poate avea maxim 255 caractere',
+    'fond.validation.company.duplicate': 'Această companie poate să existe deja în baza de date',
+    'fond.validation.holder.required': 'Deținătorul arhivei este obligatoriu',
+    'fond.validation.holder.min': 'Numele deținătorului trebuie să aibă cel puțin 2 caractere',
+    'fond.validation.holder.max': 'Numele poate avea maxim 255 caractere',
+    'fond.validation.email.invalid': 'Adresa de email nu este validă',
+    'fond.validation.phone.invalid': 'Numărul de telefon conține caractere invalide',
+    'fond.validation.url.invalid': 'URL-ul nu este valid',
+
+    // Duplicate detection
+    'fond.duplicate.warning': 'Companii similare detectate',
+    'fond.duplicate.message': 'Am găsit companii cu nume similar. Vrei să selectezi una existentă?',
+    'fond.duplicate.select.tip': 'Click pe o sugestie pentru a o selecta',
+    'fond.duplicate.suggestions': 'Companii similare găsite: {{companies}}',
+
+    // Success/Error messages
+    'fond.success.created': 'Fondul a fost creat cu succes',
+    'fond.success.updated': 'Fondul a fost actualizat cu succes',
+    'fond.success.deleted': 'Fondul a fost șters cu succes',
+    'fond.error.create': 'Eroare la crearea fondului',
+    'fond.error.update': 'Eroare la actualizarea fondului',
+    'fond.error.delete': 'Eroare la ștergerea fondului',
+    'fond.error.load': 'Eroare la încărcarea fondurilor',
+
+    // ========== USER MANAGEMENT ==========
+    'user.title': 'Utilizator',
+    'user.username': 'Nume utilizator',
+    'user.username.placeholder': 'ex: admin, john.doe',
+    'user.username.help': 'Doar litere, cifre, underscore, cratimă și punct',
+    'user.password': 'Parolă',
+    'user.password.current': 'Parola actuală',
+    'user.password.new': 'Parola nouă',
+    'user.password.confirm': 'Confirmă parola nouă',
+    'user.password.placeholder.new': 'Introdu parola nouă',
+    'user.password.placeholder.current': 'Introdu parola actuală',
+    'user.password.placeholder.confirm': 'Confirmă parola nouă',
+    'user.password.placeholder.keep': 'Lasă gol pentru a păstra parola actuală',
+    'user.password.generate': 'Generează',
+    'user.password.strength.weak': 'Slabă',
+    'user.password.strength.medium': 'Medie',
+    'user.password.strength.strong': 'Puternică',
+    'user.role': 'Rol',
+    'user.role.admin': 'Administrator',
+    'user.role.audit': 'Audit',
+    'user.role.client': 'Client',
+    'user.role.admin.desc': 'Acces complet la sistem',
+    'user.role.audit.desc': 'Vizualizare și rapoarte (read-only)',
+    'user.role.client.desc': 'Management fonduri proprii',
+    'user.company.name': 'Numele companiei',
+    'user.company.name.placeholder': 'ex: Tractorul Brașov Heritage SRL',
+    'user.company.name.help': 'Numele companiei pentru care gestionează fondurile',
+    'user.contact.email': 'Email contact',
+    'user.contact.email.placeholder': 'ex: contact@companie.ro',
+    'user.contact.email.recommended': '(recomandat)',
+    'user.notes': 'Note administrative',
+    'user.notes.placeholder': 'Note despre utilizator...',
+
+    // Form modes
+    'user.form.create': 'Utilizator Nou',
+    'user.form.edit': 'Editare Utilizator',
+    'user.form.create.button': 'Creează',
+    'user.form.update.button': 'Actualizează',
+    'user.form.saving': 'Se salvează...',
+
+    // Edit mode info
+    'user.edit.info': 'Editare utilizator',
+    'user.edit.password.tip': 'Lasă parola goală pentru a păstra parola actuală',
+
+    // Password security
+    'user.password.security.title': 'Sfaturi pentru o parolă sigură',
+    'user.password.security.length': '• Folosește cel puțin 8 caractere',
+    'user.password.security.mix': '• Combină litere mari și mici, cifre și simboluri',
+    'user.password.security.personal': '• Nu folosi informații personale',
+    'user.password.security.reuse': '• Nu reutiliza parole de la alte conturi',
+
+    // Role warnings
+    'user.role.admin.warning': 'Atenție: Rol Administrator',
+    'user.role.admin.warning.desc': 'Administratorii au acces complet la toate datele și funcționalitățile aplicației, inclusiv managementul utilizatorilor și fondurilor.',
+    'user.role.client.info': 'Informații Client',
+    'user.role.client.info.desc': 'Clienții pot gestiona doar fondurile care le sunt assignate de administrator. Numele companiei este obligatoriu pentru identificarea fondurilor.',
+
+    // Validation messages
+    'user.validation.username.required': 'Username-ul este obligatoriu',
+    'user.validation.username.min': 'Username-ul trebuie să aibă cel puțin 3 caractere',
+    'user.validation.username.max': 'Username-ul poate avea maxim 64 caractere',
+    'user.validation.username.pattern': 'Username-ul poate conține doar litere, cifre, underscore, cratimă și punct',
+    'user.validation.username.exists': 'Acest username este deja folosit',
+    'user.validation.password.required': 'Parola este obligatorie',
+    'user.validation.password.min': 'Parola trebuie să aibă cel puțin 8 caractere',
+    'user.validation.password.pattern': 'Parola trebuie să conțină cel puțin o literă mică, o literă mare și o cifră',
+    'user.validation.password.match': 'Parolele nu se potrivesc',
+    'user.validation.password.different': 'Parola nouă trebuie să fie diferită de cea actuală',
+    'user.validation.role.required': 'Rolul este obligatoriu',
+    'user.validation.role.invalid': 'Rolul selectat nu este valid',
+    'user.validation.company.required.client': 'Numele companiei este obligatoriu pentru clienți',
+    'user.validation.company.max': 'Numele companiei poate avea maxim 255 caractere',
+    'user.validation.email.invalid': 'Adresa de email nu este validă',
+
+    // Success/Error messages
+    'user.success.created': 'Utilizatorul "{{username}}" ({{role}}) a fost creat cu succes!',
+    'user.success.updated': 'Utilizatorul "{{username}}" a fost actualizat cu succes!',
+    'user.success.deleted': 'Utilizatorul "{{username}}" a fost șters cu succes!',
+    'user.success.password.changed': 'Parola a fost schimbată cu succes!',
+    'user.error.create': 'Eroare la crearea utilizatorului',
+    'user.error.update': 'Eroare la actualizarea utilizatorului',
+    'user.error.delete': 'Eroare la ștergerea utilizatorului',
+    'user.error.load': 'Eroare la încărcarea utilizatorilor',
+    'user.error.password.change': 'A apărut o eroare la schimbarea parolei',
+    'user.error.password.current.wrong': 'Parola actuală este incorectă',
+    'user.error.no.permission.create': 'Nu ai permisiuni pentru a crea utilizatori',
+    'user.error.no.permission.edit': 'Nu ai permisiuni pentru a modifica utilizatori',
+    'user.error.no.permission.delete': 'Nu ai permisiuni pentru a șterge utilizatori',
+    'user.error.cannot.delete.self': 'Nu te poți șterge pe tine însuți!',
+
+    // ========== DASHBOARD TERMS ==========
+    'dashboard.admin': 'Dashboard Administrator',
+    'dashboard.audit': 'Dashboard Audit',
+    'dashboard.client': 'Dashboard Client',
+    'dashboard.loading': 'Se încarcă dashboard-ul...',
+    'dashboard.stats': 'Statistici',
+    'dashboard.recent.activity': 'Activitate recentă',
+    'dashboard.quick.actions': 'Acțiuni rapide',
+
+    // ========== ERRORS & MESSAGES ==========
+    'error.generic': 'A apărut o eroare neașteptată',
+    'error.unauthorized': 'Nu ai autorizație pentru această acțiune',
+    'error.forbidden': 'Acces interzis',
+    'error.not.found': 'Resursa nu a fost găsită',
+    'error.validation': 'Eroare de validare',
+    'error.duplicate': 'Intrarea există already',
+
+    'success.operation': 'Operația a fost completată cu succes',
+    'success.save': 'Salvat cu succes',
+    'success.update': 'Actualizat cu succes',
+    'success.delete': 'Șters cu succes',
+    'success.create': 'Creat cu succes',
+
+    // ========== CONFIRMATIONS ==========
+    'confirm.delete': 'Ești sigur că vrei să ștergi {{item}}?',
+    'confirm.delete.warning': 'Această acțiune este ireversibilă!',
+    'confirm.unsaved.changes': 'Ai modificări nesalvate. Vrei să continui?',
+    'confirm.logout': 'Ești sigur că vrei să te deconectezi?',
+
+    // ========== LOADING STATES ==========
+    'loading.please.wait': 'Te rugăm să aștepți...',
+    'loading.data': 'Se încarcă datele...',
+    'loading.saving': 'Se salvează...',
+    'loading.deleting': 'Se șterge...',
+    'loading.updating': 'Se actualizează...',
+    'loading.creating': 'Se creează...',
+    'loading.processing': 'Se procesează...',
+
+    // ========== PERMISSIONS & ACCESS ==========
+    'permission.denied': 'Nu ai permisiuni pentru această acțiune',
+    'permission.read.only': 'Acces doar pentru citire',
+    'permission.admin.required': 'Este necesară autorizația de administrator',
+    'access.unauthorized': 'Acces neautorizat',
+    'access.login.required': 'Este necesară autentificarea',
+
+    // ========== DATE & TIME ==========
+    'date.today': 'Azi',
+    'date.yesterday': 'Ieri',
+    'date.last.week': 'Săptămâna trecută',
+    'date.last.month': 'Luna trecută',
+    'time.now': 'Acum',
+    'time.minutes.ago': '{{minutes}} minute în urmă',
+    'time.hours.ago': '{{hours}} ore în urmă',
+    'time.days.ago': '{{days}} zile în urmă',
+
+    // ========== FOOTER ==========
+    'footer.privacy': 'Politica de confidențialitate',
+    'footer.terms': 'Termeni și condiții',
+    'footer.contact': 'Contact',
   },
-  
+
   en: {
-    // Header & Navigation
+
+     // Header & Navigation
     'app.title': 'Archive Web App',
     'app.subtitle': 'Search Romanian archival funds',
     'auth.login': 'Login',
@@ -511,8 +806,6 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'homepage.title': 'Find your company\'s archive',
     'homepage.subtitle': 'Search our database to find the contact information of the responsible institution that holds a Romanian company\'s archive.',
     'search.placeholder': 'Ex: Tractorul Brasov, Steagul Rosu...',
-    'search.button': 'Search',
-    'search.button.loading': 'Searching...',
     'search.suggestions': 'Suggestions:',
     
     // Search Results
@@ -532,16 +825,10 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'pagination.previous': 'Previous',
     'pagination.next': 'Next',
 
-    // Footer
-    'footer.copyright': '© 2025 Archive Web App - Tony Gheorghe',
-    'footer.description': 'Application for searching Romanian archival funds',
-
     // Error Messages
     'error.search.min_length': 'Search must contain at least 2 characters',
     'error.search.failed': 'Search error:',
     'error.search.generic': 'An error occurred during search',
-    'error.network': 'Network error. Check your connection.',
-    'error.server': 'Server error. Please try again.',
     
     // Loading States
     'loading.search': 'Searching...',
@@ -741,7 +1028,230 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'audit.error.export_failed': 'Export failed',
     'audit.error.failed_to_export_data': 'Failed to export data',
 
-    // Client Dashboard
+    // ========== COMMON TERMS ==========
+    'common.loading': 'Loading...',
+    'common.error': 'Error',
+    'common.success': 'Success',
+    'common.cancel': 'Cancel',
+    'common.save': 'Save',
+    'common.edit': 'Edit',
+    'common.delete': 'Delete',
+    'common.add': 'Add',
+    'common.create': 'Create',
+    'common.update': 'Update',
+    'common.close': 'Close',
+    'common.back': 'Back',
+    'common.continue': 'Continue',
+    'common.confirm': 'Confirm',
+    'common.retry': 'Retry',
+    'common.yes': 'Yes',
+    'common.no': 'No',
+    'common.optional': 'Optional',
+    'common.required': 'Required',
+    'common.search': 'Search',
+    'common.filter': 'Filter',
+    'common.sort': 'Sort',
+    'common.export': 'Export',
+    'common.import': 'Import',
+    'common.refresh': 'Refresh',
+
+    // ========== APP HEADER & NAVIGATION ==========
+    'nav.home': 'Home',
+    'nav.settings': 'Settings',
+    'nav.help': 'Help',
+    'nav.logout': 'Logout',
+
+    // ========== AUTHENTICATION ==========
+    'auth.username': 'Username',
+    'auth.password': 'Password',
+    'auth.login.button': 'Sign In',
+    'auth.login.loading': 'Signing in...',
+    'auth.login.failed': 'Login failed',
+    'auth.login.invalid': 'Invalid username or password',
+    'auth.required': 'You must be authenticated to access this page',
+    'auth.session.expired': 'Session expired. Please sign in again.',
+
+    // ========== HOMEPAGE & SEARCH ==========
+    'search.button': 'Search',
+    'search.button.loading': 'Searching...',
+    'search.min.length': 'Search must contain at least 2 characters',
+    'search.no.results': 'No results found',
+    'search.results.count': '{{count}} results found',
+    'search.error': 'Search error: {{error}}',
+
+    // ========== FOND MANAGEMENT ==========
+    'fond.title': 'Archival Fund',
+    'fond.company.name': 'Company name',
+    'fond.company.name.placeholder': 'ex: Tractorul Brasov SA',
+    'fond.holder.name': 'Archive holder',
+    'fond.holder.name.placeholder': 'ex: National Archives Brasov',
+    'fond.address': 'Address',
+    'fond.address.placeholder': 'ex: Industrial Street 15, Brasov, 500269',
+    'fond.email': 'Email',
+    'fond.email.placeholder': 'contact@archive.ro',
+    'fond.phone': 'Phone',
+    'fond.phone.placeholder': '+40 268 123 456',
+    'fond.notes': 'Notes',
+    'fond.notes.placeholder': 'Additional information about the fund...',
+    'fond.source.url': 'Source URL',
+    'fond.source.url.placeholder': 'https://archive.ro/funds/tractorul',
+    'fond.status.active': 'Active fund (visible in public search)',
+    'fond.owner.assignment': 'Owner Assignment',
+    'fond.owner.assign.to': 'Assign to client',
+    'fond.owner.unassigned': '-- Unassigned --',
+    'fond.owner.selected': 'Selected: {{username}}',
+    'fond.owner.info': 'Fund will be visible and editable only by the selected user',
+
+    // Form modes
+    'fond.form.create': 'New Fund',
+    'fond.form.edit': 'Edit Fund',
+    'fond.form.create.button': 'Create',
+    'fond.form.update.button': 'Update',
+    'fond.form.saving': 'Saving...',
+
+    // Validation messages
+    'fond.validation.company.required': 'Company name is required',
+    'fond.validation.company.min': 'Name must have at least 2 characters',
+    'fond.validation.company.max': 'Name can have maximum 255 characters',
+    'fond.validation.company.duplicate': 'This company may already exist in the database',
+    'fond.validation.holder.required': 'Archive holder is required',
+    'fond.validation.holder.min': 'Holder name must have at least 2 characters',
+    'fond.validation.holder.max': 'Name can have maximum 255 characters',
+    'fond.validation.email.invalid': 'Email address is not valid',
+    'fond.validation.phone.invalid': 'Phone number contains invalid characters',
+    'fond.validation.url.invalid': 'URL is not valid',
+
+    // Duplicate detection
+    'fond.duplicate.warning': 'Similar companies detected',
+    'fond.duplicate.message': 'We found companies with similar names. Do you want to select an existing one?',
+    'fond.duplicate.select.tip': 'Click on a suggestion to select it',
+    'fond.duplicate.suggestions': 'Similar companies found: {{companies}}',
+
+    // Success/Error messages
+    'fond.success.created': 'Fund created successfully',
+    'fond.success.updated': 'Fund updated successfully',
+    'fond.success.deleted': 'Fund deleted successfully',
+    'fond.error.create': 'Error creating fund',
+    'fond.error.update': 'Error updating fund',
+    'fond.error.delete': 'Error deleting fund',
+    'fond.error.load': 'Error loading funds',
+
+    // ========== USER MANAGEMENT ==========
+    'user.title': 'User',
+    'user.username': 'Username',
+    'user.username.placeholder': 'ex: admin, john.doe',
+    'user.username.help': 'Only letters, numbers, underscore, hyphen and dot',
+    'user.password': 'Password',
+    'user.password.current': 'Current password',
+    'user.password.new': 'New password',
+    'user.password.confirm': 'Confirm new password',
+    'user.password.placeholder.new': 'Enter new password',
+    'user.password.placeholder.current': 'Enter current password',
+    'user.password.placeholder.confirm': 'Confirm new password',
+    'user.password.placeholder.keep': 'Leave empty to keep current password',
+    'user.password.generate': 'Generate',
+    'user.password.strength.weak': 'Weak',
+    'user.password.strength.medium': 'Medium',
+    'user.password.strength.strong': 'Strong',
+    'user.role': 'Role',
+    'user.role.admin': 'Administrator',
+    'user.role.audit': 'Audit',
+    'user.role.client': 'Client',
+    'user.role.admin.desc': 'Full system access',
+    'user.role.audit.desc': 'View and reports (read-only)',
+    'user.role.client.desc': 'Own funds management',
+    'user.company.name': 'Company name',
+    'user.company.name.placeholder': 'ex: Tractorul Brasov Heritage SRL',
+    'user.company.name.help': 'Company name for which they manage funds',
+    'user.contact.email': 'Contact email',
+    'user.contact.email.placeholder': 'ex: contact@company.ro',
+    'user.contact.email.recommended': '(recommended)',
+    'user.notes': 'Administrative notes',
+    'user.notes.placeholder': 'Notes about user...',
+
+    // Form modes
+    'user.form.create': 'New User',
+    'user.form.edit': 'Edit User',
+    'user.form.create.button': 'Create',
+    'user.form.update.button': 'Update',
+    'user.form.saving': 'Saving...',
+
+    // Edit mode info
+    'user.edit.info': 'Edit user',
+    'user.edit.password.tip': 'Leave password empty to keep current password',
+
+    // Password security
+    'user.password.security.title': 'Tips for a secure password',
+    'user.password.security.length': '• Use at least 8 characters',
+    'user.password.security.mix': '• Combine uppercase and lowercase letters, numbers and symbols',
+    'user.password.security.personal': '• Don\'t use personal information',
+    'user.password.security.reuse': '• Don\'t reuse passwords from other accounts',
+
+    // Role warnings
+    'user.role.admin.warning': 'Warning: Administrator Role',
+    'user.role.admin.warning.desc': 'Administrators have full access to all application data and functionality, including user and fund management.',
+    'user.role.client.info': 'Client Information',
+    'user.role.client.info.desc': 'Clients can only manage funds assigned to them by an administrator. Company name is required for fund identification.',
+
+    // Validation messages
+    'user.validation.username.required': 'Username is required',
+    'user.validation.username.min': 'Username must have at least 3 characters',
+    'user.validation.username.max': 'Username can have maximum 64 characters',
+    'user.validation.username.pattern': 'Username can only contain letters, numbers, underscore, hyphen and dot',
+    'user.validation.username.exists': 'This username is already taken',
+    'user.validation.password.required': 'Password is required',
+    'user.validation.password.min': 'Password must have at least 8 characters',
+    'user.validation.password.pattern': 'Password must contain at least one lowercase letter, one uppercase letter and one digit',
+    'user.validation.password.match': 'Passwords don\'t match',
+    'user.validation.password.different': 'New password must be different from current',
+    'user.validation.role.required': 'Role is required',
+    'user.validation.role.invalid': 'Selected role is not valid',
+    'user.validation.company.required.client': 'Company name is required for clients',
+    'user.validation.company.max': 'Company name can have maximum 255 characters',
+    'user.validation.email.invalid': 'Email address is not valid',
+
+    // Success/Error messages
+    'user.success.created': 'User "{{username}}" ({{role}}) created successfully!',
+    'user.success.updated': 'User "{{username}}" updated successfully!',
+    'user.success.deleted': 'User "{{username}}" deleted successfully!',
+    'user.success.password.changed': 'Password changed successfully!',
+    'user.error.create': 'Error creating user',
+    'user.error.update': 'Error updating user',
+    'user.error.delete': 'Error deleting user',
+    'user.error.load': 'Error loading users',
+    'user.error.password.change': 'Error occurred while changing password',
+    'user.error.password.current.wrong': 'Current password is incorrect',
+    'user.error.no.permission.create': 'You don\'t have permission to create users',
+    'user.error.no.permission.edit': 'You don\'t have permission to edit users',
+    'user.error.no.permission.delete': 'You don\'t have permission to delete users',
+    'user.error.cannot.delete.self': 'You cannot delete yourself!',
+
+    // ========== DASHBOARD TERMS ==========
+    'dashboard.admin': 'Administrator Dashboard',
+    'dashboard.audit': 'Audit Dashboard',
+    'dashboard.client': 'Client Dashboard',
+    'dashboard.loading': 'Loading dashboard...',
+    'dashboard.stats': 'Statistics',
+    'dashboard.recent.activity': 'Recent activity',
+    'dashboard.quick.actions': 'Quick actions',
+
+    // ========== ERRORS & MESSAGES ==========
+    'error.generic': 'An unexpected error occurred',
+    'error.network': 'Network error. Check your connection.',
+    'error.server': 'Server error. Please try again.',
+    'error.unauthorized': 'You are not authorized for this action',
+    'error.forbidden': 'Access denied',
+    'error.not.found': 'Resource not found',
+    'error.validation': 'Validation error',
+    'error.duplicate': 'Entry already exists',
+
+    'success.operation': 'Operation completed successfully',
+    'success.save': 'Saved successfully',
+    'success.update': 'Updated successfully',
+    'success.delete': 'Deleted successfully',
+    'success.create': 'Created successfully',
+
+        // Client Dashboard
     'client.loading.fonds': 'Loading your funds...',
     'client.role_name': 'Client',
     'client.header.description': 'Assigned funds management',
@@ -823,7 +1333,46 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'client.success.fond_deleted': 'Fund deleted successfully',
     
     // Client Confirmations
-    'client.confirm.delete_fond': 'Are you sure you want to delete the fund'
+    'client.confirm.delete_fond': 'Are you sure you want to delete the fund',
+
+    // ========== CONFIRMATIONS ==========
+    'confirm.delete': 'Are you sure you want to delete {{item}}?',
+    'confirm.delete.warning': 'This action is irreversible!',
+    'confirm.unsaved.changes': 'You have unsaved changes. Do you want to continue?',
+    'confirm.logout': 'Are you sure you want to logout?',
+
+    // ========== LOADING STATES ==========
+    'loading.please.wait': 'Please wait...',
+    'loading.data': 'Loading data...',
+    'loading.saving': 'Saving...',
+    'loading.deleting': 'Deleting...',
+    'loading.updating': 'Updating...',
+    'loading.creating': 'Creating...',
+    'loading.processing': 'Processing...',
+
+    // ========== PERMISSIONS & ACCESS ==========
+    'permission.denied': 'You don\'t have permission for this action',
+    'permission.read.only': 'Read-only access',
+    'permission.admin.required': 'Administrator authorization required',
+    'access.unauthorized': 'Unauthorized access',
+    'access.login.required': 'Authentication required',
+
+    // ========== DATE & TIME ==========
+    'date.today': 'Today',
+    'date.yesterday': 'Yesterday',
+    'date.last.week': 'Last week',
+    'date.last.month': 'Last month',
+    'time.now': 'Now',
+    'time.minutes.ago': '{{minutes}} minutes ago',
+    'time.hours.ago': '{{hours}} hours ago',
+    'time.days.ago': '{{days}} days ago',
+
+    // ========== FOOTER ==========
+    'footer.copyright': '© 2025 Archive Web App - Tony Gheorghe',
+    'footer.description': 'Application for searching Romanian archival funds',
+    'footer.privacy': 'Privacy Policy',
+    'footer.terms': 'Terms and Conditions',
+    'footer.contact': 'Contact',
   }
 };
 
