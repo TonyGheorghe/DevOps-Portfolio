@@ -1,7 +1,8 @@
-// src/components/AuthSystem.tsx - Final Clean Version with Extended User Types
+// src/components/AuthSystem.tsx - UPDATED with Complete i18n Support
 import React, { useState, useContext, createContext, useEffect, ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Eye, EyeOff, User, LogOut, Shield, ArrowLeft, Home } from 'lucide-react';
+import { useLanguage } from './common/LanguageSystem'; // Import language system
 
 // ===== TYPES & INTERFACES =====
 interface UserData {
@@ -131,7 +132,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// ===== LOGIN PAGE COMPONENT =====
+// ===== LOGIN PAGE COMPONENT - UPDATED with i18n =====
 export const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -140,6 +141,7 @@ export const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   
   const { login, isAuthenticated } = useAuth();
+  const { t } = useLanguage(); // Add translation hook
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -156,7 +158,7 @@ export const LoginPage: React.FC = () => {
     if (e) e.preventDefault();
     
     if (!username.trim() || !password.trim()) {
-      setError('Username și parola sunt obligatorii');
+      setError(t('auth.error.required'));
       return;
     }
 
@@ -170,10 +172,10 @@ export const LoginPage: React.FC = () => {
         console.log('Login successful, redirecting to:', from);
         navigate(from, { replace: true });
       } else {
-        setError('Username sau parolă greșite');
+        setError(t('auth.error.invalid'));
       }
     } catch (err) {
-      setError('A apărut o eroare la conectare');
+      setError(t('auth.error.connection'));
     } finally {
       setIsLoading(false);
     }
@@ -192,67 +194,67 @@ export const LoginPage: React.FC = () => {
 
   if (isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <Shield className="h-16 w-16 text-green-600 mx-auto mb-4 animate-pulse" />
-          <h2 className="text-2xl font-bold text-gray-900">Conectat cu succes!</h2>
-          <p className="text-gray-600 mt-2">Te redirectăm către aplicație...</p>
+          <Shield className="h-16 w-16 text-green-600 dark:text-green-400 mx-auto mb-4 animate-pulse" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('auth.success.connected')}</h2>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">{t('auth.success.redirecting')}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Back to Home Button */}
         <div className="flex justify-start">
           <button
             onClick={handleBackToHome}
-            className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors px-3 py-2 rounded-md hover:bg-white/50"
+            className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors px-3 py-2 rounded-md hover:bg-white/50 dark:hover:bg-gray-700/50"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span className="text-sm font-medium">Înapoi la căutare</span>
+            <span className="text-sm font-medium">{t('auth.back.search')}</span>
           </button>
         </div>
 
         <div className="text-center">
-          <Lock className="h-12 w-12 text-blue-600 mx-auto" />
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Conectare
+          <Lock className="h-12 w-12 text-blue-600 dark:text-blue-400 mx-auto" />
+          <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-gray-100">
+            {t('auth.title')}
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Introdu datele de conectare pentru acces
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            {t('auth.subtitle')}
           </p>
           {from !== '/' && (
-            <p className="mt-1 text-xs text-amber-600">
-              Vei fi redirectat către: {from}
+            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+              {t('auth.redirect.info')} {from}
             </p>
           )}
         </div>
 
-        <div className="bg-white shadow-lg rounded-lg px-8 py-8">
+        <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg px-8 py-8 border dark:border-gray-700">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                <p className="text-sm text-red-800">{error}</p>
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4">
+                <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
               </div>
             )}
 
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                Username
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {t('auth.username')}
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
                 <input
                   id="username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Introdu username-ul"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
+                  placeholder={t('auth.username.placeholder')}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   disabled={isLoading}
                   autoComplete="username"
                   required
@@ -261,19 +263,19 @@ export const LoginPage: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Parolă
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {t('auth.password')}
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Introdu parola"
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
+                  placeholder={t('auth.password.placeholder')}
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   disabled={isLoading}
                   autoComplete="current-password"
                   required
@@ -281,7 +283,7 @@ export const LoginPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                   disabled={isLoading}
                 >
                   {showPassword ? <EyeOff /> : <Eye />}
@@ -297,25 +299,25 @@ export const LoginPage: React.FC = () => {
               {isLoading ? (
                 <div className="flex items-center justify-center">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Se conectează...
+                  {t('auth.login.loading')}
                 </div>
               ) : (
-                'Conectare'
+                t('auth.login.button')
               )}
             </button>
 
-            <div className="bg-gray-50 rounded-md p-4">
-              <p className="text-xs text-gray-600 text-center mb-2">
-                <strong>Conturi demo disponibile:</strong>
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-md p-4">
+              <p className="text-xs text-gray-600 dark:text-gray-400 text-center mb-2">
+                <strong>{t('auth.demo.accounts')}</strong>
               </p>
-              <div className="text-xs text-gray-600 space-y-1">
+              <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
                 <div className="flex justify-between">
                   <span>Admin:</span>
-                  <span>admin / admin123</span>
+                  <span>{t('auth.demo.admin')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Client:</span>
-                  <span>client / client123</span>
+                  <span>{t('auth.demo.client')}</span>
                 </div>
               </div>
             </div>
@@ -323,15 +325,15 @@ export const LoginPage: React.FC = () => {
         </div>
 
         <div className="text-center">
-          <p className="text-xs text-gray-500 mb-2">
-            © 2025 Arhivare Web App - Tony Gheorghe
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+            {t('footer.copyright')}
           </p>
           <button
             onClick={handleBackToHome}
-            className="inline-flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-800 transition-colors"
+            className="inline-flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
           >
             <Home className="h-3 w-3" />
-            <span>Înapoi la pagina principală</span>
+            <span>{t('auth.back.search')}</span>
           </button>
         </div>
       </div>
@@ -339,9 +341,10 @@ export const LoginPage: React.FC = () => {
   );
 };
 
-// ===== USER PROFILE COMPONENT =====
+// ===== USER PROFILE COMPONENT - UPDATED with i18n =====
 export const UserProfile: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
+  const { t } = useLanguage(); // Add translation hook
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -355,7 +358,7 @@ export const UserProfile: React.FC = () => {
 
   return (
     <div className="relative inline-block text-left">
-      <div className="flex items-center space-x-3 bg-white rounded-lg px-4 py-2 shadow-sm border border-gray-200">
+      <div className="flex items-center space-x-3 bg-white dark:bg-gray-800 rounded-lg px-4 py-2 shadow-sm border border-gray-200 dark:border-gray-600">
         <div className="flex-shrink-0">
           <div className="h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center">
             <User className="h-5 w-5 text-white" />
@@ -363,18 +366,18 @@ export const UserProfile: React.FC = () => {
         </div>
         
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-900 truncate">
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
             {user.username}
           </p>
-          <p className="text-xs text-gray-500 capitalize">
+          <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
             {user.role}
           </p>
         </div>
 
         <button
           onClick={handleLogout}
-          className="flex-shrink-0 p-1 text-gray-400 hover:text-red-600 transition-colors"
-          title="Deconectare"
+          className="flex-shrink-0 p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+          title={t('auth.logout')}
         >
           <LogOut className="h-5 w-5" />
         </button>
@@ -383,13 +386,14 @@ export const UserProfile: React.FC = () => {
   );
 };
 
-// ===== PROTECTED ROUTE COMPONENT =====
+// ===== PROTECTED ROUTE COMPONENT - UPDATED with i18n =====
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
   requiredRole,
   allowReadOnly = false
 }) => {
   const { isAuthenticated, user, isLoading, logout } = useAuth();
+  const { t } = useLanguage(); // Add translation hook
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -417,10 +421,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="text-gray-600 mt-4">Se verifică autentificarea...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
+          <p className="text-gray-600 dark:text-gray-300 mt-4">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -436,19 +440,19 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     }
     
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
-          <Shield className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Acces interzis</h2>
-          <p className="text-gray-600 mb-4">
-            Nu ai permisiunile necesare pentru a accesa această secțiune.
+          <Shield className="h-16 w-16 text-red-500 dark:text-red-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{t('error.forbidden')}</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            {t('error.unauthorized')}
           </p>
-          <div className="bg-gray-100 rounded-lg p-4 mb-6">
-            <p className="text-sm text-gray-700">
-              <strong>Rolul tău:</strong> {user?.role || 'Necunoscut'}
+          <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 mb-6">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              <strong>{t('users.table.role')}:</strong> {user?.role || t('admin.unknown_user')}
             </p>
-            <p className="text-sm text-gray-700">
-              <strong>Rol necesar:</strong> {requiredRole}
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              <strong>{t('common.required')}:</strong> {requiredRole}
             </p>
           </div>
           
@@ -457,7 +461,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
               onClick={handleGoHome}
               className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              {user?.role === 'admin' ? 'Înapoi la Dashboard' : 'Înapoi la Căutare'}
+              {user?.role === 'admin' ? t('nav.admin.dashboard') : t('search.button')}
             </button>
             
             <button
@@ -465,15 +469,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
               className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2"
             >
               <LogOut className="h-4 w-4" />
-              <span>Schimbă contul</span>
+              <span>{t('auth.logout')}</span>
             </button>
           </div>
           
           {user?.role === 'user' && (
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-800">
-                💡 <strong>Sfat:</strong> Pentru acces la funcțiile administrative, 
-                contactează un administrator pentru a-ți schimba rolul.
+            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                💡 <strong>{t('profile.security.tips')}:</strong> {t('users.readonly.description')}
               </p>
             </div>
           )}

@@ -1,4 +1,4 @@
-// src/components/AuditDashboard.tsx - COMPLETE DARK MODE VERSION
+// src/components/AuditDashboard.tsx - COMPLETE i18n VERSION
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from './AuthSystem';
 import { DarkModeToggle, useDarkMode } from './common/DarkModeSystem';
+import { LanguageToggle, useLanguage } from './common/LanguageSystem';
 
 // Types
 interface Fond {
@@ -53,7 +54,8 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const AuditDashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const { currentTheme } = useDarkMode(); // 🔴 Add dark mode hook
+  const { currentTheme } = useDarkMode();
+  const { t } = useLanguage(); // 🌍 ADD TRANSLATION HOOK
   const navigate = useNavigate();
   
   // State management
@@ -120,7 +122,7 @@ const AuditDashboard: React.FC = () => {
           navigate('/login', { replace: true });
           return;
         }
-        throw new Error('Failed to load data');
+        throw new Error(t('audit.error.failed_to_load_data'));
       }
 
       const [fondsData, statsData, assignmentsData] = await Promise.all([
@@ -134,12 +136,12 @@ const AuditDashboard: React.FC = () => {
       setRecentAssignments(assignmentsData.assignments || []);
       
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error loading data');
+      setError(err instanceof Error ? err.message : t('audit.error.loading_data'));
       console.error('Error loading audit data:', err);
     } finally {
       setLoading(false);
     }
-  }, [showInactive, selectedPeriod, logout, navigate]);
+  }, [showInactive, selectedPeriod, logout, navigate, t]);
 
   useEffect(() => {
     loadAllData();
@@ -160,7 +162,7 @@ const AuditDashboard: React.FC = () => {
         { headers: getAuthHeaders() }
       );
 
-      if (!response.ok) throw new Error('Export failed');
+      if (!response.ok) throw new Error(t('audit.error.export_failed'));
 
       const data = await response.json();
       
@@ -176,7 +178,7 @@ const AuditDashboard: React.FC = () => {
       URL.revokeObjectURL(url);
       
     } catch (err) {
-      setError('Failed to export data');
+      setError(t('audit.error.failed_to_export_data'));
     }
   };
 
@@ -197,7 +199,7 @@ const AuditDashboard: React.FC = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 dark:border-purple-400 mx-auto"></div>
-          <p className="text-gray-600 dark:text-gray-300 mt-4">Se încarcă dashboard-ul audit...</p>
+          <p className="text-gray-600 dark:text-gray-300 mt-4">{t('audit.loading.dashboard')}</p>
         </div>
       </div>
     );
@@ -212,8 +214,8 @@ const AuditDashboard: React.FC = () => {
             <div className="flex items-center space-x-3">
               <BarChart3 className="h-8 w-8 text-purple-600 dark:text-purple-400" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Dashboard Audit</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Vizualizare și analiză date (read-only)</p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('nav.audit.dashboard')}</h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{t('nav.audit.dashboard.description')}</p>
               </div>
             </div>
             
@@ -225,7 +227,7 @@ const AuditDashboard: React.FC = () => {
                   className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors px-3 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   <Home className="h-4 w-4" />
-                  <span>Căutare</span>
+                  <span>{t('nav.search')}</span>
                 </button>
                 
                 <button 
@@ -234,7 +236,7 @@ const AuditDashboard: React.FC = () => {
                   className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors px-3 py-2 rounded-md hover:bg-purple-50 dark:hover:bg-purple-900/20 disabled:opacity-50"
                 >
                   <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-                  <span>Refresh</span>
+                  <span>{t('audit.actions.refresh')}</span>
                 </button>
 
                 <button 
@@ -242,11 +244,12 @@ const AuditDashboard: React.FC = () => {
                   className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors px-3 py-2 rounded-md hover:bg-green-50 dark:hover:bg-green-900/20"
                 >
                   <Download className="h-4 w-4" />
-                  <span>Export</span>
+                  <span>{t('audit.actions.export')}</span>
                 </button>
               </nav>
               
-              {/* 🔴 Dark Mode Toggle */}
+              {/* 🌍 Language & Dark Mode Toggles */}
+              <LanguageToggle size="sm" />
               <DarkModeToggle size="sm" showLabel={false} />
               
               {/* User profile section */}
@@ -258,12 +261,12 @@ const AuditDashboard: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user?.username}</p>
-                  <p className="text-xs text-purple-600 dark:text-purple-400 capitalize">Audit (Read-Only)</p>
+                  <p className="text-xs text-purple-600 dark:text-purple-400 capitalize">{t('audit.role_display')}</p>
                 </div>
                 <button
                   onClick={handleLogout}
                   className="text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20"
-                  title="Deconectare"
+                  title={t('auth.logout')}
                 >
                   <LogOut className="h-5 w-5" />
                 </button>
@@ -299,9 +302,9 @@ const AuditDashboard: React.FC = () => {
               <div className="flex items-center">
                 <Archive className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Fonduri</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('audit.stats.total_fonds')}</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total_fonds}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{stats.active_fonds} active</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{stats.active_fonds} {t('common.active').toLowerCase()}</p>
                 </div>
               </div>
             </div>
@@ -310,9 +313,9 @@ const AuditDashboard: React.FC = () => {
               <div className="flex items-center">
                 <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Fonduri Assignate</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('audit.stats.assigned_fonds')}</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.assigned_fonds}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{stats.assignment_rate}% din total</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{stats.assignment_rate}% {t('audit.stats.of_total')}</p>
                 </div>
               </div>
             </div>
@@ -321,9 +324,9 @@ const AuditDashboard: React.FC = () => {
               <div className="flex items-center">
                 <AlertCircle className="h-8 w-8 text-orange-600 dark:text-orange-400" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Fonduri Neasignate</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('audit.stats.unassigned_fonds')}</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.unassigned_fonds}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Disponibile pentru assignment</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{t('audit.stats.available_for_assignment')}</p>
                 </div>
               </div>
             </div>
@@ -332,9 +335,9 @@ const AuditDashboard: React.FC = () => {
               <div className="flex items-center">
                 <Users className="h-8 w-8 text-purple-600 dark:text-purple-400" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Clienți Activi</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('audit.stats.active_clients')}</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.clients_with_fonds}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Cu fonduri assignate</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{t('audit.stats.with_assigned_fonds')}</p>
                 </div>
               </div>
             </div>
@@ -348,16 +351,16 @@ const AuditDashboard: React.FC = () => {
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
                   <TrendingUp className="h-5 w-5 mr-2 text-purple-600 dark:text-purple-400" />
-                  Assignment-uri Recente
+                  {t('audit.recent_assignments.title')}
                 </h2>
                 <select
                   value={selectedPeriod}
                   onChange={(e) => setSelectedPeriod(Number(e.target.value))}
                   className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 >
-                  <option value={1}>Ultima zi</option>
-                  <option value={7}>Ultima săptămână</option>
-                  <option value={30}>Ultima lună</option>
+                  <option value={1}>{t('audit.period.last_day')}</option>
+                  <option value={7}>{t('audit.period.last_week')}</option>
+                  <option value={30}>{t('audit.period.last_month')}</option>
                 </select>
               </div>
             </div>
@@ -365,7 +368,7 @@ const AuditDashboard: React.FC = () => {
               {recentAssignments.length === 0 ? (
                 <div className="text-center py-8">
                   <Calendar className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400">Nu există assignment-uri recente</p>
+                  <p className="text-gray-500 dark:text-gray-400">{t('audit.recent_assignments.none')}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -387,7 +390,7 @@ const AuditDashboard: React.FC = () => {
                             ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300' 
                             : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                         }`}>
-                          {assignment.active ? 'Activ' : 'Inactiv'}
+                          {assignment.active ? t('common.active') : t('common.inactive')}
                         </span>
                       </div>
                     </div>
@@ -402,7 +405,7 @@ const AuditDashboard: React.FC = () => {
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
                 <Users className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
-                Distribuția pe Clienți
+                {t('audit.client_distribution.title')}
               </h2>
             </div>
             <div className="p-6">
@@ -418,7 +421,7 @@ const AuditDashboard: React.FC = () => {
                       </div>
                       <div className="flex items-center space-x-2">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
-                          {client.fond_count} fonduri
+                          {client.fond_count} {client.fond_count === 1 ? t('audit.client_distribution.fond') : t('audit.client_distribution.fonds')}
                         </span>
                       </div>
                     </div>
@@ -427,7 +430,7 @@ const AuditDashboard: React.FC = () => {
               ) : (
                 <div className="text-center py-8">
                   <Users className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400">Nu există clienți cu fonduri assignate</p>
+                  <p className="text-gray-500 dark:text-gray-400">{t('audit.client_distribution.none')}</p>
                 </div>
               )}
             </div>
@@ -440,7 +443,7 @@ const AuditDashboard: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
                 <FileText className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
-                Toate Fondurile ({filteredFonds.length})
+                {t('audit.table.all_fonds')} ({filteredFonds.length})
               </h2>
               
               <div className="flex items-center space-x-4">
@@ -451,7 +454,7 @@ const AuditDashboard: React.FC = () => {
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Caută fonduri..."
+                      placeholder={t('audit.search.placeholder')}
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                     />
                   </div>
@@ -464,7 +467,7 @@ const AuditDashboard: React.FC = () => {
                     onChange={(e) => setShowInactive(e.target.checked)}
                     className="rounded border-gray-300 dark:border-gray-600 text-purple-600 focus:ring-purple-500 bg-white dark:bg-gray-700"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Arată inactive</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{t('audit.filters.show_inactive')}</span>
                 </label>
               </div>
             </div>
@@ -475,22 +478,22 @@ const AuditDashboard: React.FC = () => {
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Companie
+                    {t('audit.table.company')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Deținător Arhivă
+                    {t('audit.table.archive_holder')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Status / Owner
+                    {t('audit.table.status_owner')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Contact
+                    {t('audit.table.contact')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Ultima Actualizare
+                    {t('audit.table.last_update')}
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Acțiuni
+                    {t('audit.table.actions')}
                   </th>
                 </tr>
               </thead>
@@ -499,9 +502,9 @@ const AuditDashboard: React.FC = () => {
                   <tr>
                     <td colSpan={6} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                       <Building2 className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                      <p className="text-lg font-medium">Niciun fond găsit</p>
+                      <p className="text-lg font-medium">{t('audit.table.no_fonds_found')}</p>
                       <p className="text-sm">
-                        {searchQuery ? 'Încearcă să modifici căutarea' : 'Fondurile se încarcă...'}
+                        {searchQuery ? t('audit.table.try_modify_search') : t('audit.table.loading_fonds')}
                       </p>
                     </td>
                   </tr>
@@ -533,16 +536,16 @@ const AuditDashboard: React.FC = () => {
                               ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300' 
                               : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                           }`}>
-                            {fond.active ? 'Activ' : 'Inactiv'}
+                            {fond.active ? t('common.active') : t('common.inactive')}
                           </span>
                           
                           {fond.owner_id ? (
                             <div className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded">
-                              Assignat (ID: {fond.owner_id})
+                              {t('audit.table.assigned')} (ID: {fond.owner_id})
                             </div>
                           ) : (
                             <div className="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded">
-                              Neasignat
+                              {t('audit.table.unassigned')}
                             </div>
                           )}
                         </div>
@@ -576,7 +579,7 @@ const AuditDashboard: React.FC = () => {
                         <div className="flex justify-end space-x-2">
                           <button
                             className="text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 p-1 rounded hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
-                            title="Vizualizează (Read-Only)"
+                            title={t('audit.table.view_read_only')}
                           >
                             <Eye className="h-4 w-4" />
                           </button>
@@ -593,36 +596,36 @@ const AuditDashboard: React.FC = () => {
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border dark:border-gray-700">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Acces Audit</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">{t('audit.summary.audit_access')}</h3>
             <div className="space-y-3">
               <div className="flex items-center text-sm">
                 <CheckCircle className="h-4 w-4 text-green-500 dark:text-green-400 mr-2" />
-                <span className="text-gray-900 dark:text-gray-100">Vizualizare toate fondurile</span>
+                <span className="text-gray-900 dark:text-gray-100">{t('audit.summary.view_all_fonds')}</span>
               </div>
               <div className="flex items-center text-sm">
                 <CheckCircle className="h-4 w-4 text-green-500 dark:text-green-400 mr-2" />
-                <span className="text-gray-900 dark:text-gray-100">Export date și statistici</span>
+                <span className="text-gray-900 dark:text-gray-100">{t('audit.summary.export_data_stats')}</span>
               </div>
               <div className="flex items-center text-sm">
                 <CheckCircle className="h-4 w-4 text-green-500 dark:text-green-400 mr-2" />
-                <span className="text-gray-900 dark:text-gray-100">Rapoarte și analize</span>
+                <span className="text-gray-900 dark:text-gray-100">{t('audit.summary.reports_analytics')}</span>
               </div>
               <div className="flex items-center text-sm">
                 <X className="h-4 w-4 text-red-500 dark:text-red-400 mr-2" />
-                <span className="text-gray-900 dark:text-gray-100">Fără modificări (Read-Only)</span>
+                <span className="text-gray-900 dark:text-gray-100">{t('audit.summary.no_modifications')}</span>
               </div>
             </div>
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border dark:border-gray-700">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Acțiuni Rapide</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">{t('audit.summary.quick_actions')}</h3>
             <div className="space-y-3">
               <button
                 onClick={handleExport}
                 className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 dark:bg-green-500 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
               >
                 <Download className="h-4 w-4" />
-                <span>Export Date</span>
+                <span>{t('audit.actions.export_data')}</span>
               </button>
               
               <button
@@ -631,18 +634,18 @@ const AuditDashboard: React.FC = () => {
                 className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 dark:bg-purple-500 text-white rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors disabled:opacity-50"
               >
                 <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-                <span>Refresh Date</span>
+                <span>{t('audit.actions.refresh_data')}</span>
               </button>
             </div>
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border dark:border-gray-700">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Informații Sistem</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">{t('audit.summary.system_info')}</h3>
             <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-              <div>Rol: <span className="font-medium text-purple-600 dark:text-purple-400">Audit</span></div>
-              <div>Utilizator: <span className="font-medium text-gray-900 dark:text-gray-100">{user?.username}</span></div>
-              <div>Fonduri vizibile: <span className="font-medium text-gray-900 dark:text-gray-100">{filteredFonds.length}</span></div>
-              <div>Ultima actualizare: <span className="font-medium text-gray-900 dark:text-gray-100">{new Date().toLocaleTimeString('ro-RO')}</span></div>
+              <div>{t('audit.summary.role')}: <span className="font-medium text-purple-600 dark:text-purple-400">{t('audit.role_name')}</span></div>
+              <div>{t('audit.summary.user')}: <span className="font-medium text-gray-900 dark:text-gray-100">{user?.username}</span></div>
+              <div>{t('audit.summary.visible_fonds')}: <span className="font-medium text-gray-900 dark:text-gray-100">{filteredFonds.length}</span></div>
+              <div>{t('audit.summary.last_update')}: <span className="font-medium text-gray-900 dark:text-gray-100">{new Date().toLocaleTimeString('ro-RO')}</span></div>
             </div>
           </div>
         </div>

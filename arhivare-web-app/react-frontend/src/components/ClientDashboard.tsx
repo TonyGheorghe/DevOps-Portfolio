@@ -1,4 +1,4 @@
-// src/components/ClientDashboard.tsx - COMPLETE DARK MODE VERSION
+// src/components/ClientDashboard.tsx - COMPLETE i18n VERSION
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -9,6 +9,7 @@ import {
 import { useAuth } from './AuthSystem';
 import FondForm from './forms/FondForm';
 import { DarkModeToggle, useDarkMode } from './common/DarkModeSystem';
+import { LanguageToggle, useLanguage } from './common/LanguageSystem';
 
 // Types
 interface Fond {
@@ -48,7 +49,8 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const ClientDashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const { currentTheme } = useDarkMode(); // 🔴 Add dark mode hook
+  const { currentTheme } = useDarkMode();
+  const { t } = useLanguage(); // 🌍 ADD TRANSLATION HOOK
   const navigate = useNavigate();
   
   // State management
@@ -122,7 +124,7 @@ const ClientDashboard: React.FC = () => {
           navigate('/login', { replace: true });
           return;
         }
-        throw new Error('Failed to load your data');
+        throw new Error(t('client.error.failed_to_load_data'));
       }
 
       const [fondsData, statsData] = await Promise.all([
@@ -134,12 +136,12 @@ const ClientDashboard: React.FC = () => {
       setStats(statsData);
       
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error loading your fonds');
+      setError(err instanceof Error ? err.message : t('client.error.loading_fonds'));
       console.error('Error loading client data:', err);
     } finally {
       setLoading(false);
     }
-  }, [showInactive, logout, navigate]);
+  }, [showInactive, logout, navigate, t]);
 
   useEffect(() => {
     loadMyData();
@@ -164,7 +166,7 @@ const ClientDashboard: React.FC = () => {
           return;
         }
         const errorData = await response.json();
-        throw new Error(errorData.detail || `Error creating fond: ${response.status}`);
+        throw new Error(errorData.detail || `${t('client.error.creating_fond')}: ${response.status}`);
       }
 
       const newFond = await response.json();
@@ -173,10 +175,10 @@ const ClientDashboard: React.FC = () => {
       setEditingFond(undefined);
       await loadMyData();
       
-      setSuccessMessage(`Fondul "${newFond.company_name}" a fost creat cu succes!`);
+      setSuccessMessage(`${t('client.success.fond_created')} "${newFond.company_name}"!`);
       
     } catch (err) {
-      throw new Error(err instanceof Error ? err.message : 'Error creating fond');
+      throw new Error(err instanceof Error ? err.message : t('client.error.creating_fond_generic'));
     } finally {
       setFormLoading(false);
     }
@@ -203,7 +205,7 @@ const ClientDashboard: React.FC = () => {
           return;
         }
         const errorData = await response.json();
-        throw new Error(errorData.detail || `Error updating fond: ${response.status}`);
+        throw new Error(errorData.detail || `${t('client.error.updating_fond')}: ${response.status}`);
       }
 
       const updatedFond = await response.json();
@@ -212,10 +214,10 @@ const ClientDashboard: React.FC = () => {
       setEditingFond(undefined);
       await loadMyData();
       
-      setSuccessMessage(`Fondul "${updatedFond.company_name}" a fost actualizat cu succes!`);
+      setSuccessMessage(`${t('client.success.fond_updated')} "${updatedFond.company_name}"!`);
       
     } catch (err) {
-      throw new Error(err instanceof Error ? err.message : 'Error updating fond');
+      throw new Error(err instanceof Error ? err.message : t('client.error.updating_fond_generic'));
     } finally {
       setFormLoading(false);
     }
@@ -238,7 +240,7 @@ const ClientDashboard: React.FC = () => {
 
   // Delete operation
   const handleDeleteFond = async (fond: Fond) => {
-    if (!window.confirm(`Ești sigur că vrei să ștergi fondul "${fond.company_name}"?`)) {
+    if (!window.confirm(`${t('client.confirm.delete_fond')} "${fond.company_name}"?`)) {
       return;
     }
 
@@ -254,13 +256,13 @@ const ClientDashboard: React.FC = () => {
           navigate('/login', { replace: true });
           return;
         }
-        throw new Error(`Error deleting fond: ${response.status}`);
+        throw new Error(`${t('client.error.deleting_fond')}: ${response.status}`);
       }
 
       await loadMyData();
-      setSuccessMessage(`Fondul "${fond.company_name}" a fost șters cu succes!`);
+      setSuccessMessage(`${t('client.success.fond_deleted')} "${fond.company_name}"!`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error deleting fond');
+      setError(err instanceof Error ? err.message : t('client.error.deleting_fond_generic'));
     }
   };
 
@@ -281,7 +283,7 @@ const ClientDashboard: React.FC = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 dark:border-green-400 mx-auto"></div>
-          <p className="text-gray-600 dark:text-gray-300 mt-4">Se încarcă fondurile tale...</p>
+          <p className="text-gray-600 dark:text-gray-300 mt-4">{t('client.loading.fonds')}</p>
         </div>
       </div>
     );
@@ -296,8 +298,8 @@ const ClientDashboard: React.FC = () => {
             <div className="flex items-center space-x-3">
               <Target className="h-8 w-8 text-green-600 dark:text-green-400" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Fondurile Mele</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Management fonduri assignate</p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('nav.client.my-fonds')}</h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{t('client.header.description')}</p>
               </div>
             </div>
             
@@ -309,11 +311,12 @@ const ClientDashboard: React.FC = () => {
                   className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors px-3 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   <Home className="h-4 w-4" />
-                  <span>Căutare</span>
+                  <span>{t('nav.search')}</span>
                 </button>
               </nav>
               
-              {/* 🔴 Dark Mode Toggle */}
+              {/* 🌍 Language & Dark Mode Toggles */}
+              <LanguageToggle size="sm" />
               <DarkModeToggle size="sm" showLabel={false} />
               
               {/* User profile section */}
@@ -325,12 +328,12 @@ const ClientDashboard: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user?.username}</p>
-                  <p className="text-xs text-green-600 dark:text-green-400 capitalize">Client</p>
+                  <p className="text-xs text-green-600 dark:text-green-400 capitalize">{t('client.role_name')}</p>
                 </div>
                 <button
                   onClick={handleLogout}
                   className="text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors p-1 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20"
-                  title="Deconectare"
+                  title={t('auth.logout')}
                 >
                   <LogOut className="h-5 w-5" />
                 </button>
@@ -382,9 +385,9 @@ const ClientDashboard: React.FC = () => {
               <div className="flex items-center">
                 <Plus className="h-8 w-8 text-green-600 dark:text-green-400" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Fonduri Totale</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('client.stats.total_fonds')}</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total_fonds}</p>
-                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">Click pentru adăugare</p>
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">{t('client.stats.click_to_add')}</p>
                 </div>
               </div>
             </div>
@@ -393,9 +396,9 @@ const ClientDashboard: React.FC = () => {
               <div className="flex items-center">
                 <Archive className="h-8 w-8 text-orange-600 dark:text-orange-400" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Fonduri Inactive</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('client.stats.inactive_fonds')}</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.inactive_fonds}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Nu sunt vizibile public</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{t('client.stats.not_public_visible')}</p>
                 </div>
               </div>
             </div>
@@ -404,9 +407,9 @@ const ClientDashboard: React.FC = () => {
               <div className="flex items-center">
                 <BarChart3 className="h-8 w-8 text-purple-600 dark:text-purple-400" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Completare Date</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('client.stats.data_completion')}</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.completion_rate}%</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Rate de completare</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{t('client.stats.completion_rate')}</p>
                 </div>
               </div>
             </div>
@@ -424,7 +427,7 @@ const ClientDashboard: React.FC = () => {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Caută în fondurile tale..."
+                    placeholder={t('client.search.placeholder')}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                   />
                 </div>
@@ -438,7 +441,7 @@ const ClientDashboard: React.FC = () => {
                     onChange={(e) => setShowInactive(e.target.checked)}
                     className="rounded border-gray-300 dark:border-gray-600 text-green-600 focus:ring-green-500 bg-white dark:bg-gray-700"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Arată inactive</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{t('client.filters.show_inactive')}</span>
                 </label>
 
                 <button
@@ -449,7 +452,7 @@ const ClientDashboard: React.FC = () => {
                   className="bg-green-600 dark:bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-700 dark:hover:bg-green-600 flex items-center space-x-2 transition-colors"
                 >
                   <Plus className="h-4 w-4" />
-                  <span>Adaugă Fond</span>
+                  <span>{t('client.actions.add_fond')}</span>
                 </button>
               </div>
             </div>
@@ -460,21 +463,21 @@ const ClientDashboard: React.FC = () => {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-6 p-6 border dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
             <User className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
-            Informații Client
+            {t('client.info.title')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Nume utilizator</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('client.info.username')}</p>
               <p className="text-lg text-gray-900 dark:text-gray-100">{user?.username}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Rol</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{t('client.info.role')}</p>
               <p className="text-lg text-gray-900 dark:text-gray-100">{user?.role}</p>
             </div>
           </div>
           {stats?.last_updated && (
             <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-              Ultima actualizare: {new Date(stats.last_updated).toLocaleString('ro-RO')}
+              {t('client.info.last_update')}: {new Date(stats.last_updated).toLocaleString('ro-RO')}
             </div>
           )}
         </div>
@@ -484,7 +487,7 @@ const ClientDashboard: React.FC = () => {
           <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
               <FileText className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
-              Fondurile Tale ({filteredFonds.length})
+              {t('client.table.your_fonds')} ({filteredFonds.length})
             </h2>
           </div>
           
@@ -493,19 +496,19 @@ const ClientDashboard: React.FC = () => {
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Companie
+                    {t('client.table.company')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Deținător Arhivă
+                    {t('client.table.archive_holder')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Contact
+                    {t('client.table.contact')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Status
+                    {t('client.table.status')}
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Acțiuni
+                    {t('client.table.actions')}
                   </th>
                 </tr>
               </thead>
@@ -515,12 +518,12 @@ const ClientDashboard: React.FC = () => {
                     <td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                       <Building2 className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                       <p className="text-lg font-medium">
-                        {fonds.length === 0 ? 'Nu ai încă fonduri assignate' : 'Niciun fond găsit'}
+                        {fonds.length === 0 ? t('client.table.no_fonds_assigned') : t('client.table.no_fonds_found')}
                       </p>
                       <p className="text-sm mb-4">
                         {fonds.length === 0 
-                          ? 'Contactează administratorul pentru a-ți fi assignate fonduri sau adaugă unul nou.'
-                          : searchQuery ? 'Încearcă să modifici căutarea' : 'Fondurile se încarcă...'
+                          ? t('client.table.contact_admin_or_add')
+                          : searchQuery ? t('client.table.try_modify_search') : t('client.table.loading_fonds')
                         }
                       </p>
                       {fonds.length === 0 && (
@@ -529,7 +532,7 @@ const ClientDashboard: React.FC = () => {
                           className="inline-flex items-center space-x-2 px-4 py-2 bg-green-600 dark:bg-green-500 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
                         >
                           <Plus className="h-4 w-4" />
-                          <span>Adaugă primul fond</span>
+                          <span>{t('client.table.add_first_fond')}</span>
                         </button>
                       )}
                     </td>
@@ -588,7 +591,7 @@ const ClientDashboard: React.FC = () => {
                               ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300' 
                               : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                           }`}>
-                            {fond.active ? 'Activ' : 'Inactiv'}
+                            {fond.active ? t('common.active') : t('common.inactive')}
                           </span>
                           
                           <div className="text-xs text-blue-600 dark:text-blue-400">
@@ -604,14 +607,14 @@ const ClientDashboard: React.FC = () => {
                             setShowForm(true);
                           }}
                           className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 p-1 rounded hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
-                          title="Editează"
+                          title={t('client.actions.edit')}
                         >
                           <Edit2 className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteFond(fond)}
                           className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                          title="Șterge"
+                          title={t('client.actions.delete')}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -627,35 +630,35 @@ const ClientDashboard: React.FC = () => {
         {/* Summary and Help */}
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border dark:border-gray-700">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Acțiuni Disponibile</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">{t('client.help.available_actions')}</h3>
             <div className="space-y-3">
               <div className="flex items-center text-sm">
                 <CheckCircle className="h-4 w-4 text-green-500 dark:text-green-400 mr-2" />
-                <span className="text-gray-900 dark:text-gray-100">Vizualizare și editare fonduri proprii</span>
+                <span className="text-gray-900 dark:text-gray-100">{t('client.help.view_edit_own_fonds')}</span>
               </div>
               <div className="flex items-center text-sm">
                 <CheckCircle className="h-4 w-4 text-green-500 dark:text-green-400 mr-2" />
-                <span className="text-gray-900 dark:text-gray-100">Adăugare fonduri noi</span>
+                <span className="text-gray-900 dark:text-gray-100">{t('client.help.add_new_fonds')}</span>
               </div>
               <div className="flex items-center text-sm">
                 <CheckCircle className="h-4 w-4 text-green-500 dark:text-green-400 mr-2" />
-                <span className="text-gray-900 dark:text-gray-100">Ștergere fonduri (proprii)</span>
+                <span className="text-gray-900 dark:text-gray-100">{t('client.help.delete_own_fonds')}</span>
               </div>
               <div className="flex items-center text-sm">
                 <CheckCircle className="h-4 w-4 text-green-500 dark:text-green-400 mr-2" />
-                <span className="text-gray-900 dark:text-gray-100">Căutare în fondurile publice</span>
+                <span className="text-gray-900 dark:text-gray-100">{t('client.help.search_public_fonds')}</span>
               </div>
             </div>
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border dark:border-gray-700">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Sfaturi pentru Completare</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">{t('client.help.completion_tips')}</h3>
             <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-              <p>• <strong className="text-gray-900 dark:text-gray-100">Numele companiei:</strong> Folosește denumirea oficială</p>
-              <p>• <strong className="text-gray-900 dark:text-gray-100">Deținător arhivă:</strong> Instituția care păstrează documentele</p>
-              <p>• <strong className="text-gray-900 dark:text-gray-100">Contact:</strong> Adaugă email și telefon pentru ușurință în comunicare</p>
-              <p>• <strong className="text-gray-900 dark:text-gray-100">Adresa:</strong> Adresa completă ajută la localizare</p>
-              <p>• <strong className="text-gray-900 dark:text-gray-100">Note:</strong> Informații suplimentare despre fond</p>
+              <p>• <strong className="text-gray-900 dark:text-gray-100">{t('client.help.company_name')}:</strong> {t('client.help.company_name_tip')}</p>
+              <p>• <strong className="text-gray-900 dark:text-gray-100">{t('client.help.archive_holder')}:</strong> {t('client.help.archive_holder_tip')}</p>
+              <p>• <strong className="text-gray-900 dark:text-gray-100">{t('client.help.contact')}:</strong> {t('client.help.contact_tip')}</p>
+              <p>• <strong className="text-gray-900 dark:text-gray-100">{t('client.help.address')}:</strong> {t('client.help.address_tip')}</p>
+              <p>• <strong className="text-gray-900 dark:text-gray-100">{t('client.help.notes')}:</strong> {t('client.help.notes_tip')}</p>
             </div>
           </div>
         </div>
@@ -664,10 +667,10 @@ const ClientDashboard: React.FC = () => {
         {filteredFonds.length > 0 && (
           <div className="mt-4 flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
             <p>
-              Afișând {filteredFonds.length} din {fonds.length} fonduri
+              {t('client.pagination.showing')} {filteredFonds.length} {t('client.pagination.of')} {fonds.length} {t('client.pagination.fonds')}
             </p>
             <p>
-              {searchQuery && `Filtrate după: "${searchQuery}"`}
+              {searchQuery && `${t('client.pagination.filtered_by')}: "${searchQuery}"`}
             </p>
           </div>
         )}
