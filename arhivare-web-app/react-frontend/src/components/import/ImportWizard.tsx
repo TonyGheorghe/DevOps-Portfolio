@@ -1,11 +1,11 @@
 // src/components/import/ImportWizard.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  X, 
-  Upload, 
-  FileText, 
-  Table, 
-  Code, 
+import {
+  X,
+  Upload,
+  FileText,
+  Table,
+  Code,
   AlertCircle,
   CheckCircle,
   Info,
@@ -22,11 +22,11 @@ import {
   Trash2,
   FileCheck
 } from 'lucide-react';
-import { 
-  ImportData, 
-  ImportOptions, 
-  ImportResult, 
-  ImportValidation, 
+import {
+  ImportData,
+  ImportOptions,
+  ImportResult,
+  ImportValidation,
   ImportProgress,
   ImportError,
   ImportDuplicate
@@ -85,7 +85,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
   // Progress callback setup
   useEffect(() => {
     importService.setProgressCallback(setProgress);
-    return () => importService.setProgressCallback(() => {});
+    return () => importService.setProgressCallback(() => { });
   }, []);
 
   // Load available users for admin assignment
@@ -136,7 +136,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
 
     setSelectedFile(file);
     setError('');
-    
+
     try {
       setIsLoading(true);
       const data = await importService.parseFile(file);
@@ -152,7 +152,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
   const handleFileDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    
+
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
       handleFileSelect(files[0]);
@@ -172,7 +172,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
   // Validation
   const validateData = async () => {
     if (parsedData.length === 0) return;
-    
+
     setIsLoading(true);
     try {
       const validationResult = await importService.validateData(parsedData);
@@ -191,12 +191,12 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
   const executeImport = async () => {
     setIsLoading(true);
     setError('');
-    
+
     try {
       const result = await importService.importData(parsedData, importOptions);
       setImportResult(result);
       setCurrentStep('complete');
-      
+
       if (onImportComplete) {
         onImportComplete(result);
       }
@@ -238,24 +238,22 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
           <div className="flex items-center justify-between">
             {steps.map((step, index) => (
               <div key={step.id} className="flex items-center">
-                <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
-                  index < currentStepIndex 
-                    ? 'bg-green-500 border-green-500 text-white' 
+                <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${index < currentStepIndex
+                    ? 'bg-green-500 border-green-500 text-white'
                     : index === currentStepIndex
-                    ? 'bg-blue-500 border-blue-500 text-white'
-                    : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-400'
-                }`}>
+                      ? 'bg-blue-500 border-blue-500 text-white'
+                      : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-400'
+                  }`}>
                   {index < currentStepIndex ? (
                     <Check className="w-4 h-4" />
                   ) : (
                     step.icon
                   )}
                 </div>
-                <span className={`ml-2 text-sm font-medium ${
-                  index <= currentStepIndex 
-                    ? 'text-gray-900 dark:text-white' 
+                <span className={`ml-2 text-sm font-medium ${index <= currentStepIndex
+                    ? 'text-gray-900 dark:text-white'
                     : 'text-gray-400'
-                }`}>
+                  }`}>
                   {step.title}
                 </span>
                 {index < steps.length - 1 && (
@@ -284,7 +282,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Upload Import File
                 </h3>
-                
+
                 {/* Template Download */}
                 <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                   <div className="flex items-center justify-between">
@@ -309,17 +307,15 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
                   onDrop={handleFileDrop}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
-                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                    isDragOver
+                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${isDragOver
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                       : 'border-gray-300 dark:border-gray-600 hover:border-blue-400'
-                  }`}
+                    }`}
                 >
                   <div className="flex flex-col items-center">
-                    <Upload className={`w-12 h-12 mb-4 ${
-                      isDragOver ? 'text-blue-500' : 'text-gray-400'
-                    }`} />
-                    
+                    <Upload className={`w-12 h-12 mb-4 ${isDragOver ? 'text-blue-500' : 'text-gray-400'
+                      }`} />
+
                     {selectedFile ? (
                       <div className="space-y-2">
                         <p className="text-lg font-medium text-gray-900 dark:text-white">
@@ -349,7 +345,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
                       </div>
                     )}
                   </div>
-                  
+
                   <input
                     type="file"
                     accept=".csv,.xlsx,.xls,.json"
@@ -413,7 +409,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
                       </div>
                     </div>
                   </div>
-                  
+
                   {validation && (
                     <>
                       <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
@@ -493,7 +489,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
                         <div className="max-h-32 overflow-y-auto space-y-2">
                           {validation.duplicates.slice(0, 5).map((duplicate, index) => (
                             <div key={index} className="p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded text-sm">
-                              <span className="font-medium">Row {duplicate.row}</span>: 
+                              <span className="font-medium">Row {duplicate.row}</span>:
                               {duplicate.data.company_name} - Similar to existing record ({Math.round(duplicate.similarity * 100)}% match)
                             </div>
                           ))}
@@ -513,7 +509,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Import Configuration
                 </h3>
-                
+
                 <div className="space-y-6">
                   {/* User Assignment (Admin only) */}
                   {userRole === 'admin' && availableUsers.length > 0 && (
@@ -560,7 +556,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
                           <p className="text-sm text-gray-600 dark:text-gray-400">Don't import records that already exist</p>
                         </div>
                       </label>
-                      
+
                       <label className="flex items-center">
                         <input
                           type="radio"
@@ -578,7 +574,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
                           <p className="text-sm text-gray-600 dark:text-gray-400">Update existing records with new data</p>
                         </div>
                       </label>
-                      
+
                       <label className="flex items-center">
                         <input
                           type="radio"
@@ -630,7 +626,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Import Preview
                 </h3>
-                
+
                 {/* Summary */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
@@ -685,13 +681,12 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
                           const hasError = validation?.errors.some(e => e.row === index + 1);
                           const hasWarning = validation?.warnings.some(w => w.row === index + 1);
                           const isDuplicate = validation?.duplicates.some(d => d.row === index + 1);
-                          
+
                           return (
-                            <tr key={index} className={`${
-                              hasError ? 'bg-red-50 dark:bg-red-900/10' : 
-                              hasWarning ? 'bg-yellow-50 dark:bg-yellow-900/10' :
-                              isDuplicate ? 'bg-orange-50 dark:bg-orange-900/10' : ''
-                            }`}>
+                            <tr key={index} className={`${hasError ? 'bg-red-50 dark:bg-red-900/10' :
+                                hasWarning ? 'bg-yellow-50 dark:bg-yellow-900/10' :
+                                  isDuplicate ? 'bg-orange-50 dark:bg-orange-900/10' : ''
+                              }`}>
                               <td className="px-4 py-2 text-sm text-gray-900 dark:text-white">
                                 {row.company_name}
                               </td>
@@ -702,26 +697,33 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
                                 {row.email || row.phone || '-'}
                               </td>
                               <td className="px-4 py-2 text-sm">
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  row.active 
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${row.active
                                     ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
                                     : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
-                                }`}>
+                                  }`}>
                                   {row.active ? 'Active' : 'Inactive'}
                                 </span>
                               </td>
                               <td className="px-4 py-2 text-sm">
                                 {hasError && (
-                                  <AlertCircle className="w-4 h-4 text-red-500" title="Has errors" />
+                                  <div title="Has errors">
+                                    <AlertCircle className="w-4 h-4 text-red-500" />
+                                  </div>
                                 )}
                                 {hasWarning && !hasError && (
-                                  <AlertTriangle className="w-4 h-4 text-yellow-500" title="Has warnings" />
+                                  <div title="Has warnings">
+                                    <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                                  </div>
                                 )}
                                 {isDuplicate && !hasError && !hasWarning && (
-                                  <Info className="w-4 h-4 text-orange-500" title="Potential duplicate" />
+                                  <div title="Potential duplicate">
+                                    <Info className="w-4 h-4 text-orange-500" />
+                                  </div>
                                 )}
                                 {!hasError && !hasWarning && !isDuplicate && (
-                                  <CheckCircle className="w-4 h-4 text-green-500" title="Valid" />
+                                  <div title="Valid">
+                                    <CheckCircle className="w-4 h-4 text-green-500" />
+                                  </div>
                                 )}
                               </td>
                             </tr>
@@ -729,7 +731,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
                         })}
                       </tbody>
                     </table>
-                    
+
                     {parsedData.length > 10 && (
                       <p className="text-sm text-gray-600 dark:text-gray-400 text-center py-2">
                         Showing first 10 of {parsedData.length} records
@@ -745,7 +747,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
                     <div>
                       <span className="text-gray-600 dark:text-gray-400">Assignment:</span>
                       <span className="ml-2 font-medium text-gray-900 dark:text-white">
-                        {importOptions.assignToUser 
+                        {importOptions.assignToUser
                           ? availableUsers.find(u => u.id === importOptions.assignToUser)?.username || 'Unknown User'
                           : 'No assignment'
                         }
@@ -754,9 +756,9 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
                     <div>
                       <span className="text-gray-600 dark:text-gray-400">Duplicate Handling:</span>
                       <span className="ml-2 font-medium text-gray-900 dark:text-white">
-                        {importOptions.updateExisting ? 'Update existing' : 
-                         importOptions.skipDuplicates ? 'Skip duplicates' : 
-                         'Import all'}
+                        {importOptions.updateExisting ? 'Update existing' :
+                          importOptions.skipDuplicates ? 'Skip duplicates' :
+                            'Import all'}
                       </span>
                     </div>
                     <div>
@@ -778,7 +780,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   {importOptions.dryRun ? 'Dry Run in Progress' : 'Import in Progress'}
                 </h3>
-                
+
                 {progress && (
                   <div className="space-y-4">
                     <div>
@@ -793,7 +795,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
                         />
                       </div>
                     </div>
-                    
+
                     {progress.currentRow && (
                       <div className="text-sm text-gray-600 dark:text-gray-400">
                         Processing row: {progress.currentRow}
@@ -801,16 +803,15 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
                     )}
                   </div>
                 )}
-                
+
                 {!progress && !isLoading && (
                   <div className="text-center">
                     <button
                       onClick={executeImport}
-                      className={`px-6 py-3 rounded-lg text-white flex items-center mx-auto ${
-                        importOptions.dryRun 
-                          ? 'bg-blue-600 hover:bg-blue-700' 
+                      className={`px-6 py-3 rounded-lg text-white flex items-center mx-auto ${importOptions.dryRun
+                          ? 'bg-blue-600 hover:bg-blue-700'
                           : 'bg-green-600 hover:bg-green-700'
-                      }`}
+                        }`}
                     >
                       {importOptions.dryRun ? (
                         <>
@@ -836,18 +837,18 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
               <div className="flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full mx-auto">
                 <CheckCircle className="w-8 h-8 text-green-500" />
               </div>
-              
+
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                   {importOptions.dryRun ? 'Dry Run Complete!' : 'Import Complete!'}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  {importOptions.dryRun 
+                  {importOptions.dryRun
                     ? `Validated ${importResult.imported} records successfully`
                     : `Successfully imported ${importResult.imported} records`
                   }
                 </p>
-                
+
                 {/* Results Summary */}
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -898,7 +899,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
                     </div>
                   </div>
                 )}
-                
+
                 {/* Action Buttons */}
                 <div className="flex justify-center space-x-4">
                   {importOptions.dryRun && importResult.success && (
@@ -913,7 +914,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
                       Execute Real Import
                     </button>
                   )}
-                  
+
                   <button
                     onClick={onClose}
                     className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
@@ -937,7 +938,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
               <ChevronLeft className="w-4 h-4 mr-1" />
               Previous
             </button>
-            
+
             <div className="flex space-x-3">
               <button
                 onClick={onClose}
@@ -946,7 +947,7 @@ export const ImportWizard: React.FC<ImportWizardProps> = ({
               >
                 Cancel
               </button>
-              
+
               <button
                 onClick={goToNext}
                 disabled={

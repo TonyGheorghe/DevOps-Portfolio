@@ -7,7 +7,7 @@ import {
   User, Settings, BarChart3, Shield, Eye, AlertTriangle,
   RefreshCw, Zap, Target, UserCheck
 } from 'lucide-react';
-import { useAuth } from './AuthSystem';
+import { useAuth } from '../AuthSystem';
 import FondForm from '../forms/FondForm';
 import ReassignmentModal from '../ReassignmentModal';
 import { DarkModeToggle, useDarkMode } from '../common/DarkModeSystem';

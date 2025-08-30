@@ -41,7 +41,7 @@ export const ImportExportControls: React.FC<ImportExportControlsProps> = ({
 
   const handleImportComplete = (result: ImportResult) => {
     setRecentActivity(prev => [...prev, {
-      type: 'import',
+      type: 'import' as const,
       timestamp: new Date(),
       result
     }].slice(-5)); // Keep last 5 activities
@@ -53,7 +53,7 @@ export const ImportExportControls: React.FC<ImportExportControlsProps> = ({
 
   const handleExportComplete = (result: ExportResult) => {
     setRecentActivity(prev => [...prev, {
-      type: 'export', 
+      type: 'export' as const, 
       timestamp: new Date(),
       result
     }].slice(-5));

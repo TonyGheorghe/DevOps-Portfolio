@@ -5,7 +5,7 @@ import {
   Search, Phone, Mail, MapPin, Building2, Archive, LogIn, 
   Users, BarChart3, Eye, User, ChevronDown
 } from 'lucide-react';
-import { useAuth } from './AuthSystem';
+import { useAuth } from '../AuthSystem';
 
 // 🔴 ADD DARK MODE & LANGUAGE IMPORTS
 import { DarkModeToggle } from '../common/DarkModeSystem';

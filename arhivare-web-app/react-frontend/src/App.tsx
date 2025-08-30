@@ -6,7 +6,7 @@ import {
   ProtectedRoute, 
   LoginPage, 
   useAuth 
-} from './components/dashboards/AuthSystem';
+} from './components/AuthSystem';
 
 // Page components
 import HomePage from './components/dashboards/HomePage';
@@ -53,6 +53,7 @@ import { NetworkHandlingDemo } from './components/common/NetworkHandling';
 import LoadingStatesDemo from './components/common/LoadingStates';
 
 import './App.css';
+import { Import } from 'lucide-react';
 
 function App() {
   return (
@@ -74,7 +75,7 @@ function App() {
                   
                   {/* Global offline notice */}
                   <OfflineNotice />
-                  
+                  <ImportExportDemo />
                   <Routes>
                     {/* ========== PUBLIC ROUTES ========== */}
                     <Route path="/" element={<HomePage />} />

@@ -6,7 +6,7 @@ import {
   Phone, Mail, MapPin, X, LogOut, CheckCircle,
   User, Save, Home, FileText, BarChart3, Target
 } from 'lucide-react';
-import { useAuth } from './AuthSystem';
+import { useAuth } from '../AuthSystem';
 import FondForm from '../forms/FondForm';
 import { DarkModeToggle, useDarkMode } from '../common/DarkModeSystem';
 import { LanguageToggle, useLanguage } from '../common/LanguageSystem';

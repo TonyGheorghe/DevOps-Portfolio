@@ -7,7 +7,7 @@ import {
   AlertCircle, FileText, Calendar, TrendingUp,
   Eye, Filter, RefreshCw
 } from 'lucide-react';
-import { useAuth } from './AuthSystem';
+import { useAuth } from '../AuthSystem';
 import { DarkModeToggle, useDarkMode } from './common/DarkModeSystem';
 import { LanguageToggle, useLanguage } from './common/LanguageSystem';
 
