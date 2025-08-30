@@ -8,8 +8,8 @@ import {
   Eye, Filter, RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../AuthSystem';
-import { DarkModeToggle, useDarkMode } from './common/DarkModeSystem';
-import { LanguageToggle, useLanguage } from './common/LanguageSystem';
+import { DarkModeToggle, useDarkMode } from '../common/DarkModeSystem';
+import { LanguageToggle, useLanguage } from '../common/LanguageSystem';
 
 // Types
 interface Fond {
