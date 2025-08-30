@@ -7,9 +7,11 @@ import {
   User, Save, Home, FileText, BarChart3, Target
 } from 'lucide-react';
 import { useAuth } from './AuthSystem';
-import FondForm from './forms/FondForm';
-import { DarkModeToggle, useDarkMode } from './common/DarkModeSystem';
-import { LanguageToggle, useLanguage } from './common/LanguageSystem';
+import FondForm from '../forms/FondForm';
+import { DarkModeToggle, useDarkMode } from '../common/DarkModeSystem';
+import { LanguageToggle, useLanguage } from '../common/LanguageSystem';
+import { ClientDashboardWithImportExport, QuickImportButton } from './ImportExportIntegration';
+
 
 // Types
 interface Fond {

@@ -8,8 +8,8 @@ import {
 import { useAuth } from './AuthSystem';
 
 // 🔴 ADD DARK MODE & LANGUAGE IMPORTS
-import { DarkModeToggle } from './common/DarkModeSystem';
-import { LanguageToggle, useLanguage } from './common/LanguageSystem';
+import { DarkModeToggle } from '../common/DarkModeSystem';
+import { LanguageToggle, useLanguage } from '../common/LanguageSystem';
 
 // Type definitions bazate pe schema din backend
 interface Fond {

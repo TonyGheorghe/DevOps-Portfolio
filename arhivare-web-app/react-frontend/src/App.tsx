@@ -6,15 +6,18 @@ import {
   ProtectedRoute, 
   LoginPage, 
   useAuth 
-} from './components/AuthSystem';
+} from './components/dashboards/AuthSystem';
 
 // Page components
-import HomePage from './components/HomePage';
-import AdminDashboard from './components/AdminDashboard';
-import AuditDashboard from './components/AuditDashboard';
-import ClientDashboard from './components/ClientDashboard';
+import HomePage from './components/dashboards/HomePage';
+import AdminDashboard from './components/dashboards/AdminDashboard';
+import AuditDashboard from './components/dashboards/AuditDashboard';
+import ClientDashboard from './components/dashboards/ClientDashboard';
 import UsersPage from './components/pages/UsersPage';
 import UserProfile from './components/pages/UserProfile';
+
+
+import { ImportExportDemo } from './components/ImportExportDemo';
 
 // Language Imports
 import { LanguageProvider } from './components/common/LanguageSystem';

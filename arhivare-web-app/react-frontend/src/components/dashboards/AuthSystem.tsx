@@ -2,7 +2,7 @@
 import React, { useState, useContext, createContext, useEffect, ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Eye, EyeOff, User, LogOut, Shield, ArrowLeft, Home } from 'lucide-react';
-import { useLanguage } from './common/LanguageSystem'; // Import language system
+import { useLanguage } from '../common/LanguageSystem'; // Import language system
 
 // ===== TYPES & INTERFACES =====
 interface UserData {
